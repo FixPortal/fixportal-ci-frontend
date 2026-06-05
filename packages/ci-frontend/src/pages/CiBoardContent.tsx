@@ -71,8 +71,10 @@ export function CiBoardContent() {
   const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
   const allCollapsed = collapse.allCollapsed([...repoNames, ...sectionKeys])
   // The stepper opens at the head of this oldest-first list, so its first entry
-  // is "next in queue" — surface it from the same source the Open PRs button loads.
-  const openPrs = flattenOpenPrs(repositories)
+  // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
+  // applied) so the card and stepper never advertise a PR from a repo the board
+  // is currently hiding.
+  const openPrs = flattenOpenPrs(visibleRepos)
   const nextPr = openPrs[0] ?? null
 
   let repoListContent
