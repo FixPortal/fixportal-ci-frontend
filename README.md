@@ -19,7 +19,7 @@ drop it into your own app or run the bundled dashboard as-is.
 
 | Path | What it is |
 | --- | --- |
-| `packages/ci-frontend` | `@fixportal/ci-frontend` — the publishable React component library |
+| `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library |
 | `apps/dashboard` | a thin Vite app that consumes the library via the workspace |
 
 ## Quickstart (clone and run)
@@ -40,7 +40,7 @@ npm run dev
 ## Using the library in your own app
 
 ```bash
-npm install @fixportal/ci-frontend @tanstack/react-query react react-dom
+npm install @fix-portal/ci-frontend @tanstack/react-query react react-dom
 ```
 
 `react`, `react-dom`, and `@tanstack/react-query` are peer dependencies — the
@@ -48,11 +48,11 @@ library uses your copies, so wrap the board in your own `QueryClientProvider`.
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { CiBoard } from '@fixportal/ci-frontend'
+import { CiBoard } from '@fix-portal/ci-frontend'
 
 // If you have no design system of your own, import both stylesheets:
-import '@fixportal/ci-frontend/tokens.css'
-import '@fixportal/ci-frontend/board.css'
+import '@fix-portal/ci-frontend/tokens.css'
+import '@fix-portal/ci-frontend/board.css'
 
 const queryClient = new QueryClient()
 
@@ -79,11 +79,11 @@ export function App() {
 The board consumes ~15 "universal" CSS custom properties (`--text`, `--border`,
 `--brand`, `--card-bg`, `--font-sans`, ...). Two ways to supply them:
 
-- **No design system of your own:** import `@fixportal/ci-frontend/tokens.css`
+- **No design system of your own:** import `@fix-portal/ci-frontend/tokens.css`
   (a vendored light + dark token set) **before** `board.css`. Toggle dark mode
   with `document.documentElement.dataset.theme = 'dark'`.
 - **You already define those token names:** import only
-  `@fixportal/ci-frontend/board.css` and let your own tokens (and theming) flow
+  `@fix-portal/ci-frontend/board.css` and let your own tokens (and theming) flow
   into the board.
 
 ## Backend contract

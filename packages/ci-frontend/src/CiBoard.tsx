@@ -16,8 +16,8 @@ export interface CiBoardProps {
 }
 
 // The board is style-free at the component level: consumers import the
-// stylesheets explicitly -- `@fixportal/ci-frontend/board.css` (always) and
-// optionally `@fixportal/ci-frontend/tokens.css` if they have no design system
+// stylesheets explicitly -- `@fix-portal/ci-frontend/board.css` (always) and
+// optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
 // of their own. This keeps CSS out of the JS bundle and lets a host with its
 // own tokens (e.g. the simulator) skip the vendored set.
 export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, logo, footerSlot }: CiBoardProps) {

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { CiBoard, DEFAULT_CI_API_BASE } from '@fixportal/ci-frontend'
+import { CiBoard, DEFAULT_CI_API_BASE } from '@fix-portal/ci-frontend'
 
 const queryClient = new QueryClient()
 const apiBase = import.meta.env.VITE_CI_API_BASE ?? DEFAULT_CI_API_BASE

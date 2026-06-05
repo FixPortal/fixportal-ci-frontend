@@ -4,9 +4,9 @@
   "type": "module",
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "build:lib": "npm run build -w @fixportal/ci-frontend",
+    "build:lib": "npm run build -w @fix-portal/ci-frontend",
     "build:app": "npm run build -w dashboard",
-    "test": "npm run test -w @fixportal/ci-frontend",
+    "test": "npm run test -w @fix-portal/ci-frontend",
     "lint": "eslint .",
     "dev": "npm run build:lib && npm run dev -w dashboard"
   },
