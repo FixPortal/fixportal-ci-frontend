@@ -1,0 +1,55 @@
+/* @fixportal/ci-frontend — vendored universal design tokens (Apache-2.0).
+ *
+ * The ~15 "universal" custom properties that board.css consumes but does not
+ * define. Import this BEFORE board.css if your application has no design system
+ * of its own (the standalone dashboard does exactly that). Consumers that
+ * already define these property names — e.g. the FixPortal simulator via
+ * @fixportal/design — should NOT import this file and instead let their own
+ * tokens (and theming) flow into the board.
+ *
+ * Values are a vendored subset mirrored from @fixportal/design:
+ *   light  -> fixportal-assets/packages/design/tokens.css (:root)
+ *   dark   -> the same file's :root[data-theme="dark"] block
+ * Only the properties whose values actually change in dark are overridden;
+ * --brand, --ok-border, --bad-solid, --warn-fill-deep and the fonts are
+ * theme-invariant. Re-sync from that source if the upstream tokens change.
+ *
+ * Fonts fall back to system-ui / ui-monospace when IBM Plex is not installed;
+ * a consumer wanting the exact FixPortal type can add the @fontsource packages. */
+
+:root {
+  --app-bg: #f7f8fa;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --border-strong: #cbd5e1;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --text-faint: #94a3b8;
+
+  --brand: #0d9488;
+
+  --ok-border: #16a34a;
+
+  --bad-solid: #dc2626;
+  --bad-text: #991b1b;
+
+  --warn-text: #92400e;
+  --warn-fill-deep: #f59e0b;
+
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #020617;
+  --card-bg: #0f172a;
+  --border: #1e293b;
+  --border-strong: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+
+  --bad-text: #fecaca;
+
+  --warn-text: #f0abfc;
+}

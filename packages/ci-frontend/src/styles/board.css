@@ -1,0 +1,1079 @@
+/*
+  @fixportal/ci-frontend — CI dashboard board styles.
+
+  The board's component rules, scoped under .ci-embed so its bespoke
+  (non-Tailwind) rules and app-local tokens cannot leak into or collide with a
+  host application's global styles.
+
+  TOKEN CONTRACT: this sheet DEFINES its app-local tokens (--surface-2, --run,
+  --pkg, --unknown, --no-ci, --r-* radii, the --space-* / --fs-* scales) on
+  .ci-page, but CONSUMES ~15 "universal" tokens it does not define (--app-bg,
+  --card-bg, --border, --border-strong, --text, --text-muted, --text-faint,
+  --brand, --ok-border, --bad-solid, --bad-text, --warn-text, --warn-fill-deep,
+  --font-sans, --font-mono). Supply them by importing EITHER:
+    - this package's tokens.css (the vendored standalone set), OR
+    - your own design system that defines the same custom-property names
+      (e.g. the FixPortal simulator's @fixportal/design tokens).
+  Import board.css AFTER the token sheet so the cascade resolves.
+
+  Keyframes are named ci-live-pulse (NOT live-pulse) to avoid colliding with a
+  host's global animations. The .site-footer block (outside .ci-embed) styles
+  both the bundled DefaultFooter (band + tagline) and a richer footer a consumer
+  may pass via CiBoard's footerSlot (the __wordmark / __attrib classes). */
+
+/* Page frame: app-local tokens hoisted here so both .ci-embed and .site-footer
+   (siblings inside .ci-page) inherit them. The universal tokens come from the
+   token sheet described above. */
+.ci-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  --surface-2: #f9fafb;
+  --run: #2563eb;
+  --pkg: #7c3aed;
+  --unknown: #94a0b3;
+  --no-ci: #6b72b0;
+  --r-control: 4px;
+  --r-chip: 6px;
+  --r-panel: 8px;
+
+  /* Spacing scale (4px base) + type tiers — the shared sheet publishes neither,
+     so they live here next to --r-* and every spacing/font declaration reads
+     them. Suffix = px ÷ 4; --space-hair is the 0.5 step. */
+  --space-hair: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --fs-10: 10px;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-24: 24px;
+}
+
+:root[data-theme="dark"] .ci-page {
+  --surface-2: #1c2538;
+  --run: #60a5fa;
+  --pkg: #a78bfa;
+  --unknown: #5d6880;
+  --no-ci: #7c83b8;
+}
+
+/* Keyframes must be top-level (cannot be nested). Renamed from the dashboard's
+   `live-pulse` to avoid any collision with simulator-global animations. */
+@keyframes ci-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ci-page .ci-embed {
+  flex: 1;
+}
+
+.ci-embed {
+  background: var(--app-bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.ci-embed__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+.ci-embed__lockup {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.ci-embed__wordmark { display: block; color: var(--text); }
+/* Text fallback used when no `logo` node is passed to CiBoard. */
+.ci-embed__wordmark-text {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  color: var(--brand);
+}
+.ci-embed__descriptor {
+  font-family: var(--font-mono);
+  font-size: var(--fs-13);
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding-bottom: var(--space-2);
+}
+
+.ci-embed {
+  /* Visually-hidden but exposed to assistive tech. Carries the spoken status word
+     into each chip's accessible name so state is never colour-only (WCAG 1.4.1). */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    /* stylelint-disable-next-line declaration-property-value-disallowed-list -- the -1px clip is the canonical visually-hidden idiom, not chrome spacing. */
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---- Dashboard layout ---------------------------------------------------- */
+
+  .dashboard-page {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-6) var(--space-12);
+  }
+
+  .dashboard__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .dashboard__scope {
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
+
+  .dashboard__refreshed {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+    animation: ci-live-pulse 2.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
+
+  .state-msg {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--fs-14);
+  }
+
+  .state-msg--error { color: var(--bad-text); }
+
+  /* ---- Summary panels ------------------------------------------------------ */
+
+  .summary-panels {
+    display: grid;
+    grid-template-columns: 0.9fr 1.3fr 1fr;
+    gap: var(--space-3);
+    /* Stretch all three panels to a uniform height so the row reads as one band —
+       the CI-status panel is tallest (it carries the 24h trend bar), and matching
+       Review and Inventory to it keeps their bottom edges aligned. */
+    align-items: stretch;
+  }
+
+  .summary-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+  }
+
+  /* The review panel is a different kind of thing (work to do, not pipeline health)
+     so it reads distinctly — a brand-tinted edge sets it apart from the CI counts. */
+  .summary-panel--review {
+    border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+    background: color-mix(in srgb, var(--brand) 5%, var(--card-bg));
+  }
+
+  .summary-panel__title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .summary-panel__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .summary__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 64px;
+    text-decoration: none;
+  }
+
+  .summary__item--btn {
+    background: none;
+    border: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .summary__item--btn:hover .summary__label { color: var(--text); }
+  .summary__item--btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: var(--r-control); }
+  .summary__item--btn:disabled { cursor: default; }
+
+  .summary__count {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: var(--fs-24);
+    line-height: 1;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary__label {
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Non-zero counts take their chip's colour; zero / inventory stay quiet. */
+  .summary__item[data-tone="alert"] .summary__count { color: var(--warn-text); }
+  .summary__item[data-tone="fail"] .summary__count { color: var(--bad-text); }
+  .summary__item[data-tone="run"] .summary__count { color: var(--run); }
+  .summary__item[data-tone="review"] .summary__count { color: var(--brand); }
+  .summary__item[data-tone="no-ci"] .summary__count { color: var(--no-ci); }
+
+  /* CI status uses a fixed 3-col grid so Running/Deploys-Running and
+     Failing/Deploys-Failing align in columns regardless of which items are present. */
+  .summary-panel--ci .summary-panel__items {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    gap: var(--space-4) var(--space-6);
+  }
+  .summary-panel--ci .summary__item[data-key="running"]          { grid-column: 1; grid-row: 1; }
+  .summary-panel--ci .summary__item[data-key="failing"]          { grid-column: 2; grid-row: 1; }
+  .summary-panel--ci .summary__item[data-key="packages-failing"] { grid-column: 3; grid-row: 1; }
+  .summary-panel--ci .summary__item[data-key="deploys-running"]  { grid-column: 1; grid-row: 2; }
+  .summary-panel--ci .summary__item[data-key="deploys-failing"]  { grid-column: 2; grid-row: 2; }
+  .summary-panel--ci .summary__item[data-key="no-ci"]            { grid-column: 3; grid-row: 2; }
+
+  /* ---- Repo boards --------------------------------------------------------- */
+
+  .repo-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .repo-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-1) var(--space-2);
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    text-align: left;
+  }
+  .repo-section__chevron {
+    font-size: var(--fs-10);
+    color: var(--text-muted);
+  }
+  .repo-section__label {
+    font-size: var(--fs-10);
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .repo-section__count {
+    font-size: var(--fs-10);
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .repo-board {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+  }
+
+  /* No-CI repos: a repo with zero workflows. The indigo left edge + muted toggle
+     name + "No CI" tag mark them apart; an earlier element-level opacity dimmed
+     the indigo accent and stacked on the already-muted name, hurting legibility —
+     so the recede is carried by the tonal cues, accent + text at full strength. */
+  .repo-board--no-ci {
+    box-shadow: inset 3px 0 0 var(--no-ci);
+  }
+  .repo-board--no-ci .repo-board__toggle {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  .repo-board__noci-tag {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--no-ci);
+    background: color-mix(in srgb, var(--no-ci) 16%, transparent);
+    border: 1px solid var(--no-ci);
+    border-radius: var(--r-control);
+    padding: var(--space-hair) var(--space-2);
+  }
+
+  .repo-board > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .repo-board__toggle {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: var(--fs-14);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .repo-board__chev {
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    transition: transform 0.15s ease;
+  }
+  .repo-board:not(.repo-board--collapsed) .repo-board__chev { transform: rotate(90deg); }
+
+  .repo-board__gh-link {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .repo-board__gh-link:hover { color: var(--text); text-decoration: underline; }
+
+  .dashboard__toolbar-right {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .dashboard__collapse-all,
+  .dashboard__hide-noci {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-chip);
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .dashboard__collapse-all:hover,
+  .dashboard__hide-noci:hover { border-color: var(--border-strong); }
+  .dashboard__hide-noci--on {
+    color: var(--no-ci);
+    border-color: var(--no-ci);
+    background: color-mix(in srgb, var(--no-ci) 16%, transparent);
+  }
+  .dashboard__hide-noci--on:hover { border-color: var(--no-ci); }
+
+  /* On narrow widths the name + metrics line stop competing for one row and stack. */
+  @media (max-width: 720px) {
+    .repo-board > header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2);
+    }
+    .repo-metrics { gap: var(--space-3); }
+  }
+
+  .repo-top-signals {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  /* Labelled workflow row — the count grounds the top-line "Workflows" total in a
+     visible per-repo number, and mirrors the Deploys row's label treatment. */
+  .repo-workflows {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-4);
+  }
+
+  .repo-workflows__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ---- Signal chip (the signature element) --------------------------------- */
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-chip);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: var(--fs-12);
+    line-height: 1;
+    transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+  }
+
+  .chip:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+
+  .chip:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  /* Non-interactive chip — a workflow with no run, or a private repo whose run URL
+     would 404 for the anonymous audience. Present the status without inviting a
+     click: no pointer cursor, no hover lift. */
+  .chip--static { cursor: default; }
+  .chip--static:hover { border-color: var(--border); transform: none; }
+
+  .chip__dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--unknown);
+  }
+
+  .chip__label {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .chip__meta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Unknown reads as absence, never as alarm: hollow dot, dashed, dimmed. */
+  .chip--unknown {
+    background: transparent;
+    border-style: dashed;
+    opacity: 0.72;
+  }
+  .chip--unknown .chip__dot {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+    border: 1.5px solid var(--unknown);
+  }
+  .chip--unknown .chip__label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Failure/warn SIGNALS use --bad-solid / --warn-fill-deep, not the -border step:
+     --bad-border resolves to a dark maroon in dark mode (it's a badge-border tint)
+     and --warn-border goes fuchsia — both wrong for a vivid status dot/fill on the
+     dark ops surface. Coloured-text counts keep the AA-safe --bad-text/--warn-text. */
+
+  /* Org-wide workflow states. success/failure mirror the ok/bad treatments;
+     running pulses on the brand colour to read as in-flight, not settled. */
+  .chip--success {
+    background: color-mix(in srgb, var(--ok-border) 7%, var(--surface-2));
+  }
+  .chip--success .chip__dot {
+    background: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+  }
+
+  .chip--failure {
+    background: color-mix(in srgb, var(--bad-solid) 9%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--bad-solid) 32%, var(--border));
+  }
+  /* Failure is the one state that must survive grayscale / red-green CVD: a square
+     LED reads distinctly from the circular passing/running dots without relying on
+     the red. 2px is a deliberate data-viz micro-radius (cf. the .ci-weather block),
+     exempt from the 4/6/8 chrome radius scale. */
+  .chip--failure .chip__dot {
+    background: var(--bad-solid);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent);
+  }
+
+  .chip--running {
+    background: color-mix(in srgb, var(--run) 12%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--run) 45%, var(--border));
+  }
+  .chip--running .chip__label { color: var(--run); }
+  .chip--running .chip__dot {
+    background: var(--run);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent);
+    animation: ci-live-pulse 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip--running .chip__dot { animation: none; }
+  }
+
+  /* Repo with no workflows: quiet, dashed, matching the "unknown" absence cue. */
+  .repo-board__empty {
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+    border-top: 1px dashed var(--border);
+  }
+
+  /* ---- Repo metrics line (in the card header) ------------------------------ */
+  .repo-metrics {
+    display: flex;
+    gap: var(--space-4);
+    margin: 0;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
+
+  .repo-metrics div {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+
+  .repo-metrics dt {
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .repo-metrics dd {
+    margin: 0;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Functions above the complexity threshold draw the eye, like a warning chip. */
+  .repo-metrics__complex dd { color: var(--warn-text); }
+
+  /* ---- Open PRs (below the signals) ---------------------------------------- */
+  .repo-prs {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+  }
+
+  .repo-prs__count {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .repo-prs ul {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .repo-prs__item a {
+    display: inline-flex;
+    gap: var(--space-2);
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .repo-prs__item a:hover .repo-prs__title { text-decoration: underline; }
+
+  .repo-prs__num {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .repo-prs__meta {
+    display: block;
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    margin-top: var(--space-hair);
+  }
+
+  /* Drafts read as not-yet-live: dimmed title. */
+  .repo-prs__item--draft .repo-prs__title { color: var(--text-muted); }
+
+  /* ---- Job-lane rows (deploys, packages) ----------------------------------- */
+  .repo-joblane {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+  }
+
+  .repo-joblane__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Each lane gets its own accent so deploys and packages are told apart at a
+     glance; the chips keep their state colours. */
+  .repo-joblane--deploys .repo-joblane__label { color: var(--brand); }
+  .repo-joblane--packages .repo-joblane__label { color: var(--pkg); }
+
+  .repo-joblane__chips {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  /* Lane chips reuse the state colours but stay solid (never dashed) so they read
+     as first-class signals next to the workflow chips. */
+  .chip--joblane { border-style: solid; }
+
+  /* ---- Status legend (board footer, decodes the dot colour language) ------- */
+  .status-legend {
+    margin-top: var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-panel);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+  }
+  .status-legend__title {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .status-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* Swatches mirror the live dots: same colours, same square-failure shape cue.
+     2px is the data-viz micro-radius exception (cf. .ci-weather / failure dot). */
+  .status-legend__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--unknown);
+  }
+  .status-legend__dot[data-state="success"] {
+    background: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+  }
+  .status-legend__dot[data-state="failure"] {
+    background: var(--bad-solid);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent);
+  }
+  .status-legend__dot[data-state="running"] {
+    background: var(--run);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent);
+  }
+  .status-legend__dot[data-state="unknown"] {
+    background: transparent;
+    border: 1.5px dashed var(--unknown);
+  }
+  /* No-CI repos are marked by an indigo left edge on the card; the swatch shows it. */
+  .status-legend__noci {
+    flex: none;
+    width: 18px;
+    height: 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    box-shadow: inset 3px 0 0 var(--no-ci);
+    background: var(--card-bg);
+  }
+  .status-legend__gloss b {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .status-legend + .metrics-legend {
+    margin-top: var(--space-2);
+  }
+
+  /* ---- Metrics legend (board footer) --------------------------------------- */
+  .metrics-legend {
+    margin-top: var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-panel);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+  }
+
+  .metrics-legend__title {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .metrics-legend__item b {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* ---- Per-repo header activity indicator ---------------------------------- */
+  .repo-activity {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .repo-activity__pr {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.04em;
+    color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--border));
+    border-radius: var(--r-control);
+    padding: var(--space-hair) var(--space-2);
+  }
+
+  .repo-activity__sig {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .repo-activity__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--unknown);
+  }
+  .repo-activity__dot[data-activity="success"] { background: var(--ok-border); border-color: var(--ok-border); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent); }
+  .repo-activity__dot[data-activity="running"] { background: var(--run); border-color: var(--run); box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent); }
+  /* Square failure LED — the same non-colour shape cue as the failure chip dot. */
+  .repo-activity__dot[data-activity="failure"] { background: var(--bad-solid); border-color: var(--bad-solid); border-radius: 2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent); }
+
+  /* ---- Responsive: phones + touch ------------------------------------------ */
+
+  /* Summary panels go full-width and stack rather than squeezing side by side. */
+  @media (max-width: 560px) {
+    .summary-panels { grid-template-columns: 1fr; }
+  }
+
+  /* Comfortable tap targets on touch pointers. */
+  @media (pointer: coarse) {
+    .chip { padding: var(--space-2) var(--space-3); }
+    .summary__item--btn { min-height: 44px; }
+  }
+
+  /* ---- PR stepper modal ---------------------------------------------------- */
+  /* Native <dialog> handles modality, centering and the top layer; .pr-modal is
+     now the card itself (formerly .pr-modal__panel), and ::backdrop replaces the
+     old .pr-modal__backdrop element. */
+  .pr-modal {
+    width: min(440px, calc(100vw - 32px));
+    background: var(--card-bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-panel);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    padding: var(--space-4);
+  }
+  .pr-modal:focus { outline: none; }
+  .pr-modal::backdrop { background: rgba(3, 6, 12, 0.62); }
+  .pr-modal__top { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .pr-modal__title { font-size: var(--fs-13); font-weight: 600; }
+  .pr-modal__counter { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
+  .pr-modal__x {
+    margin-left: auto; width: 26px; height: 26px; border-radius: var(--r-chip);
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); cursor: pointer;
+  }
+  .pr-card { border: 1px solid var(--border); border-left: 3px solid var(--unknown); border-radius: var(--r-chip); padding: var(--space-4); background: var(--surface-2); }
+  .pr-card--amber { border-left-color: var(--warn-fill-deep); }
+  .pr-card--red { border-left-color: var(--bad-solid); }
+  .pr-card--draft { opacity: 0.72; }
+  .pr-card__head { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
+  .pr-card__repo { color: var(--text-muted); }
+  .pr-card__meta { margin-left: auto; }
+  .pr-card__title { margin: var(--space-3) 0 var(--space-2); font-size: var(--fs-14); font-weight: 600; line-height: 1.3; color: var(--text); }
+  .pr-card__foot { display: flex; align-items: center; justify-content: space-between; }
+  .pr-card__author { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
+  .pr-card__gh { font-size: var(--fs-12); color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border)); border-radius: var(--r-chip); padding: var(--space-1) var(--space-2); text-decoration: none; }
+  .pr-modal__nav { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-4); }
+  .pr-modal__nav button {
+    font-family: var(--font-sans); font-size: var(--fs-12); color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-chip); padding: var(--space-2) var(--space-4); cursor: pointer;
+  }
+  .pr-modal__nav button:disabled { opacity: 0.4; cursor: default; }
+  .pr-modal__nav button:not(:disabled):hover { border-color: var(--border-strong); }
+
+  .summary-panel__merged,
+  .summary-panel__next {
+    display: block;
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    line-height: 1.5;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .summary-panel__q-lab { display: block; margin-bottom: var(--space-1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  /* The "(2m ago)" age rides the uppercased label but stays sentence-case itself. */
+  .summary-panel__q-age { text-transform: none; letter-spacing: 0; }
+  .summary-panel__q-body { color: var(--text-muted); }
+  .summary-panel__q-title { display: block; color: var(--text-muted); }
+  .summary-panel__merged:hover .summary-panel__q-title { text-decoration: underline; }
+  .summary-panel__trend {
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border);
+  }
+  .ci-weather {
+    display: flex;
+    gap: var(--space-hair);
+    height: 26px;
+  }
+  /* 2px: deliberate data-viz micro-radius (sparkline-style blocks), exempt from the chrome 4/6/8 scale — cf. SessionCard square-corner exception. */
+  .ci-weather__block {
+    flex: 1;
+    border-radius: 2px;
+    background: var(--unknown);
+  }
+  .ci-weather__block[data-state="passing"] { background: var(--ok-border); }
+  .ci-weather__block[data-state="failing"] { background: var(--bad-solid); }
+  .ci-weather__block[data-state="noData"]  { background: color-mix(in srgb, var(--unknown) 35%, transparent); }
+  .ci-weather__readout {
+    display: block;
+    margin-top: var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Label row wraps the trend label + info button. position:relative anchors
+     the absolute popover; margin-top replaces the former display:block margin
+     on the label itself. */
+  .summary-panel__trend-label-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+  }
+  .summary-panel__trend-label-row .summary-panel__trend-lab {
+    display: inline;
+    margin-top: 0;
+  }
+  .summary-panel__trend-lab {
+    display: block;
+    margin-top: var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .ci-trend-info-btn {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: none;
+    color: var(--text-muted);
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: var(--fs-10);
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: border-color 0.12s ease, color 0.12s ease;
+  }
+  .ci-trend-info-btn:hover,
+  .ci-trend-info-btn[aria-expanded="true"] {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+  .ci-trend-info-btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .ci-trend-popover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    width: 260px;
+    background: var(--card-bg);
+    border: 1px solid color-mix(in srgb, var(--brand) 60%, var(--border));
+    border-radius: var(--r-panel);
+    padding: var(--space-3);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    line-height: 1.55;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .ci-trend-popover p {
+    margin: 0 0 var(--space-2);
+  }
+  .ci-trend-popover p:last-of-type {
+    margin-bottom: 0;
+  }
+  .ci-trend-popover__swatch--fail { color: var(--bad-solid); }
+  .ci-trend-popover__swatch--pass { color: var(--ok-border); }
+  .ci-trend-popover__title {
+    font-size: var(--fs-10);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brand);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+  .ci-trend-popover__caret {
+    position: absolute;
+    bottom: -5px;
+    left: var(--space-5);
+    width: 8px;
+    height: 8px;
+    background: var(--card-bg);
+    border-right: 1px solid color-mix(in srgb, var(--brand) 60%, var(--border));
+    border-bottom: 1px solid color-mix(in srgb, var(--brand) 60%, var(--border));
+    transform: rotate(45deg);
+  }
+}
+
+/* ---- Site footer (brand band + attribution) --------------------------------
+   Rendered by SiteFooter outside .ci-embed in CiBoard.tsx. Mirrored from
+   fixportal-ci-dashboard-ui/src/index.css. */
+.site-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-6);
+  border-top: 1px solid var(--border);
+}
+/* Decorative inner brand band: keep aria-hidden="true" on this wrapper in the
+   HTML (SiteFooter.tsx) — pointer-events:none here only removes mouse hits, the
+   aria-hidden is what keeps it out of the accessibility tree. */
+.site-footer__band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+.site-footer__wordmark {
+  color: var(--text);
+  opacity: 0.85;
+}
+.site-footer__tagline {
+  font-family: var(--font-mono);
+  font-size: var(--fs-10);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.site-footer__attrib {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.site-footer__attrib a {
+  color: var(--brand);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
+}
+.site-footer__attrib a:hover {
+  border-bottom-color: var(--brand);
+}
+.site-footer__attrib a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
