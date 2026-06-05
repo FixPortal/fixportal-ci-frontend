@@ -1,0 +1,12 @@
+{
+  "name": "fixportal-ci-frontend-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build:lib": "npm run build -w @fixportal/ci-frontend",
+    "test": "npm run test -w @fixportal/ci-frontend",
+    "lint": "eslint .",
+    "dev": "npm run build:lib && npm run dev -w dashboard"
+  }
+}
