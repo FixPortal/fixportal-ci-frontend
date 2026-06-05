@@ -1,0 +1,38 @@
+name: Release
+
+# Publish @fixportal/ci-frontend to npm on a version tag (e.g. v0.1.0).
+# Prerequisites (one-time):
+#   1. A public npm org named "fixportal" must exist (scoped public packages
+#      require the org). The package already sets publishConfig.access=public.
+#   2. Add an automation npm token as the repo secret NPM_TOKEN
+#      (npm -> Access Tokens -> Generate -> Automation).
+# Then: `git tag v0.1.0 && git push origin v0.1.0`.
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: npm ci
+
+      - name: Build library
+        run: npm run build:lib
+
+      - name: Publish
+        run: npm publish -w @fixportal/ci-frontend
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
