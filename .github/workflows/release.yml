@@ -1,11 +1,17 @@
 name: Release
 
-# Publish @fixportal/ci-frontend to npm on a version tag (e.g. v0.1.0).
+# Dual-publish @fixportal/ci-frontend on a version tag (e.g. v0.1.0):
+#   - public npm (registry.npmjs.org) — for open-source reuse
+#   - GitHub Packages (npm.pkg.github.com) — so @fixportal consumers (e.g. the
+#     FixPortal simulator, whose .npmrc maps the @fixportal scope to GitHub
+#     Packages alongside @fixportal/design) can install it.
+#
 # Prerequisites (one-time):
 #   1. A public npm org named "fixportal" must exist (scoped public packages
-#      require the org). The package already sets publishConfig.access=public.
+#      require the org). The package sets publishConfig.access=public.
 #   2. Add an automation npm token as the repo secret NPM_TOKEN
 #      (npm -> Access Tokens -> Generate -> Automation).
+#   The GitHub Packages job uses the built-in GITHUB_TOKEN — no extra secret.
 # Then: `git tag v0.1.0 && git push origin v0.1.0`.
 
 on:
@@ -13,7 +19,7 @@ on:
     tags: ['v*']
 
 jobs:
-  publish:
+  publish-npm:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,7 +38,34 @@ jobs:
       - name: Build library
         run: npm run build:lib
 
-      - name: Publish
+      - name: Publish to public npm
         run: npm publish -w @fixportal/ci-frontend
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-gh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+
+      - name: Install
+        run: npm ci
+
+      - name: Build library
+        run: npm run build:lib
+
+      # Per-command --registry overrides the package's public-npm default so the
+      # same artifact also lands in GitHub Packages under the @fixportal scope.
+      - name: Publish to GitHub Packages
+        run: npm publish -w @fixportal/ci-frontend --registry=https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
