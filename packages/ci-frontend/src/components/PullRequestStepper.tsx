@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
+import { isAllowedHref } from '../lib/isAllowedHref'
 export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: () => void }) {
   const [i, setI] = useState(0)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -18,7 +19,10 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
     const dlg = dialogRef.current
     dlg?.showModal()
     dlg?.focus()
-    return () => previouslyFocused?.focus?.()
+    return () => {
+      previouslyFocused?.focus?.()
+      dlg?.close()
+    }
   }, [])
 
   // If the list drains entirely, there is nothing to step through — close via
@@ -59,7 +63,7 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         <div className="pr-card__title">{pr.title}</div>
         <div className="pr-card__foot">
           <span className="pr-card__author">@{pr.author}</span>
-          <a className="pr-card__gh" href={pr.htmlUrl} target="_blank" rel="noopener noreferrer">Open on GitHub ↗</a>
+          <a className="pr-card__gh" href={isAllowedHref(pr.htmlUrl)} target="_blank" rel="noopener noreferrer">Open on GitHub ↗</a>
         </div>
       </div>
       {/* One PR needs no nav — the '1 / 1' counter already says so; two disabled

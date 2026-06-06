@@ -4,6 +4,7 @@ import type { OpenPr } from '../lib/flattenOpenPrs'
 import { formatCompactNumber } from '../lib/formatCompactNumber'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { CiWeatherBar } from './CiWeatherBar'
+import { isAllowedHref } from '../lib/isAllowedHref'
 const SUMMARY_LABELS: Record<string, string> = {
   repos: 'Repositories',
   workflows: 'Workflows',
@@ -124,7 +125,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
               </div>
             )}
             {isReview && lastMerged && (
-              <a className="summary-panel__merged" href={lastMerged.htmlUrl} target="_blank" rel="noopener noreferrer">
+              <a className="summary-panel__merged" href={isAllowedHref(lastMerged.htmlUrl)} target="_blank" rel="noopener noreferrer">
                 <span className="summary-panel__q-lab">
                   last merged <span className="summary-panel__q-age">({formatRelativeTime(lastMerged.mergedAt)})</span>
                 </span>
@@ -142,7 +143,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                     className="ci-trend-info-btn"
                     aria-label="CI health information"
                     aria-expanded={trendInfoOpen}
-                    aria-controls="ci-trend-popover"
+                    aria-controls={trendInfoOpen ? 'ci-trend-popover' : undefined}
                     onClick={() => setTrendInfoOpen(o => !o)}
                   >
                     i

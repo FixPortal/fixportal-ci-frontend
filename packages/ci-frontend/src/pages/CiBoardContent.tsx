@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDashboardSnapshot } from '../hooks/useDashboardSnapshot'
 import { useCollapseState } from '../hooks/useCollapseState'
 import { useHideNoCi } from '../hooks/useHideNoCi'
@@ -20,6 +20,12 @@ export function CiBoardContent() {
   const hideNoCi = useHideNoCi()
   const isAdmin = useCiAdmin()
   const [stepperOpen, setStepperOpen] = useState(false)
+
+  useEffect(() => {
+    if (openPrs.length === 0) {
+      setStepperOpen(false)
+    }
+  }, [openPrs.length])
 
   if (snapshot.isPending) {
     return (
@@ -51,10 +57,10 @@ export function CiBoardContent() {
   // everything downstream — summary counts, stepper PRs, and next-in-queue all
   // reflect exactly the repos displayed on screen.
   const repositories = isAdmin ? allRepositories : allRepositories.filter(r => !r.private)
-  const summary = isAdmin ? snapshot.data.summary : computeSummary(repositories)
+  const summary = (isAdmin && !hideNoCi.hidden) ? snapshot.data.summary : computeSummary(visibleRepos)
   // Only surface lastMergedPr when its repo is in the visible set; a private-repo
   // merge is invisible to the public viewer and the link would 404 for them.
-  const lastMergedPr = rawLastMerged && repositories.some(r => r.name === rawLastMerged.repo)
+  const lastMergedPr = rawLastMerged && visibleRepos.some(r => r.name === rawLastMerged.repo)
     ? rawLastMerged
     : null
   // Compute the names list and the all-collapsed flag once — they were rebuilt
