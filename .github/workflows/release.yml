@@ -9,10 +9,11 @@ name: Release
 # Prerequisites (one-time):
 #   1. The npm org "fix-portal" exists (it does). The package sets
 #      publishConfig.access=public.
-#   2. Add an automation npm token as the repo secret NPM_TOKEN
-#      (npm -> Access Tokens -> Generate -> Automation), generated from an
-#      account that is a member of the fix-portal org.
-# Then: `git tag v0.1.0 && git push origin v0.1.0`.
+#   2. Add a granular npm token (Read and write on fix-portal org scope) as
+#      the repo secret NPM_TOKEN. Set via GitHub web UI — never on the command line.
+#      Org 2FA enforcement (npmjs.com → fix-portal org → Settings → Security)
+#      must not be "Required" or token publish will EOTP regardless of account mode.
+# Then: `git tag v0.x.x && git push origin v0.x.x`.
 
 on:
   push:
@@ -21,6 +22,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: read
     steps:
