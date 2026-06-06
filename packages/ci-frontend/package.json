@@ -1,6 +1,6 @@
 {
   "name": "@fix-portal/ci-frontend",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Open-source CI dashboard UI - React components for the FixPortal CI backend snapshot API.",
   "license": "Apache-2.0",
   "type": "module",
