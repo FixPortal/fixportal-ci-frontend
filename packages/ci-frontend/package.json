@@ -3,6 +3,10 @@
   "version": "0.3.1",
   "description": "Open-source CI dashboard UI - React components for the FixPortal CI backend snapshot API.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FixPortal/fixportal-ci-frontend.git"
+  },
   "type": "module",
   "sideEffects": ["*.css"],
   "files": ["dist"],
