@@ -27,6 +27,11 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
+      - name: Debug OIDC
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+
       - name: Install
         run: npm ci
 
