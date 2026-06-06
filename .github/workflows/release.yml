@@ -39,4 +39,6 @@ jobs:
         run: npm run build:lib
 
       - name: Publish to public npm
-        run: npm publish -w @fix-portal/ci-frontend
+        run: npm publish --provenance -w @fix-portal/ci-frontend
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
