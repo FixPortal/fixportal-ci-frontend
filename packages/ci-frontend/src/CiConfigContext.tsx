@@ -3,8 +3,14 @@ import { createContext, use } from 'react'
 // Runtime config for the CI board. apiBase is the origin of the CI backend
 // snapshot API (no trailing slash). Empty string means relative URLs — works
 // with any nginx proxy (Docker Compose or www.fixportal.org/ci).
+// adminSnapshotUrl: when set, the board fetches this URL directly (instead of
+// apiBase + /api/dashboard/snapshot) when the viewer is admin. Lets a host
+// proxy the admin endpoint server-side without exposing the shared key to the
+// browser — the host passes a same-origin relative URL here, and its backend
+// adds the X-Admin-Key before forwarding to the CI backend.
 export interface CiConfig {
   apiBase: string
+  adminSnapshotUrl?: string
 }
 
 export const DEFAULT_CI_API_BASE = ''

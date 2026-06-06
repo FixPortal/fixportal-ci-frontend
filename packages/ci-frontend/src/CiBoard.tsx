@@ -9,6 +9,8 @@ export interface CiBoardProps {
   adminSignal: boolean
   /** Origin of the CI backend snapshot API (no trailing slash). Defaults to '' (relative URLs — requires a same-origin /api/ proxy). Pass 'https://ci.fixportal.org' to reach the public FixPortal backend. */
   apiBase?: string
+  /** Full URL the board fetches when the viewer is admin. The host's backend should proxy this to the CI backend's /api/dashboard/snapshot/admin endpoint, adding the X-Admin-Key header server-side so the shared secret never reaches the browser. When unset, admin viewers see the public (private-repo-stripped) snapshot. */
+  adminSnapshotUrl?: string
   /** Brand mark for the header. Defaults to a plain text wordmark. */
   logo?: ReactNode
   /** Footer node. Defaults to a generic, brand-free footer. */
@@ -20,9 +22,9 @@ export interface CiBoardProps {
 // optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
 // of their own. This keeps CSS out of the JS bundle and lets a host with its
 // own tokens (e.g. the simulator) skip the vendored set.
-export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, logo, footerSlot }: CiBoardProps) {
+export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, adminSnapshotUrl, logo, footerSlot }: CiBoardProps) {
   return (
-    <CiConfigProvider value={{ apiBase }}>
+    <CiConfigProvider value={{ apiBase, adminSnapshotUrl }}>
       <div className="ci-page">
         <div className="ci-embed">
           <header className="ci-embed__header">
