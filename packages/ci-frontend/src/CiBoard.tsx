@@ -7,7 +7,7 @@ import { DefaultFooter } from './DefaultFooter'
 export interface CiBoardProps {
   /** Whether the viewer is an admin: sees private repos + actionable PR links. Host-computed. */
   adminSignal: boolean
-  /** Origin of the CI backend snapshot API (no trailing slash). Defaults to the public CI host. */
+  /** Origin of the CI backend snapshot API (no trailing slash). Defaults to '' (relative URLs — requires a same-origin /api/ proxy). Pass 'https://ci.fixportal.org' to reach the public FixPortal backend. */
   apiBase?: string
   /** Brand mark for the header. Defaults to a plain text wordmark. */
   logo?: ReactNode

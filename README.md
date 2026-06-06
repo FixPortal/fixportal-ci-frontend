@@ -34,8 +34,8 @@ npm run dev
 `npm run dev` builds the library and starts the standalone app on
 `http://localhost:5173`. Point it at a CI backend by copying
 `apps/dashboard/.env.example` to `apps/dashboard/.env` and setting
-`VITE_CI_API_BASE` to your backend origin (defaults to
-`https://ci.fixportal.org`).
+`VITE_CI_API_BASE` to your backend origin. Leave it empty to use relative
+URLs via an nginx `/api/` proxy (the default for the Docker image).
 
 ## Using the library in your own app
 
@@ -70,7 +70,7 @@ export function App() {
 | Prop | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `adminSignal` | `boolean` | (required) | When `true`, private repos and actionable GitHub PR links are shown; when `false`, the board is the public, read-only view. You compute this however your app authenticates. |
-| `apiBase` | `string` | `https://ci.fixportal.org` | Origin of the CI backend snapshot API (no trailing slash). |
+| `apiBase` | `string` | `''` (relative URLs) | Origin of the CI backend snapshot API (no trailing slash). Empty string uses relative `/api/` URLs — pass `'https://ci.fixportal.org'` to target the public backend directly. |
 | `logo` | `ReactNode` | a text wordmark | Brand mark rendered in the header. |
 | `footerSlot` | `ReactNode` | a generic footer | Footer content; pass your own to replace the default. |
 
