@@ -60,21 +60,24 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
   const trendLabelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!trendInfoOpen) return
-    function handleOutside(e: MouseEvent) {
-      if (!trendLabelRef.current?.contains(e.target as Node)) {
-        setTrendInfoOpen(false)
+    let cleanup: (() => void) | undefined
+    if (trendInfoOpen) {
+      const handleOutside = (e: MouseEvent) => {
+        if (!trendLabelRef.current?.contains(e.target as Node)) {
+          setTrendInfoOpen(false)
+        }
+      }
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setTrendInfoOpen(false)
+      }
+      document.addEventListener('mousedown', handleOutside)
+      document.addEventListener('keydown', handleEsc)
+      cleanup = () => {
+        document.removeEventListener('mousedown', handleOutside)
+        document.removeEventListener('keydown', handleEsc)
       }
     }
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === 'Escape') setTrendInfoOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    document.addEventListener('keydown', handleEsc)
-    return () => {
-      document.removeEventListener('mousedown', handleOutside)
-      document.removeEventListener('keydown', handleEsc)
-    }
+    return cleanup
   }, [trendInfoOpen])
 
   return (
