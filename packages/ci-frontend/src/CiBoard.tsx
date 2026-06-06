@@ -1,4 +1,6 @@
+import { useState, useContext } from 'react'
 import type { ReactNode } from 'react'
+import { QueryClient, QueryClientProvider, QueryClientContext } from '@tanstack/react-query'
 import { CiAdminProvider } from './CiAdminContext'
 import { CiConfigProvider, DEFAULT_CI_API_BASE } from './CiConfigContext'
 import { CiBoardContent } from './pages/CiBoardContent'
@@ -17,6 +19,33 @@ export interface CiBoardProps {
   footerSlot?: ReactNode
 }
 
+function QueryClientSafeProvider({ children }: { children: ReactNode }) {
+  const existingClient = useContext(QueryClientContext)
+  const [localClient] = useState(() => {
+    if (!existingClient) {
+      return new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 1,
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+    }
+    return null
+  })
+
+  if (existingClient) {
+    return <>{children}</>
+  }
+
+  return (
+    <QueryClientProvider client={localClient!}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
 // The board is style-free at the component level: consumers import the
 // stylesheets explicitly -- `@fix-portal/ci-frontend/board.css` (always) and
 // optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
@@ -25,22 +54,24 @@ export interface CiBoardProps {
 export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, adminSnapshotUrl, logo, footerSlot }: CiBoardProps) {
   return (
     <CiConfigProvider value={{ apiBase, adminSnapshotUrl }}>
-      <div className="ci-page">
-        <div className="ci-embed">
-          <header className="ci-embed__header">
-            <span className="ci-embed__lockup">
-              {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
-              <span className="ci-embed__descriptor">
-                CI Dashboard {adminSignal ? '[Admin]' : '[Guest]'}
+      <QueryClientSafeProvider>
+        <div className="ci-page">
+          <div className="ci-embed">
+            <header className="ci-embed__header">
+              <span className="ci-embed__lockup">
+                {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
+                <span className="ci-embed__descriptor">
+                  CI Dashboard {adminSignal ? '[Admin]' : '[Guest]'}
+                </span>
               </span>
-            </span>
-          </header>
-          <CiAdminProvider value={adminSignal}>
-            <CiBoardContent />
-          </CiAdminProvider>
+            </header>
+            <CiAdminProvider value={adminSignal}>
+              <CiBoardContent />
+            </CiAdminProvider>
+          </div>
+          {footerSlot ?? <DefaultFooter />}
         </div>
-        {footerSlot ?? <DefaultFooter />}
-      </div>
+      </QueryClientSafeProvider>
     </CiConfigProvider>
   )
 }

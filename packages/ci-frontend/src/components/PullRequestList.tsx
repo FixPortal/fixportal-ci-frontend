@@ -1,5 +1,6 @@
 import type { PullRequest } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
+import { isAllowedHref } from '../lib/isAllowedHref'
 
 export function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
   if (pullRequests.length === 0) return null
@@ -11,7 +12,7 @@ export function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] 
       <ul>
         {pullRequests.map(pr => (
           <li key={pr.number} className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}>
-            <a href={pr.htmlUrl} target="_blank" rel="noopener noreferrer">
+            <a href={isAllowedHref(pr.htmlUrl)} target="_blank" rel="noopener noreferrer">
               <span className="repo-prs__num">#{pr.number}</span>
               <span className="repo-prs__title">{pr.title}</span>
             </a>

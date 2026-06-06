@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { RepositorySnapshot } from '../api/types'
 import { isNoCi } from '../lib/isNoCi'
+import { isAllowedHref } from '../lib/isAllowedHref'
 import { SignalChip } from './SignalChip'
 import { RepoMetricsLine } from './RepoMetricsLine'
 import { PullRequestList } from './PullRequestList'
@@ -30,7 +31,7 @@ export const RepoBoard = memo(function RepoBoard({
         {noCi && <span className="repo-board__noci-tag">No CI</span>}
         <RepoMetricsLine metrics={repository.metrics} />
         <RepoActivityIndicator repository={repository} />
-        <a className="repo-board__gh-link" href={repository.htmlUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
+        <a className="repo-board__gh-link" href={isAllowedHref(repository.htmlUrl)} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
           GitHub ↗
         </a>
       </header>

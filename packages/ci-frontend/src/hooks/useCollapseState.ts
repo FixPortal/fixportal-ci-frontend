@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const KEY = 'ci-dashboard:collapsed'
 
@@ -23,11 +23,14 @@ function save(set: Set<string>) {
 export function useCollapseState() {
   const [collapsed, setCollapsed] = useState<Set<string>>(load)
 
+  useEffect(() => {
+    save(collapsed)
+  }, [collapsed])
+
   const mutate = useCallback((fn: (next: Set<string>) => void) => {
     setCollapsed(prev => {
       const next = new Set(prev)
       fn(next)
-      save(next)
       return next
     })
   }, [])

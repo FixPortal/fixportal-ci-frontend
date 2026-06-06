@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const KEY = 'ci-dashboard:hide-no-ci'
 
@@ -15,16 +15,16 @@ function load(): boolean {
 export function useHideNoCi() {
   const [hidden, setHidden] = useState<boolean>(load)
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(KEY, String(hidden))
+    } catch {
+      // ignore (private mode / quota) — hide state is best-effort
+    }
+  }, [hidden])
+
   const toggle = useCallback(() => {
-    setHidden(prev => {
-      const next = !prev
-      try {
-        localStorage.setItem(KEY, String(next))
-      } catch {
-        // ignore (private mode / quota) — hide state is best-effort
-      }
-      return next
-    })
+    setHidden(prev => !prev)
   }, [])
 
   return { hidden, toggle }

@@ -2,12 +2,13 @@ import { memo } from 'react'
 import type { WorkflowSnapshot } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { stateLabel } from '../lib/stateLabel'
+import { isAllowedHref } from '../lib/isAllowedHref'
 
 function meta(wf: WorkflowSnapshot): string {
   // Unknown carries no trustworthy run time, so say why rather than show a
   // misleading age; known states show how long ago the run last updated.
   if (wf.state === 'unknown') return wf.lastRun ? 'no status' : 'no runs'
-  return formatRelativeTime(wf.lastRun!.updatedAt)
+  return wf.lastRun ? formatRelativeTime(wf.lastRun.updatedAt) : 'no runs'
 }
 
 // Memoised: on a no-change poll tick React Query preserves the workflow object
@@ -27,7 +28,7 @@ export const SignalChip = memo(function SignalChip({ workflow }: { workflow: Wor
   )
   // Open the run in a new tab so the always-on board never navigates away.
   return linkable ? (
-    <a className={className} href={url} title={stateLabel(workflow.state)} target="_blank" rel="noopener noreferrer">{body}</a>
+    <a className={className} href={isAllowedHref(url)} title={stateLabel(workflow.state)} target="_blank" rel="noopener noreferrer">{body}</a>
   ) : (
     <span className={className} title={stateLabel(workflow.state)}>{body}</span>
   )

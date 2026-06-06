@@ -3,6 +3,7 @@ import type { JobSignal } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { dedupeJobLabel } from '../lib/dedupeJobLabel'
 import { stateLabel } from '../lib/stateLabel'
+import { isAllowedHref } from '../lib/isAllowedHref'
 // Memoised: the signals array reference is preserved across no-change poll ticks
 // (React Query structural sharing), so the lane skips re-rendering.
 export const JobLaneRow = memo(function JobLaneRow({
@@ -22,7 +23,7 @@ export const JobLaneRow = memo(function JobLaneRow({
           <a
             key={`${s.workflow}/${s.name}/${i}`}
             className={`chip chip--${s.state} chip--joblane`}
-            href={s.htmlUrl}
+            href={isAllowedHref(s.htmlUrl)}
             title={`${s.workflow} · ${s.state}`}
             target="_blank"
             rel="noopener noreferrer"
