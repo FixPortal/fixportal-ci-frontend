@@ -59,9 +59,9 @@ export function CiBoardContent() {
     : null
   // Compute the names list and the all-collapsed flag once — they were rebuilt
   // and re-traversed twice per render (the onClick and the button label).
-  const repoNames = repositories.map(r => r.name)
   const noCiCount = repositories.filter(isNoCi).length
   const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
+  const repoNames = visibleRepos.map(r => r.name)
   const hiddenCount = repositories.length - visibleRepos.length
   const publicRepos = visibleRepos.filter(r => !r.private)
   const privateRepos = visibleRepos.filter(r => r.private)
@@ -162,7 +162,7 @@ export function CiBoardContent() {
       </div>
       <StatusLegend />
       <MetricsLegend />
-      {stepperOpen && (
+      {stepperOpen && openPrs.length > 0 && (
         <PullRequestStepper prs={openPrs} onClose={() => setStepperOpen(false)} />
       )}
     </main>
