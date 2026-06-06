@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import type { RepositorySnapshot, MergedPr, SummaryCount } from '../api/types'
 import { useDashboardSnapshot } from '../hooks/useDashboardSnapshot'
 import { useCollapseState } from '../hooks/useCollapseState'
 import { useHideNoCi } from '../hooks/useHideNoCi'
@@ -14,86 +15,31 @@ import { PullRequestStepper } from '../components/PullRequestStepper'
 import { flattenOpenPrs } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
 
-export function CiBoardContent() {
-  const snapshot = useDashboardSnapshot()
-  const collapse = useCollapseState()
-  const hideNoCi = useHideNoCi()
-  const isAdmin = useCiAdmin()
-  const [stepperOpen, setStepperOpen] = useState(false)
+function getVisibleLastMergedPr(rawLastMerged: MergedPr | null, visibleRepos: RepositorySnapshot[]): MergedPr | null {
+  if (!rawLastMerged) return null
+  return visibleRepos.some(r => r.name === rawLastMerged.repo) ? rawLastMerged : null
+}
 
-  // Compute openPrs before the useEffect so the dependency array does not
-  // access a const in its temporal dead zone (TDZ). Defaults to [] when
-  // snapshot.data is not yet available (before the early returns below).
-  const earlyRepos = snapshot.data?.repositories ?? []
-  const earlyFiltered = isAdmin ? earlyRepos : earlyRepos.filter(r => !r.private)
-  const openPrs = flattenOpenPrs(hideNoCi.hidden ? earlyFiltered.filter(r => !isNoCi(r)) : earlyFiltered)
+function resolveSummary(isAdmin: boolean, hideNoCiHidden: boolean, adminSummary: SummaryCount[], visibleRepos: RepositorySnapshot[]): SummaryCount[] {
+  return isAdmin && !hideNoCiHidden ? adminSummary : computeSummary(visibleRepos)
+}
 
-  useEffect(() => {
-    if (openPrs.length === 0) {
-      setStepperOpen(false)
-    }
-  }, [openPrs.length])
+const KEY_PUBLIC = 'section:public'
+const KEY_PRIVATE = 'section:private'
 
-  if (snapshot.isPending) {
-    return (
-      <main className="dashboard-page">
-        <div className="state-msg">Loading dashboard…</div>
-      </main>
-    )
+function buildRepoList(
+  visibleRepos: RepositorySnapshot[],
+  publicRepos: RepositorySnapshot[],
+  privateRepos: RepositorySnapshot[],
+  showGroups: boolean,
+  hideNoCiHidden: boolean,
+  collapse: ReturnType<typeof useCollapseState>,
+) {
+  if (visibleRepos.length === 0 && hideNoCiHidden) {
+    return <div className="state-msg">All repositories are No-CI — hidden.</div>
   }
-
-  if (snapshot.isError) {
+  if (showGroups) {
     return (
-      <main className="dashboard-page">
-        <div className="state-msg state-msg--error">Dashboard unavailable.</div>
-      </main>
-    )
-  }
-
-  // 204 -> null: backend is up but has not produced a snapshot yet.
-  if (!snapshot.data) {
-    return (
-      <main className="dashboard-page">
-        <div className="state-msg">Waiting for the first refresh…</div>
-      </main>
-    )
-  }
-
-  const { refreshedAt, repositories: allRepositories, lastMergedPr: rawLastMerged } = snapshot.data
-  // Non-admin viewers see only public repos; admin sees all. Filtering here drives
-  // everything downstream — summary counts, stepper PRs, and next-in-queue all
-  // reflect exactly the repos displayed on screen.
-  const repositories = isAdmin ? allRepositories : allRepositories.filter(r => !r.private)
-  // Compute the names list and the all-collapsed flag once — they were rebuilt
-  // and re-traversed twice per render (the onClick and the button label).
-  const noCiCount = repositories.filter(isNoCi).length
-  const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
-  const summary = (isAdmin && !hideNoCi.hidden) ? snapshot.data.summary : computeSummary(visibleRepos)
-  // Only surface lastMergedPr when its repo is in the visible set; a private-repo
-  // merge is invisible to the public viewer and the link would 404 for them.
-  const lastMergedPr = rawLastMerged && visibleRepos.some(r => r.name === rawLastMerged.repo)
-    ? rawLastMerged
-    : null
-  const repoNames = visibleRepos.map(r => r.name)
-  const hiddenCount = repositories.length - visibleRepos.length
-  const publicRepos = visibleRepos.filter(r => !r.private)
-  const privateRepos = visibleRepos.filter(r => r.private)
-  const showGroups = publicRepos.length > 0 && privateRepos.length > 0
-  const KEY_PUBLIC = 'section:public'
-  const KEY_PRIVATE = 'section:private'
-  const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
-  const allCollapsed = collapse.allCollapsed([...repoNames, ...sectionKeys])
-  // The stepper opens at the head of this oldest-first list, so its first entry
-  // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
-  // applied) so the card and stepper never advertise a PR from a repo the board
-  // is currently hiding. openPrs is computed above before the early returns.
-  const nextPr = openPrs[0] ?? null
-
-  let repoListContent
-  if (visibleRepos.length === 0 && hideNoCi.hidden) {
-    repoListContent = <div className="state-msg">All repositories are No-CI — hidden.</div>
-  } else if (showGroups) {
-    repoListContent = (
       <>
         <RepoSection
           label="Public"
@@ -129,16 +75,80 @@ export function CiBoardContent() {
         }
       </>
     )
-  } else {
-    repoListContent = visibleRepos.map(repository => (
-      <RepoBoard
-        key={repository.name}
-        repository={repository}
-        collapsed={collapse.isCollapsed(repository.name)}
-        onToggle={collapse.toggle}
-      />
-    ))
   }
+  return visibleRepos.map(repository => (
+    <RepoBoard
+      key={repository.name}
+      repository={repository}
+      collapsed={collapse.isCollapsed(repository.name)}
+      onToggle={collapse.toggle}
+    />
+  ))
+}
+
+export function CiBoardContent() {
+  const snapshot = useDashboardSnapshot()
+  const collapse = useCollapseState()
+  const hideNoCi = useHideNoCi()
+  const isAdmin = useCiAdmin()
+  const [stepperOpen, setStepperOpen] = useState(false)
+
+  // Computed before the early returns so nextPr and the stepper guard are
+  // available regardless of snapshot state. Defaults to [] when data is absent.
+  const earlyRepos = snapshot.data?.repositories ?? []
+  const earlyFiltered = isAdmin ? earlyRepos : earlyRepos.filter(r => !r.private)
+  const openPrs = flattenOpenPrs(hideNoCi.hidden ? earlyFiltered.filter(r => !isNoCi(r)) : earlyFiltered)
+
+  if (snapshot.isPending) {
+    return (
+      <main className="dashboard-page">
+        <div className="state-msg">Loading dashboard…</div>
+      </main>
+    )
+  }
+
+  if (snapshot.isError) {
+    return (
+      <main className="dashboard-page">
+        <div className="state-msg state-msg--error">Dashboard unavailable.</div>
+      </main>
+    )
+  }
+
+  // 204 -> null: backend is up but has not produced a snapshot yet.
+  if (!snapshot.data) {
+    return (
+      <main className="dashboard-page">
+        <div className="state-msg">Waiting for the first refresh…</div>
+      </main>
+    )
+  }
+
+  const { refreshedAt, repositories: allRepositories, lastMergedPr: rawLastMerged } = snapshot.data
+  // Non-admin viewers see only public repos; admin sees all. Filtering here drives
+  // everything downstream — summary counts, stepper PRs, and next-in-queue all
+  // reflect exactly the repos displayed on screen.
+  const repositories = isAdmin ? allRepositories : allRepositories.filter(r => !r.private)
+  // Compute the names list and the all-collapsed flag once — they were rebuilt
+  // and re-traversed twice per render (the onClick and the button label).
+  const noCiCount = repositories.filter(isNoCi).length
+  const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
+  const summary = resolveSummary(isAdmin, hideNoCi.hidden, snapshot.data.summary, visibleRepos)
+  const lastMergedPr = getVisibleLastMergedPr(rawLastMerged, visibleRepos)
+  const repoNames = visibleRepos.map(r => r.name)
+  const hiddenCount = repositories.length - visibleRepos.length
+  const publicRepos = visibleRepos.filter(r => !r.private)
+  const privateRepos = visibleRepos.filter(r => r.private)
+  const showGroups = publicRepos.length > 0 && privateRepos.length > 0
+  const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
+  const allCollapsed = collapse.allCollapsed([...repoNames, ...sectionKeys])
+  // The stepper opens at the head of this oldest-first list, so its first entry
+  // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
+  // applied) so the card and stepper never advertise a PR from a repo the board
+  // is currently hiding. openPrs is computed above before the early returns.
+  const nextPr = openPrs[0] ?? null
+
+  const repoListContent = buildRepoList(visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, collapse)
 
   return (
     <main className="dashboard-page">
