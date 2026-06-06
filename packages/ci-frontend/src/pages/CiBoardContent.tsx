@@ -21,6 +21,13 @@ export function CiBoardContent() {
   const isAdmin = useCiAdmin()
   const [stepperOpen, setStepperOpen] = useState(false)
 
+  // Compute openPrs before the useEffect so the dependency array does not
+  // access a const in its temporal dead zone (TDZ). Defaults to [] when
+  // snapshot.data is not yet available (before the early returns below).
+  const earlyRepos = snapshot.data?.repositories ?? []
+  const earlyFiltered = isAdmin ? earlyRepos : earlyRepos.filter(r => !r.private)
+  const openPrs = flattenOpenPrs(hideNoCi.hidden ? earlyFiltered.filter(r => !isNoCi(r)) : earlyFiltered)
+
   useEffect(() => {
     if (openPrs.length === 0) {
       setStepperOpen(false)
@@ -57,16 +64,16 @@ export function CiBoardContent() {
   // everything downstream — summary counts, stepper PRs, and next-in-queue all
   // reflect exactly the repos displayed on screen.
   const repositories = isAdmin ? allRepositories : allRepositories.filter(r => !r.private)
+  // Compute the names list and the all-collapsed flag once — they were rebuilt
+  // and re-traversed twice per render (the onClick and the button label).
+  const noCiCount = repositories.filter(isNoCi).length
+  const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
   const summary = (isAdmin && !hideNoCi.hidden) ? snapshot.data.summary : computeSummary(visibleRepos)
   // Only surface lastMergedPr when its repo is in the visible set; a private-repo
   // merge is invisible to the public viewer and the link would 404 for them.
   const lastMergedPr = rawLastMerged && visibleRepos.some(r => r.name === rawLastMerged.repo)
     ? rawLastMerged
     : null
-  // Compute the names list and the all-collapsed flag once — they were rebuilt
-  // and re-traversed twice per render (the onClick and the button label).
-  const noCiCount = repositories.filter(isNoCi).length
-  const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
   const repoNames = visibleRepos.map(r => r.name)
   const hiddenCount = repositories.length - visibleRepos.length
   const publicRepos = visibleRepos.filter(r => !r.private)
@@ -79,8 +86,7 @@ export function CiBoardContent() {
   // The stepper opens at the head of this oldest-first list, so its first entry
   // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
   // applied) so the card and stepper never advertise a PR from a repo the board
-  // is currently hiding.
-  const openPrs = flattenOpenPrs(visibleRepos)
+  // is currently hiding. openPrs is computed above before the early returns.
   const nextPr = openPrs[0] ?? null
 
   let repoListContent
