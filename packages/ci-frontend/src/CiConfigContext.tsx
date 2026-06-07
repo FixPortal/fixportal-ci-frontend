@@ -4,6 +4,9 @@ import type { DashboardSnapshot } from './api/types'
 // Runtime config for the CI board. apiBase is the origin of the CI backend
 // snapshot API (no trailing slash). Empty string means relative URLs — works
 // with any nginx proxy (Docker Compose or www.fixportal.org/ci).
+// snapshotFetcher: used for guest (non-admin) snapshot requests when the host
+// needs to attach auth headers (e.g. MSAL Bearer token). Falls back to a plain
+// fetch of apiBase + /api/dashboard/snapshot when absent.
 // adminSnapshotUrl: when set, the board fetches this URL directly (instead of
 // apiBase + /api/dashboard/snapshot) when the viewer is admin. Lets a host
 // proxy the admin endpoint server-side without exposing the shared key to the
@@ -14,6 +17,7 @@ import type { DashboardSnapshot } from './api/types'
 // Takes precedence over adminSnapshotUrl when both are supplied.
 export interface CiConfig {
   apiBase: string
+  snapshotFetcher?: () => Promise<DashboardSnapshot | null>
   adminSnapshotUrl?: string
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
 }
