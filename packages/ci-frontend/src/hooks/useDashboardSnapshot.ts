@@ -4,18 +4,29 @@ import { useCiConfig } from '../CiConfigContext'
 import { useCiAdmin } from '../CiAdminContext'
 
 export function useDashboardSnapshot() {
-  const { apiBase, adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
+  const { apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
   const isAdmin = useCiAdmin()
-  // Admin viewers with a host-provided fetcher (e.g. one that attaches a Bearer
-  // token) use it directly. Fall back to the plain URL path, then to the public
-  // endpoint for non-admin or when no admin override was wired by the host.
-  const useCustomFetcher = isAdmin && !!adminSnapshotFetcher
+  // Admin viewers with a host-provided fetcher use it directly. Guest viewers
+  // with a host-provided fetcher (e.g. one that attaches a Bearer token) use
+  // that. Fall back to plain URL fetch for either role when no fetcher is wired.
+  const useAdminFetcher = isAdmin && !!adminSnapshotFetcher
+  const useGuestFetcher = !isAdmin && !!snapshotFetcher
   const snapshotUrl = isAdmin && adminSnapshotUrl
     ? adminSnapshotUrl
     : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
+  const queryKey = useAdminFetcher
+    ? ['dashboard-snapshot', '__admin_fetcher__']
+    : useGuestFetcher
+      ? ['dashboard-snapshot', '__guest_fetcher__']
+      : ['dashboard-snapshot', snapshotUrl]
+  const queryFn = useAdminFetcher
+    ? adminSnapshotFetcher!
+    : useGuestFetcher
+      ? snapshotFetcher!
+      : () => getDashboardSnapshot(snapshotUrl)
   return useQuery({
-    queryKey: useCustomFetcher ? ['dashboard-snapshot', '__admin_fetcher__'] : ['dashboard-snapshot', snapshotUrl],
-    queryFn: useCustomFetcher ? adminSnapshotFetcher! : () => getDashboardSnapshot(snapshotUrl),
+    queryKey,
+    queryFn,
     refetchInterval: 60_000,
     // The 60s poll already drives freshness; without these, an incidental tab
     // focus refetches and re-renders the whole board between ticks. Set per-query
