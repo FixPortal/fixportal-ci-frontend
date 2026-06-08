@@ -20,6 +20,13 @@ function getVisibleLastMergedPr(rawLastMerged: MergedPr | null, visibleRepos: Re
   return visibleRepos.some(r => r.name === rawLastMerged.repo) ? rawLastMerged : null
 }
 
+// Apply the Hide No-CI toggle to a repo list. Shared by the pre-early-return
+// openPrs computation and the post-guard visibleRepos so the filter shape lives
+// in one place.
+function applyNoCiFilter(repos: RepositorySnapshot[], hidden: boolean): RepositorySnapshot[] {
+  return hidden ? repos.filter(r => !isNoCi(r)) : repos
+}
+
 function resolveSummary(isAdmin: boolean, hideNoCiHidden: boolean, adminSummary: SummaryCount[], visibleRepos: RepositorySnapshot[]): SummaryCount[] {
   return isAdmin && !hideNoCiHidden ? adminSummary : computeSummary(visibleRepos)
 }
@@ -97,7 +104,7 @@ export function CiBoardContent() {
   // available regardless of snapshot state. Defaults to [] when data is absent.
   const earlyRepos = snapshot.data?.repositories ?? []
   const earlyFiltered = isAdmin ? earlyRepos : earlyRepos.filter(r => !r.private)
-  const openPrs = flattenOpenPrs(hideNoCi.hidden ? earlyFiltered.filter(r => !isNoCi(r)) : earlyFiltered)
+  const openPrs = flattenOpenPrs(applyNoCiFilter(earlyFiltered, hideNoCi.hidden))
 
   if (snapshot.isPending) {
     return (
@@ -132,7 +139,7 @@ export function CiBoardContent() {
   // Compute the names list and the all-collapsed flag once — they were rebuilt
   // and re-traversed twice per render (the onClick and the button label).
   const noCiCount = repositories.filter(isNoCi).length
-  const visibleRepos = hideNoCi.hidden ? repositories.filter(r => !isNoCi(r)) : repositories
+  const visibleRepos = applyNoCiFilter(repositories, hideNoCi.hidden)
   const summary = resolveSummary(isAdmin, hideNoCi.hidden, snapshot.data.summary, visibleRepos)
   const lastMergedPr = getVisibleLastMergedPr(rawLastMerged, visibleRepos)
   const repoNames = visibleRepos.map(r => r.name)
@@ -141,7 +148,8 @@ export function CiBoardContent() {
   const privateRepos = visibleRepos.filter(r => r.private)
   const showGroups = publicRepos.length > 0 && privateRepos.length > 0
   const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
-  const allCollapsed = collapse.allCollapsed([...repoNames, ...sectionKeys])
+  const allCollapsibleKeys = [...repoNames, ...sectionKeys]
+  const allCollapsed = collapse.allCollapsed(allCollapsibleKeys)
   // The stepper opens at the head of this oldest-first list, so its first entry
   // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
   // applied) so the card and stepper never advertise a PR from a repo the board
@@ -168,7 +176,7 @@ export function CiBoardContent() {
           <button
             type="button"
             className="dashboard__collapse-all"
-            onClick={() => (allCollapsed ? collapse.expandAll() : collapse.collapseAll([...repoNames, ...sectionKeys]))}
+            onClick={() => (allCollapsed ? collapse.expandAll() : collapse.collapseAll(allCollapsibleKeys))}
           >
             {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
           </button>
