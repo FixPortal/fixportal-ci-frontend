@@ -9,19 +9,19 @@ export function useDashboardSnapshot() {
   // Admin viewers with a host-provided fetcher use it directly. Guest viewers
   // with a host-provided fetcher (e.g. one that attaches a Bearer token) use
   // that. Fall back to plain URL fetch for either role when no fetcher is wired.
-  const useAdminFetcher = isAdmin && !!adminSnapshotFetcher
-  const useGuestFetcher = !isAdmin && !!snapshotFetcher
+  const shouldUseAdminFetcher = isAdmin && !!adminSnapshotFetcher
+  const shouldUseGuestFetcher = !isAdmin && !!snapshotFetcher
   const snapshotUrl = isAdmin && adminSnapshotUrl
     ? adminSnapshotUrl
     : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
-  const queryKey = useAdminFetcher
+  const queryKey = shouldUseAdminFetcher
     ? ['dashboard-snapshot', '__admin_fetcher__']
-    : useGuestFetcher
+    : shouldUseGuestFetcher
       ? ['dashboard-snapshot', '__guest_fetcher__']
       : ['dashboard-snapshot', snapshotUrl]
-  const queryFn = useAdminFetcher
+  const queryFn = shouldUseAdminFetcher
     ? adminSnapshotFetcher!
-    : useGuestFetcher
+    : shouldUseGuestFetcher
       ? snapshotFetcher!
       : () => getDashboardSnapshot(snapshotUrl)
   return useQuery({
