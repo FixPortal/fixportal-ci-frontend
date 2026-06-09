@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getDashboardSnapshot } from '../api/getDashboardSnapshot'
 import { useCiConfig } from '../CiConfigContext'
 import { useCiAdmin } from '../CiAdminContext'
+import type { DashboardSnapshot } from '../api/types'
 
 export function useDashboardSnapshot() {
   const { apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
@@ -14,16 +15,20 @@ export function useDashboardSnapshot() {
   const snapshotUrl = isAdmin && adminSnapshotUrl
     ? adminSnapshotUrl
     : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
-  const queryKey = shouldUseAdminFetcher
-    ? ['dashboard-snapshot', '__admin_fetcher__']
-    : shouldUseGuestFetcher
-      ? ['dashboard-snapshot', '__guest_fetcher__']
-      : ['dashboard-snapshot', snapshotUrl]
-  const queryFn = shouldUseAdminFetcher
-    ? adminSnapshotFetcher!
-    : shouldUseGuestFetcher
-      ? snapshotFetcher!
-      : () => getDashboardSnapshot(snapshotUrl)
+  const queryKeyPrefix = 'dashboard-snapshot'
+  let queryKey: unknown[]
+  let queryFn: () => Promise<DashboardSnapshot | null>
+
+  if (shouldUseAdminFetcher) {
+    queryKey = [queryKeyPrefix, '__admin_fetcher__']
+    queryFn = adminSnapshotFetcher!
+  } else if (shouldUseGuestFetcher) {
+    queryKey = [queryKeyPrefix, '__guest_fetcher__']
+    queryFn = snapshotFetcher!
+  } else {
+    queryKey = [queryKeyPrefix, snapshotUrl]
+    queryFn = () => getDashboardSnapshot(snapshotUrl)
+  }
   return useQuery({
     queryKey,
     queryFn,

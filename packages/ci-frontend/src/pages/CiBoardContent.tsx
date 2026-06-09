@@ -27,8 +27,8 @@ function applyNoCiFilter(repos: RepositorySnapshot[], hidden: boolean): Reposito
   return hidden ? repos.filter(r => !isNoCi(r)) : repos
 }
 
-function resolveSummary(isAdmin: boolean, hideNoCiHidden: boolean, adminSummary: SummaryCount[], visibleRepos: RepositorySnapshot[]): SummaryCount[] {
-  return isAdmin && !hideNoCiHidden ? adminSummary : computeSummary(visibleRepos)
+function resolveSummary(isAdmin: boolean, isNoCiHidden: boolean, adminSummary: SummaryCount[], visibleRepos: RepositorySnapshot[]): SummaryCount[] {
+  return isAdmin && !isNoCiHidden ? adminSummary : computeSummary(visibleRepos)
 }
 
 const KEY_PUBLIC = 'section:public'
@@ -39,10 +39,10 @@ function buildRepoList(
   publicRepos: RepositorySnapshot[],
   privateRepos: RepositorySnapshot[],
   showGroups: boolean,
-  hideNoCiHidden: boolean,
+  isNoCiHidden: boolean,
   collapse: ReturnType<typeof useCollapseState>,
 ) {
-  if (visibleRepos.length === 0 && hideNoCiHidden) {
+  if (visibleRepos.length === 0 && isNoCiHidden) {
     return <div className="state-msg">All repositories are No-CI — hidden.</div>
   }
   if (showGroups) {
