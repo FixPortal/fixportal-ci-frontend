@@ -17,7 +17,7 @@ export function CiWeatherBar({ trend }: { trend: CiTrendBucket[] }) {
   const label = `CI health, last 24h: ${failing} failing, ${healthy} healthy`
   return (
     <>
-      <div className="ci-weather" role="img" aria-label={label}>
+      <figure className="ci-weather" aria-label={label}>
         {trend.map((b, i) => (
           // Per-block hover reveals which hour a block is and its state — the
           // data was previously exposed only to screen readers via aria-label.
@@ -28,7 +28,7 @@ export function CiWeatherBar({ trend }: { trend: CiTrendBucket[] }) {
             title={`${formatRelativeTime(b.bucketStart)} · ${BLOCK_WORD[b.state]}`}
           />
         ))}
-      </div>
+      </figure>
       {/* Visible count parity with the aria-label (which already announces it,
           so this is hidden from SR to avoid a double read). */}
       <span className="ci-weather__readout" aria-hidden="true">
