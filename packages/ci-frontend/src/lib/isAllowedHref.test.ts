@@ -17,9 +17,10 @@ describe('isAllowedHref', () => {
     expect(isAllowedHref('//evil.com')).toBe('#')
   })
 
-  it('rejects javascript: and data: scheme injection', () => {
+  it('rejects javascript:, data: and vbscript: scheme injection', () => {
     expect(isAllowedHref('javascript:alert(1)')).toBe('#')
     expect(isAllowedHref('data:text/html,<script>alert(1)</script>')).toBe('#')
+    expect(isAllowedHref('vbscript:msgbox')).toBe('#')
   })
 
   it('rejects other non-http schemes', () => {

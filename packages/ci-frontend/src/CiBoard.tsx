@@ -14,10 +14,14 @@ export interface CiBoardProps {
   apiBase?: string
   /** Fetcher for guest (non-admin) snapshot requests. Use when the public endpoint requires auth headers (e.g. MSAL Bearer token). Falls back to a plain fetch of apiBase + /api/dashboard/snapshot when absent. */
   snapshotFetcher?: () => Promise<DashboardSnapshot | null>
+  /** Optional stable key folded into the snapshot cache key when a custom fetcher is used. Set a distinct value per board/source when several boards share the host's QueryClient, so their cache entries don't alias. */
+  snapshotCacheKey?: string
   /** Full URL the board fetches when the viewer is admin. The host's backend should proxy this to the CI backend's /api/dashboard/snapshot/admin endpoint, adding the X-Admin-Key header server-side so the shared secret never reaches the browser. When unset, admin viewers see the public (private-repo-stripped) snapshot. */
   adminSnapshotUrl?: string
   /** Alternative to adminSnapshotUrl for hosts that must attach auth headers (e.g. MSAL Bearer) to the admin snapshot request. Takes precedence over adminSnapshotUrl when both are supplied. */
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
+  /** Optional stable key folded into the admin snapshot cache key when adminSnapshotFetcher is used. Counterpart of snapshotCacheKey for the admin path. */
+  adminSnapshotCacheKey?: string
   /** Brand mark for the header. Defaults to a plain text wordmark. */
   logo?: ReactNode
   /** Footer node. Defaults to a generic, brand-free footer. */
@@ -56,9 +60,9 @@ function QueryClientSafeProvider({ children }: { children: ReactNode }) {
 // optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
 // of their own. This keeps CSS out of the JS bundle and lets a host with its
 // own tokens (e.g. the simulator) skip the vendored set.
-export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher, logo, footerSlot }: CiBoardProps) {
+export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, logo, footerSlot }: CiBoardProps) {
   return (
-    <CiConfigProvider value={{ apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher }}>
+    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey }}>
       <QueryClientSafeProvider>
         <div className="ci-page">
           <div className="ci-embed">
