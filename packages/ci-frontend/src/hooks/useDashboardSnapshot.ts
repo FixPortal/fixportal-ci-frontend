@@ -5,32 +5,33 @@ import { useCiAdmin } from '../CiAdminContext'
 import type { DashboardSnapshot } from '../api/types'
 
 export function useDashboardSnapshot() {
-  const { apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher, snapshotCacheKey } = useCiConfig()
+  const { apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey } = useCiConfig()
   const isAdmin = useCiAdmin()
-  // An admin with an admin-specific fetcher uses it directly. Otherwise any
-  // host-provided snapshotFetcher (e.g. one that attaches a Bearer token) is
-  // used — including for an admin who supplied only the shared snapshotFetcher,
-  // so the admin board still sends auth headers rather than falling through to
-  // an unauthenticated fetch. Plain URL fetch only when no fetcher is wired.
-  const shouldUseAdminFetcher = isAdmin && !!adminSnapshotFetcher
-  const shouldUseSnapshotFetcher = !shouldUseAdminFetcher && !!snapshotFetcher
-  const snapshotUrl = isAdmin && adminSnapshotUrl
-    ? adminSnapshotUrl
-    : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
+
   const queryKeyPrefix = 'dashboard-snapshot'
   let queryKey: unknown[]
   let queryFn: () => Promise<DashboardSnapshot | null>
 
   // The QueryClient is shared with the host app, so custom-fetcher branches must
-  // not alias on a fixed sentinel — fold in the caller's snapshotCacheKey to
-  // keep distinct boards/sources (or a swapped fetcher) on separate cache rows.
-  if (shouldUseAdminFetcher) {
-    queryKey = [queryKeyPrefix, '__admin_fetcher__', snapshotCacheKey]
-    queryFn = adminSnapshotFetcher!
-  } else if (shouldUseSnapshotFetcher) {
-    queryKey = [queryKeyPrefix, '__snapshot_fetcher__', snapshotCacheKey]
-    queryFn = snapshotFetcher!
+  // not alias on a fixed sentinel — fold in the caller's cache key to keep
+  // distinct boards/sources (or a swapped fetcher) on separate cache rows.
+  // .filter(Boolean) drops the trailing segment when no cache key was supplied.
+  if (isAdmin && adminSnapshotFetcher) {
+    queryKey = [queryKeyPrefix, '__admin_fetcher__', adminSnapshotCacheKey].filter(Boolean)
+    queryFn = adminSnapshotFetcher
+  } else if (isAdmin && snapshotFetcher) {
+    // A2: an admin who supplied only the shared snapshotFetcher (no admin-specific
+    // one) still uses it — and so still sends auth headers — rather than falling
+    // through to an unauthenticated fetch. Namespaced apart from the guest path.
+    queryKey = [queryKeyPrefix, '__guest_fetcher__', 'admin-fallback', snapshotCacheKey].filter(Boolean)
+    queryFn = snapshotFetcher
+  } else if (!isAdmin && snapshotFetcher) {
+    queryKey = [queryKeyPrefix, '__guest_fetcher__', snapshotCacheKey].filter(Boolean)
+    queryFn = snapshotFetcher
   } else {
+    const snapshotUrl = isAdmin && adminSnapshotUrl
+      ? adminSnapshotUrl
+      : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
     queryKey = [queryKeyPrefix, snapshotUrl]
     queryFn = () => getDashboardSnapshot(snapshotUrl)
   }
