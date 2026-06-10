@@ -8,8 +8,10 @@ export function isAllowedHref(url: string | undefined): string {
       return url
     }
   } catch {
-    // If it's a relative URL or invalid, check if it starts with / (same-origin relative URL is safe)
-    if (url.startsWith('/')) {
+    // Relative URL or invalid string. A leading single "/" is a same-origin
+    // path and safe; reject protocol-relative "//host" URLs, which the parser
+    // also rejects (no scheme) but browsers resolve to a cross-origin https:.
+    if (url.startsWith('/') && !url.startsWith('//')) {
       return url
     }
   }

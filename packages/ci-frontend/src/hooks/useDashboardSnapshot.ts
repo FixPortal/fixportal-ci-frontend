@@ -5,13 +5,15 @@ import { useCiAdmin } from '../CiAdminContext'
 import type { DashboardSnapshot } from '../api/types'
 
 export function useDashboardSnapshot() {
-  const { apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
+  const { apiBase, snapshotFetcher, adminSnapshotUrl, adminSnapshotFetcher, snapshotCacheKey } = useCiConfig()
   const isAdmin = useCiAdmin()
-  // Admin viewers with a host-provided fetcher use it directly. Guest viewers
-  // with a host-provided fetcher (e.g. one that attaches a Bearer token) use
-  // that. Fall back to plain URL fetch for either role when no fetcher is wired.
+  // An admin with an admin-specific fetcher uses it directly. Otherwise any
+  // host-provided snapshotFetcher (e.g. one that attaches a Bearer token) is
+  // used — including for an admin who supplied only the shared snapshotFetcher,
+  // so the admin board still sends auth headers rather than falling through to
+  // an unauthenticated fetch. Plain URL fetch only when no fetcher is wired.
   const shouldUseAdminFetcher = isAdmin && !!adminSnapshotFetcher
-  const shouldUseGuestFetcher = !isAdmin && !!snapshotFetcher
+  const shouldUseSnapshotFetcher = !shouldUseAdminFetcher && !!snapshotFetcher
   const snapshotUrl = isAdmin && adminSnapshotUrl
     ? adminSnapshotUrl
     : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
@@ -19,11 +21,14 @@ export function useDashboardSnapshot() {
   let queryKey: unknown[]
   let queryFn: () => Promise<DashboardSnapshot | null>
 
+  // The QueryClient is shared with the host app, so custom-fetcher branches must
+  // not alias on a fixed sentinel — fold in the caller's snapshotCacheKey to
+  // keep distinct boards/sources (or a swapped fetcher) on separate cache rows.
   if (shouldUseAdminFetcher) {
-    queryKey = [queryKeyPrefix, '__admin_fetcher__']
+    queryKey = [queryKeyPrefix, '__admin_fetcher__', snapshotCacheKey]
     queryFn = adminSnapshotFetcher!
-  } else if (shouldUseGuestFetcher) {
-    queryKey = [queryKeyPrefix, '__guest_fetcher__']
+  } else if (shouldUseSnapshotFetcher) {
+    queryKey = [queryKeyPrefix, '__snapshot_fetcher__', snapshotCacheKey]
     queryFn = snapshotFetcher!
   } else {
     queryKey = [queryKeyPrefix, snapshotUrl]
