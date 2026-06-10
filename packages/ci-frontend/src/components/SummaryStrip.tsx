@@ -59,6 +59,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
   const [trendInfoOpen, setTrendInfoOpen] = useState(false)
   const trendLabelRef = useRef<HTMLDivElement>(null)
 
+  // eslint-disable-next-line react-doctor/no-event-handler
   useEffect(() => {
     let cleanup: (() => void) | undefined
     if (trendInfoOpen) {

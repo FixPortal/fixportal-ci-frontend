@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "react-doctor/no-event-handler": "off",
+    "react-doctor/no-noninteractive-element-interactions": "off",
+    "react-doctor/no-redundant-roles": "off"
+  }
+}
