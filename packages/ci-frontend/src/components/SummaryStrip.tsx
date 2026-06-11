@@ -30,6 +30,14 @@ const PANELS: { title: string; keys: string[] }[] = [
 const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc'])
 const EMPTY_TREND: CiTrendBucket[] = []
 
+type SummaryStripProps = {
+  summary: SummaryCount[]
+  onOpenPrs?: () => void
+  lastMerged: MergedPr | null
+  nextPr?: OpenPr | null
+  ciTrend?: CiTrendBucket[]
+}
+
 function labelFor(key: string, count: number) {
   // 'Open PRs' is the only count-driven noun on the strip; singularise it so a
   // single PR doesn't read as '1 Open PRs'.
@@ -53,7 +61,7 @@ function toneFor(key: string, count: number): string {
   return 'alert'
 }
 
-export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ciTrend = EMPTY_TREND }: { summary: SummaryCount[]; onOpenPrs?: () => void; lastMerged: MergedPr | null; nextPr?: OpenPr | null; ciTrend?: CiTrendBucket[] }) {
+export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ciTrend = EMPTY_TREND }: SummaryStripProps) {
   const byKey = new Map(summary.map(s => [s.key, s.count]))
 
   const [trendInfoOpen, setTrendInfoOpen] = useState(false)
@@ -91,8 +99,9 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
         if (items.length === 0) return null
         const isReview = panel.title === 'Review'
         const isCiStatus = panel.title === 'CI status'
+        const panelClassName = ['summary-panel', isReview && 'summary-panel--review', isCiStatus && 'summary-panel--ci'].filter(Boolean).join(' ')
         return (
-          <div key={panel.title} className={`summary-panel${isReview ? ' summary-panel--review' : ''}${isCiStatus ? ' summary-panel--ci' : ''}`}>
+          <div key={panel.title} className={panelClassName}>
             <span className="summary-panel__title">{panel.title}</span>
             <div className="summary-panel__items">
               {items.map(item => {
