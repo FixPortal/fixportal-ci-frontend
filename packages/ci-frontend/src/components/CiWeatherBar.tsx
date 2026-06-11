@@ -17,7 +17,7 @@ export function CiWeatherBar({ trend }: { trend: CiTrendBucket[] }) {
   const label = `CI health, last 24h: ${failing} failing, ${healthy} healthy`
   return (
     <>
-      <figure className="ci-weather" aria-label={label}>
+      <figure role="img" className="ci-weather" aria-label={label}>
         {trend.map((b, i) => (
           // Per-block hover reveals which hour a block is and its state — the
           // data was previously exposed only to screen readers via aria-label.
