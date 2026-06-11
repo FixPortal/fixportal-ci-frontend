@@ -28,7 +28,6 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
   // If the list drains entirely, there is nothing to step through — close via
   // the callback so the parent resets stepperOpen, rather than silently
   // rendering null and leaving a dangling open flag.
-  // eslint-disable-next-line react-doctor/no-event-handler
   useEffect(() => {
     if (prs.length === 0) onClose()
   }, [prs.length, onClose])
