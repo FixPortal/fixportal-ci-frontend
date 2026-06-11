@@ -10,17 +10,27 @@ export function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] 
         {pullRequests.length} open PR{pullRequests.length === 1 ? '' : 's'}
       </span>
       <ul>
-        {pullRequests.map(pr => (
-          <li key={pr.number} className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}>
-            <a href={isAllowedHref(pr.htmlUrl)} target="_blank" rel="noopener noreferrer">
-              <span className="repo-prs__num">#{pr.number}</span>
-              <span className="repo-prs__title">{pr.title}</span>
-            </a>
-            <span className="repo-prs__meta">
-              {pr.author} · {formatRelativeTime(pr.createdAt)}{pr.isDraft ? ' · draft' : ''}
-            </span>
-          </li>
-        ))}
+        {pullRequests.map(pr => {
+          const href = isAllowedHref(pr.htmlUrl)
+          return (
+            <li key={pr.number} className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}>
+              {href !== '#' ? (
+                <a href={href} target="_blank" rel="noopener noreferrer">
+                  <span className="repo-prs__num">#{pr.number}</span>
+                  <span className="repo-prs__title">{pr.title}</span>
+                </a>
+              ) : (
+                <span className="repo-prs__static">
+                  <span className="repo-prs__num">#{pr.number}</span>
+                  <span className="repo-prs__title">{pr.title}</span>
+                </span>
+              )}
+              <span className="repo-prs__meta">
+                {pr.author} · {formatRelativeTime(pr.createdAt)}{pr.isDraft ? ' · draft' : ''}
+              </span>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

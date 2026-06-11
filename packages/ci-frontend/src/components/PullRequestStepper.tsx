@@ -20,7 +20,18 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
     dlg?.showModal()
     dlg?.focus()
     return () => {
-      previouslyFocused?.focus?.()
+      const isFocusable = previouslyFocused &&
+        document.body.contains(previouslyFocused) &&
+        !('disabled' in previouslyFocused && (previouslyFocused as any).disabled)
+
+      if (isFocusable) {
+        previouslyFocused?.focus?.()
+      } else {
+        const landmark = document.querySelector('.dashboard-page') as HTMLElement | null
+        if (landmark) {
+          landmark.focus({ preventScroll: true })
+        }
+      }
       dlg?.close()
     }
   }, [])
@@ -42,7 +53,18 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
       aria-label="Open pull requests"
       tabIndex={-1}
       onCancel={e => { e.preventDefault(); onClose() }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => {
+        if (e.target === e.currentTarget) {
+          const rect = e.currentTarget.getBoundingClientRect()
+          const isInDialog = (
+            rect.top <= e.clientY &&
+            e.clientY <= rect.top + rect.height &&
+            rect.left <= e.clientX &&
+            e.clientX <= rect.left + rect.width
+          )
+          if (!isInDialog) onClose()
+        }
+      }}
       // Left/Right arrow paging, scoped to the dialog. Escape closes via the
       // native cancel event above.
       onKeyDown={e => {
@@ -64,7 +86,11 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         <div className="pr-card__title">{pr.title}</div>
         <div className="pr-card__foot">
           <span className="pr-card__author">@{pr.author}</span>
-          <a className="pr-card__gh" href={isAllowedHref(pr.htmlUrl)} target="_blank" rel="noopener noreferrer">Open on GitHub ↗</a>
+          {isAllowedHref(pr.htmlUrl) !== '#' ? (
+            <a className="pr-card__gh" href={isAllowedHref(pr.htmlUrl)} target="_blank" rel="noopener noreferrer">Open on GitHub ↗</a>
+          ) : (
+            <span className="pr-card__gh pr-card__gh--static">Open on GitHub</span>
+          )}
         </div>
       </div>
       {/* One PR needs no nav — the '1 / 1' counter already says so; two disabled

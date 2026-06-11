@@ -8,8 +8,8 @@ export function RepoActivityIndicator({ repository }: { repository: RepositorySn
   return (
     <span className="repo-activity">
       {prCount > 0 && <span className="repo-activity__pr">{prCount} PR</span>}
-      <span className="repo-activity__sig">CI<span className="repo-activity__dot" data-activity={ci} aria-label={`CI ${ci}`} /></span>
-      <span className="repo-activity__sig">CD<span className="repo-activity__dot" data-activity={cd} aria-label={`CD ${cd}`} /></span>
+      <span className="repo-activity__sig">CI<span className="repo-activity__dot" data-activity={ci} role="img" aria-label={`CI ${ci}`} /></span>
+      <span className="repo-activity__sig">CD<span className="repo-activity__dot" data-activity={cd} role="img" aria-label={`CD ${cd}`} /></span>
     </span>
   )
 }

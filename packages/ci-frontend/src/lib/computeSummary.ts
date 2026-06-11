@@ -15,7 +15,7 @@ const ALWAYS_VISIBLE_KEYS = new Set([
 // Recomputes summary counts from a filtered repo list. Mirrors the server-side
 // aggregation so the strip reflects exactly the repos being displayed.
 export function computeSummary(repos: RepositorySnapshot[]): SummaryCount[] {
-  const workflows = repos.flatMap(r => r.workflows)
+  const workflows = repos.flatMap(r => r.workflows ?? [])
   const deploys = repos.flatMap(r => r.deploys ?? [])
   const packages = repos.flatMap(r => r.packages ?? [])
   const openPrs = repos.flatMap(r => r.pullRequests ?? [])

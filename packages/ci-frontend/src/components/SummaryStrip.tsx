@@ -136,7 +136,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                 <span className="summary-panel__q-title">{nextPr.title}</span>
               </div>
             )}
-            {isReview && lastMerged && (
+            {isReview && lastMerged && (isAllowedHref(lastMerged.htmlUrl) !== '#' ? (
               <a className="summary-panel__merged" href={isAllowedHref(lastMerged.htmlUrl)} target="_blank" rel="noopener noreferrer">
                 <span className="summary-panel__q-lab">
                   last merged <span className="summary-panel__q-age">({formatRelativeTime(lastMerged.mergedAt)})</span>
@@ -144,7 +144,15 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                 <span className="summary-panel__q-body">{lastMerged.repo} #{lastMerged.number}</span>
                 <span className="summary-panel__q-title">{lastMerged.title}</span>
               </a>
-            )}
+            ) : (
+              <div className="summary-panel__merged summary-panel__merged--static">
+                <span className="summary-panel__q-lab">
+                  last merged <span className="summary-panel__q-age">({formatRelativeTime(lastMerged.mergedAt)})</span>
+                </span>
+                <span className="summary-panel__q-body">{lastMerged.repo} #{lastMerged.number}</span>
+                <span className="summary-panel__q-title">{lastMerged.title}</span>
+              </div>
+            ))}
             {panel.title === 'CI status' && ciTrend.length > 0 && (
               <div className="summary-panel__trend">
                 <CiWeatherBar trend={ciTrend} />

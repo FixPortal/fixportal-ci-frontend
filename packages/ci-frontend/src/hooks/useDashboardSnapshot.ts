@@ -19,6 +19,9 @@ export function useDashboardSnapshot() {
   if (isAdmin && adminSnapshotFetcher) {
     queryKey = [queryKeyPrefix, '__admin_fetcher__', adminSnapshotCacheKey].filter(Boolean)
     queryFn = adminSnapshotFetcher
+  } else if (isAdmin && adminSnapshotUrl) {
+    queryKey = [queryKeyPrefix, adminSnapshotUrl]
+    queryFn = () => getDashboardSnapshot(adminSnapshotUrl)
   } else if (isAdmin && snapshotFetcher) {
     // A2: an admin who supplied only the shared snapshotFetcher (no admin-specific
     // one) still uses it — and so still sends auth headers — rather than falling
@@ -29,9 +32,7 @@ export function useDashboardSnapshot() {
     queryKey = [queryKeyPrefix, '__guest_fetcher__', snapshotCacheKey].filter(Boolean)
     queryFn = snapshotFetcher
   } else {
-    const snapshotUrl = isAdmin && adminSnapshotUrl
-      ? adminSnapshotUrl
-      : `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
+    const snapshotUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
     queryKey = [queryKeyPrefix, snapshotUrl]
     queryFn = () => getDashboardSnapshot(snapshotUrl)
   }
