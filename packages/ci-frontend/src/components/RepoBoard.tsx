@@ -31,9 +31,15 @@ export const RepoBoard = memo(function RepoBoard({
         {noCi && <span className="repo-board__noci-tag">No CI</span>}
         <RepoMetricsLine metrics={repository.metrics} />
         <RepoActivityIndicator repository={repository} />
-        <a className="repo-board__gh-link" href={isAllowedHref(repository.htmlUrl)} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
-          GitHub ↗
-        </a>
+        {isAllowedHref(repository.htmlUrl) !== '#' ? (
+          <a className="repo-board__gh-link" href={isAllowedHref(repository.htmlUrl)} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
+            GitHub ↗
+          </a>
+        ) : (
+          <span className="repo-board__gh-link repo-board__gh-link--static" aria-label={`${repository.name} GitHub link unavailable`}>
+            GitHub
+          </span>
+        )}
       </header>
       {!collapsed && (
         <>

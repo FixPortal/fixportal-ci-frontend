@@ -1,4 +1,4 @@
-import { createContext, use } from 'react'
+import { createContext, useContext } from 'react'
 import type { DashboardSnapshot } from './api/types'
 
 // Runtime config for the CI board. apiBase is the origin of the CI backend
@@ -28,6 +28,7 @@ export interface CiConfig {
   adminSnapshotUrl?: string
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
   adminSnapshotCacheKey?: string
+  storageNamespace?: string
 }
 
 export const DEFAULT_CI_API_BASE = ''
@@ -38,5 +39,5 @@ CiConfigContext.displayName = 'CiConfigContext'
 export const CiConfigProvider = CiConfigContext.Provider
 
 export function useCiConfig(): CiConfig {
-  return use(CiConfigContext)
+  return useContext(CiConfigContext)
 }

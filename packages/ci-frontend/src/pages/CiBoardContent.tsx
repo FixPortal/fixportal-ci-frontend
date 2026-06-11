@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { RepositorySnapshot, MergedPr, SummaryCount } from '../api/types'
 import { useDashboardSnapshot } from '../hooks/useDashboardSnapshot'
 import { useCollapseState } from '../hooks/useCollapseState'
 import { useHideNoCi } from '../hooks/useHideNoCi'
 import { useCiAdmin } from '../CiAdminContext'
+import { useCiConfig } from '../CiConfigContext'
 import { isNoCi } from '../lib/isNoCi'
 import { computeSummary } from '../lib/computeSummary'
 import { SummaryStrip } from '../components/SummaryStrip'
@@ -42,8 +43,11 @@ function buildRepoList(
   isNoCiHidden: boolean,
   collapse: ReturnType<typeof useCollapseState>,
 ) {
-  if (visibleRepos.length === 0 && isNoCiHidden) {
-    return <div className="state-msg">All repositories are No-CI — hidden.</div>
+  if (visibleRepos.length === 0) {
+    if (isNoCiHidden) {
+      return <div className="state-msg">All repositories are No-CI — hidden.</div>
+    }
+    return <div className="state-msg">No repositories found.</div>
   }
   if (showGroups) {
     return (
@@ -98,6 +102,8 @@ export function CiBoardContent() {
   const collapse = useCollapseState()
   const hideNoCi = useHideNoCi()
   const isAdmin = useCiAdmin()
+  const { adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
+  const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
   const [stepperOpen, setStepperOpen] = useState(false)
 
   // Computed before the early returns so nextPr and the stepper guard are
@@ -105,6 +111,12 @@ export function CiBoardContent() {
   const earlyRepos = snapshot.data?.repositories ?? []
   const earlyFiltered = isAdmin ? earlyRepos : earlyRepos.filter(r => !r.private)
   const openPrs = flattenOpenPrs(applyNoCiFilter(earlyFiltered, hideNoCi.hidden))
+
+  useEffect(() => {
+    if (openPrs.length === 0 && stepperOpen) {
+      setStepperOpen(false)
+    }
+  }, [openPrs.length, stepperOpen])
 
   if (snapshot.isPending) {
     return (
@@ -159,9 +171,9 @@ export function CiBoardContent() {
   const repoListContent = buildRepoList(visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, collapse)
 
   return (
-    <main className="dashboard-page">
+    <main className="dashboard-page" tabIndex={-1}>
       <div className="dashboard__toolbar">
-        <span className="dashboard__scope">{snapshot.data.org} · {isAdmin ? 'all repositories' : 'public repositories'}</span>
+        <span className="dashboard__scope">{snapshot.data.org} · {isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}</span>
         <span className="dashboard__toolbar-right">
           {noCiCount > 0 && (
             <button

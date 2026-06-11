@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useCiConfig } from '../CiConfigContext'
 
-const KEY = 'ci-dashboard:collapsed'
+const DEFAULT_KEY = 'ci-dashboard:collapsed'
 
-function load(): Set<string> {
+function load(key: string): Set<string> {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(key)
     return new Set(raw ? (JSON.parse(raw) as string[]) : [])
   } catch {
     return new Set()
   }
 }
 
-function save(set: Set<string>) {
+function save(key: string, set: Set<string>) {
   try {
-    localStorage.setItem(KEY, JSON.stringify([...set]))
+    localStorage.setItem(key, JSON.stringify([...set]))
   } catch {
     // ignore (private mode / quota) — collapse state is best-effort
   }
@@ -21,11 +22,13 @@ function save(set: Set<string>) {
 
 // A repo absent from the set is expanded, so new repos default to expanded.
 export function useCollapseState() {
-  const [collapsed, setCollapsed] = useState<Set<string>>(load)
+  const { storageNamespace } = useCiConfig()
+  const key = storageNamespace ? `${DEFAULT_KEY}:${storageNamespace}` : DEFAULT_KEY
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => load(key))
 
   useEffect(() => {
-    save(collapsed)
-  }, [collapsed])
+    save(key, collapsed)
+  }, [key, collapsed])
 
   const mutate = useCallback((fn: (next: Set<string>) => void) => {
     setCollapsed(prev => {

@@ -26,6 +26,8 @@ export interface CiBoardProps {
   logo?: ReactNode
   /** Footer node. Defaults to a generic, brand-free footer. */
   footerSlot?: ReactNode
+  /** Optional namespace suffix for localStorage keys to avoid collisions when multiple boards run on the same origin. */
+  storageNamespace?: string
 }
 
 function QueryClientSafeProvider({ children }: { children: ReactNode }) {
@@ -60,9 +62,9 @@ function QueryClientSafeProvider({ children }: { children: ReactNode }) {
 // optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
 // of their own. This keeps CSS out of the JS bundle and lets a host with its
 // own tokens (e.g. the simulator) skip the vendored set.
-export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, logo, footerSlot }: CiBoardProps) {
+export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, logo, footerSlot, storageNamespace }: CiBoardProps) {
   return (
-    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey }}>
+    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace }}>
       <QueryClientSafeProvider>
         <div className="ci-page">
           <div className="ci-embed">
@@ -70,7 +72,7 @@ export function CiBoard({ adminSignal, apiBase = DEFAULT_CI_API_BASE, snapshotFe
               <span className="ci-embed__lockup">
                 {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
                 <span className="ci-embed__descriptor">
-                  CI Dashboard {adminSignal ? '[Admin]' : '[Guest]'}
+                  CI Dashboard {adminSignal && (adminSnapshotUrl || adminSnapshotFetcher) ? '[Admin]' : '[Guest]'}
                 </span>
               </span>
             </header>
