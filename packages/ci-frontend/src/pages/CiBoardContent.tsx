@@ -114,8 +114,10 @@ export function CiBoardContent() {
 
   useEffect(() => {
     if (openPrs.length === 0 && stepperOpen) {
-      setStepperOpen(false)
+      const id = setTimeout(() => setStepperOpen(false), 0)
+      return () => clearTimeout(id)
     }
+    return undefined
   }, [openPrs.length, stepperOpen])
 
   if (snapshot.isPending) {
