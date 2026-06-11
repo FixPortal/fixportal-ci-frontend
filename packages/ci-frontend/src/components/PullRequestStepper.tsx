@@ -22,7 +22,7 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
     return () => {
       const isFocusable = previouslyFocused &&
         document.body.contains(previouslyFocused) &&
-        !('disabled' in previouslyFocused && (previouslyFocused as any).disabled)
+        !('disabled' in previouslyFocused && (previouslyFocused as HTMLElement & { disabled?: boolean }).disabled)
 
       if (isFocusable) {
         previouslyFocused?.focus?.()
