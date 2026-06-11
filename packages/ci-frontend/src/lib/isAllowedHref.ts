@@ -1,19 +1,35 @@
-export function isAllowedHref(url: string | undefined): string {
+function isSafeRelativeHref(url: string): boolean {
+  // Reject control characters and backslashes in relative hrefs.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f\\]/.test(url)) return false
+
+  // Allow same-origin relative forms:
+  // - "/path" (but not protocol-relative "//host")
+  // - "?query"
+  // - "#fragment"
+  if (url.startsWith('/')) return !url.startsWith('//')
+  if (url.startsWith('?')) return true
+  if (url.startsWith('#')) return true
+
+  return false
+}
+
+export function isAllowedHref(url: string | undefined | null): string {
   if (!url) return '#'
+
+  if (isSafeRelativeHref(url)) {
+    return url
+  }
+
   // Accept only http: and https: protocols to prevent javascript: or data: injection.
-  // Using a try/catch with URL parser to be safe against malformed strings.
+  // Using URL parser to be safe against malformed absolute strings.
   try {
     const parsed = new URL(url)
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
       return url
     }
   } catch {
-    // Relative URL or invalid string. A leading single "/" is a same-origin
-    // path and safe; reject protocol-relative "//host" URLs, which the parser
-    // also rejects (no scheme) but browsers resolve to a cross-origin https:.
-    if (url.startsWith('/') && !url.startsWith('//')) {
-      return url
-    }
+    // Invalid absolute URL.
   }
   return '#'
 }

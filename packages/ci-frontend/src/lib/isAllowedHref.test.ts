@@ -12,9 +12,18 @@ describe('isAllowedHref', () => {
     expect(isAllowedHref('/repos/owner/name')).toBe('/repos/owner/name')
   })
 
+  it('passes through query and fragment relative forms', () => {
+    expect(isAllowedHref('?tab=open')).toBe('?tab=open')
+    expect(isAllowedHref('#section')).toBe('#section')
+  })
+
   it('rejects protocol-relative URLs that browsers resolve cross-origin', () => {
     expect(isAllowedHref('//evil.com/path')).toBe('#')
     expect(isAllowedHref('//evil.com')).toBe('#')
+    expect(isAllowedHref('///evil.com')).toBe('#')
+    expect(isAllowedHref('////evil.com/path')).toBe('#')
+    expect(isAllowedHref('// evil.com')).toBe('#')
+    expect(isAllowedHref('//\tevil.com')).toBe('#')
   })
 
   it('rejects javascript:, data: and vbscript: scheme injection', () => {
@@ -28,8 +37,15 @@ describe('isAllowedHref', () => {
     expect(isAllowedHref('mailto:a@b.com')).toBe('#')
   })
 
-  it('returns # for empty or undefined input', () => {
+  it('rejects relative hrefs with control characters or backslashes', () => {
+    expect(isAllowedHref('/path\x00evil')).toBe('#')
+    expect(isAllowedHref('/path\\evil')).toBe('#')
+    expect(isAllowedHref('/path\x1fevil')).toBe('#')
+  })
+
+  it('returns # for empty, undefined, or null input', () => {
     expect(isAllowedHref('')).toBe('#')
     expect(isAllowedHref(undefined)).toBe('#')
+    expect(isAllowedHref(null)).toBe('#')
   })
 })
