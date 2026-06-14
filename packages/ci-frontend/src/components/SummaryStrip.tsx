@@ -12,7 +12,10 @@ const SUMMARY_LABELS: Record<string, string> = {
   running: 'Running',
   'no-ci': 'No CI',
   'open-prs': 'Open PRs',
-  nloc: 'Lines of code',
+  'nloc-fixportal': 'FixPortal loc',
+  'nloc-quickfixn': 'quickfix/n loc',
+  deploys: 'Deployments',
+  packages: 'Packages',
   'deploys-failing': 'Deploys failing',
   'deploys-running': 'Deploys running',
   'packages-failing': 'Packages failing',
@@ -24,10 +27,10 @@ const SUMMARY_LABELS: Record<string, string> = {
 const PANELS: { title: string; keys: string[] }[] = [
   { title: 'Review', keys: ['open-prs'] },
   { title: 'CI status', keys: ['running', 'failing', 'packages-failing', 'deploys-running', 'deploys-failing', 'no-ci'] },
-  { title: 'Inventory', keys: ['repos', 'workflows', 'nloc'] },
+  { title: 'Inventory', keys: ['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'] },
 ]
 
-const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc'])
+const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'])
 const EMPTY_TREND: CiTrendBucket[] = []
 
 type SummaryStripProps = {
@@ -46,7 +49,7 @@ function labelFor(key: string, count: number) {
 }
 
 function formatCount(key: string, count: number) {
-  return key === 'nloc' ? formatCompactNumber(count) : count
+  return (key === 'nloc-fixportal' || key === 'nloc-quickfixn') ? formatCompactNumber(count) : count
 }
 
 // A non-zero count is coloured to mirror its chip: failures red, running blue,
@@ -177,7 +180,8 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                       <div className="ci-trend-popover__title">CI health · 24h</div>
                       <p>Each bar is a 1-hour bucket of CI activity across the whole org.</p>
                       <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--fail">■</span> Red — any run failed that hour (on any branch).</p>
-                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--pass">■</span> Green — runs present, none failed. Quiet hours inherit the previous state.</p>
+                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--pass">■</span> Green — runs present, none failed.</p>
+                      <p>Grey bars are quiet hours with no CI runs in that hour.</p>
                       <p>Oldest bar on the left, newest on the right.</p>
                       <div className="ci-trend-popover__caret" aria-hidden="true" />
                     </section>
