@@ -177,7 +177,8 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                       <div className="ci-trend-popover__title">CI health · 24h</div>
                       <p>Each bar is a 1-hour bucket of CI activity across the whole org.</p>
                       <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--fail">■</span> Red — any run failed that hour (on any branch).</p>
-                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--pass">■</span> Green — runs present, none failed. Quiet hours inherit the previous state.</p>
+                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--pass">■</span> Green — runs present, none failed.</p>
+                      <p>Grey bars are quiet hours with no CI runs in that hour.</p>
                       <p>Oldest bar on the left, newest on the right.</p>
                       <div className="ci-trend-popover__caret" aria-hidden="true" />
                     </section>
