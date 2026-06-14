@@ -12,7 +12,10 @@ const SUMMARY_LABELS: Record<string, string> = {
   running: 'Running',
   'no-ci': 'No CI',
   'open-prs': 'Open PRs',
-  nloc: 'Lines of code',
+  'nloc-fixportal': 'FixPortal loc',
+  'nloc-quickfixn': 'quickfix/n loc',
+  deploys: 'Deployments',
+  packages: 'Packages',
   'deploys-failing': 'Deploys failing',
   'deploys-running': 'Deploys running',
   'packages-failing': 'Packages failing',
@@ -24,10 +27,10 @@ const SUMMARY_LABELS: Record<string, string> = {
 const PANELS: { title: string; keys: string[] }[] = [
   { title: 'Review', keys: ['open-prs'] },
   { title: 'CI status', keys: ['running', 'failing', 'packages-failing', 'deploys-running', 'deploys-failing', 'no-ci'] },
-  { title: 'Inventory', keys: ['repos', 'workflows', 'nloc'] },
+  { title: 'Inventory', keys: ['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'] },
 ]
 
-const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc'])
+const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'])
 const EMPTY_TREND: CiTrendBucket[] = []
 
 type SummaryStripProps = {
@@ -46,7 +49,7 @@ function labelFor(key: string, count: number) {
 }
 
 function formatCount(key: string, count: number) {
-  return key === 'nloc' ? formatCompactNumber(count) : count
+  return (key === 'nloc-fixportal' || key === 'nloc-quickfixn') ? formatCompactNumber(count) : count
 }
 
 // A non-zero count is coloured to mirror its chip: failures red, running blue,
