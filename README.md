@@ -11,9 +11,7 @@ be reused independently. The board has no hard dependency on any FixPortal
 package: the brand is injectable and the design tokens are vendored, so you can
 drop it into your own app or run the bundled dashboard as-is.
 
-> Screenshot: run the standalone app against your CI backend and add a capture
-> here (`docs/dashboard.png`). The smoke build renders the "Dashboard
-> unavailable" state when no backend is reachable.
+![FixPortal CI dashboard](docs/dashboard.png)
 
 ## What's in the repo
 
