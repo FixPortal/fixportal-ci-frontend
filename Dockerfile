@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22-alpine@sha256:ab07539e0988b63558ff621f5fbe1077054c39d9809112974fb79993949d41cd AS build
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 COPY packages/ci-frontend/package.json packages/ci-frontend/
@@ -8,7 +8,7 @@ COPY . .
 RUN npm run build:lib
 RUN npm run build:app
 
-FROM nginx:alpine
+FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
 LABEL org.opencontainers.image.source="https://github.com/FixPortal/fixportal-ci-frontend"
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
