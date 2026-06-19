@@ -1,0 +1,168 @@
+import { useState, useContext, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { QueryClient, QueryClientProvider, QueryClientContext } from '@tanstack/react-query'
+import { CiAdminProvider } from './CiAdminContext'
+import { CiConfigProvider, useCiConfig, DEFAULT_CI_API_BASE } from './CiConfigContext'
+import { CiBoardContent } from './pages/CiBoardContent'
+import { DefaultFooter } from './DefaultFooter'
+import type { DashboardSnapshot } from './api/types'
+
+export interface CiBoardProps {
+  /** Whether the viewer is an admin: sees private repos + actionable PR links. Host-computed. */
+  adminSignal: boolean
+  /** Origin of the CI backend snapshot API (no trailing slash). Defaults to '' (relative URLs — requires a same-origin /api/ proxy). Pass 'https://ci.fixportal.org' to reach the public FixPortal backend. */
+  apiBase?: string
+  /** Fetcher for guest (non-admin) snapshot requests. Use when the public endpoint requires auth headers (e.g. MSAL Bearer token). Falls back to a plain fetch of apiBase + /api/dashboard/snapshot when absent. */
+  snapshotFetcher?: () => Promise<DashboardSnapshot | null>
+  /** Optional stable key folded into the snapshot cache key when a custom fetcher is used. Set a distinct value per board/source when several boards share the host's QueryClient, so their cache entries don't alias. */
+  snapshotCacheKey?: string
+  /** Full URL the board fetches when the viewer is admin. The host's backend should proxy this to the CI backend's /api/dashboard/snapshot/admin endpoint, adding the X-Admin-Key header server-side so the shared secret never reaches the browser. When unset, admin viewers see the public (private-repo-stripped) snapshot. */
+  adminSnapshotUrl?: string
+  /** Alternative to adminSnapshotUrl for hosts that must attach auth headers (e.g. MSAL Bearer) to the admin snapshot request. Takes precedence over adminSnapshotUrl when both are supplied. */
+  adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
+  /** Optional stable key folded into the admin snapshot cache key when adminSnapshotFetcher is used. Counterpart of snapshotCacheKey for the admin path. */
+  adminSnapshotCacheKey?: string
+  /** Brand mark for the header. Defaults to a plain text wordmark. */
+  logo?: ReactNode
+  /** Footer node. Defaults to a generic, brand-free footer. */
+  footerSlot?: ReactNode
+  /** Optional namespace suffix for localStorage keys to avoid collisions when multiple boards run on the same origin. */
+  storageNamespace?: string
+  /** Whether to show the theme switcher (Light / Dark / System) in the header. Defaults to true. */
+  showThemeSwitcher?: boolean
+}
+
+function QueryClientSafeProvider({ children }: { children: ReactNode }) {
+  const existingClient = useContext(QueryClientContext)
+  const [localClient] = useState(() => {
+    if (!existingClient) {
+      return new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 1,
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+    }
+    return null
+  })
+
+  if (existingClient) {
+    return <>{children}</>
+  }
+
+  return (
+    <QueryClientProvider client={localClient!}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
+// The board is style-free at the component level: consumers import the
+// stylesheets explicitly -- `@fix-portal/ci-frontend/board.css` (always) and
+// optionally `@fix-portal/ci-frontend/tokens.css` if they have no design system
+// of their own. This keeps CSS out of the JS bundle and lets a host with its
+// own tokens (e.g. the simulator) skip the vendored set.
+type Theme = 'light' | 'dark' | 'system'
+
+function ThemeSwitcher() {
+  // Namespace the theme key like the other storage hooks, so co-hosted boards
+  // with distinct storageNamespace values don't clobber each other's preference.
+  const { storageNamespace } = useCiConfig()
+  const themeKey = storageNamespace ? `ci:theme:${storageNamespace}` : 'ci:theme'
+
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const stored = localStorage.getItem(themeKey)
+      return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
+    } catch {
+      return 'system'
+    }
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    const applyTheme = () => {
+      if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
+      } else {
+        root.setAttribute('data-theme', theme)
+      }
+    }
+    applyTheme()
+    try {
+      localStorage.setItem(themeKey, theme)
+    } catch {
+      // ignore (private mode / quota) — theme persistence is best-effort
+    }
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      mediaQuery.addEventListener('change', applyTheme)
+      return () => mediaQuery.removeEventListener('change', applyTheme)
+    }
+    return undefined
+  }, [theme, themeKey])
+
+  return (
+    <div className="ci-theme-select-container">
+      <select
+        value={theme}
+        onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+        className="ci-theme-select"
+        aria-label="Select theme"
+      >
+        <option value="system">💻 System</option>
+        <option value="light">☀️ Light</option>
+        <option value="dark">🌙 Dark</option>
+      </select>
+    </div>
+  )
+}
+
+export function CiBoard({
+  adminSignal,
+  apiBase = DEFAULT_CI_API_BASE,
+  snapshotFetcher,
+  snapshotCacheKey,
+  adminSnapshotUrl,
+  adminSnapshotFetcher,
+  adminSnapshotCacheKey,
+  logo,
+  footerSlot,
+  storageNamespace,
+  showThemeSwitcher = true,
+}: CiBoardProps) {
+  // Label reflects whether the board actually consumes a privileged data source,
+  // not merely that a signal was passed — matches the toolbar scope descriptor.
+  const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
+  return (
+    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace }}>
+      <QueryClientSafeProvider>
+        <div className="ci-page">
+          <div className="ci-embed">
+            <header className="ci-embed__header">
+              <span className="ci-embed__lockup">
+                {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
+                <span className="ci-embed__descriptor">
+                  CI Dashboard {adminSignal && hasAdminSource ? '[Admin]' : '[Guest]'}
+                </span>
+              </span>
+              {showThemeSwitcher && (
+                <div style={{ marginLeft: 'auto' }}>
+                  <ThemeSwitcher />
+                </div>
+              )}
+            </header>
+            <CiAdminProvider value={adminSignal}>
+              <CiBoardContent />
+            </CiAdminProvider>
+          </div>
+          {footerSlot ?? <DefaultFooter />}
+        </div>
+      </QueryClientSafeProvider>
+    </CiConfigProvider>
+  )
+}

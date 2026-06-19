@@ -1,0 +1,42 @@
+name: Release
+
+# Publish @fix-portal/ci-frontend to public npm on a version tag (e.g. v0.1.0).
+#
+# The package scope (@fix-portal) is distinct from @fixportal/design's scope, so
+# consumers map just this scope to public npm and install it tokenlessly — no
+# GitHub Packages mirror needed.
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Configure registry
+        run: npm config set @fix-portal:registry https://registry.npmjs.org
+
+      - name: Install
+        run: npm ci
+
+      - name: Build library
+        run: npm run build:lib
+
+      - name: Publish to public npm
+        run: npm publish --provenance -w @fix-portal/ci-frontend

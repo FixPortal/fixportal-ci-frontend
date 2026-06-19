@@ -1,0 +1,26 @@
+{
+  "name": "fixportal-ci-frontend-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build:lib": "npm run build -w @fix-portal/ci-frontend",
+    "build:app": "npm run build -w dashboard",
+    "test": "npm run test -w @fix-portal/ci-frontend",
+    "lint": "eslint .",
+    "dev": "npm run build:lib && npm run dev -w dashboard"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.60.1"
+  }
+}
