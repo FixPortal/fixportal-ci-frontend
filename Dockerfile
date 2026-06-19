@@ -9,6 +9,7 @@ RUN npm run build:lib
 RUN npm run build:app
 
 FROM nginx:alpine
+LABEL org.opencontainers.image.source="https://github.com/FixPortal/fixportal-ci-frontend"
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 COPY docker-entrypoint.sh /docker-entrypoint.sh
