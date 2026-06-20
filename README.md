@@ -3,6 +3,9 @@ title: fixportal-ci-frontend
 date: 2026-06-20
 status: living document
 last-updated: 2026-06-20
+repo: FixPortal/fixportal-ci-frontend
+stack: React 19 · TypeScript · Vite · npm
+license: Apache-2.0
 ---
 
 ![npm](https://img.shields.io/npm/v/@fix-portal/ci-frontend)
@@ -166,7 +169,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Core conventions:
 
 ## Appendix
 
-**npm package**
+### npm package
 
 ```bash
 npm install @fix-portal/ci-frontend @tanstack/react-query react react-dom
@@ -174,7 +177,7 @@ npm install @fix-portal/ci-frontend @tanstack/react-query react react-dom
 
 Package registry: [`@fix-portal/ci-frontend` on npm](https://www.npmjs.com/package/@fix-portal/ci-frontend)
 
-**Docker image**
+### Docker image
 
 ```
 ghcr.io/fixportal/fixportal-ci-frontend:latest
@@ -182,7 +185,7 @@ ghcr.io/fixportal/fixportal-ci-frontend:latest
 
 Registry: [GitHub Container Registry — fixportal-ci-frontend](https://github.com/FixPortal/fixportal-ci-frontend/pkgs/container/fixportal-ci-frontend)
 
-**Public backend (guest / read-only)**
+### Public backend (guest / read-only)
 
 ```
 https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io
