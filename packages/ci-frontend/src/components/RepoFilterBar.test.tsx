@@ -46,6 +46,8 @@ describe('RepoFilterBar', () => {
     expect(props.onToggleCiStatus).toHaveBeenCalledWith('failing')
     await userEvent.click(screen.getByRole('button', { name: /has prs/i }))
     expect(props.onToggleHasOpenPrs).toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: /^public$/i }))
+    expect(props.onToggleVisibility).toHaveBeenCalledWith('public')
   })
 
   it('reflects selected state via aria-pressed', () => {
