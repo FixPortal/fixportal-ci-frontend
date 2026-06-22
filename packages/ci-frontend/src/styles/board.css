@@ -443,6 +443,89 @@
   }
   .dashboard__hide-noci--on:hover { border-color: var(--no-ci); }
 
+  /* ---- Filter bar ---------------------------------------------------------- */
+
+  .dashboard__filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .repo-filter__search {
+    font-family: var(--font-sans);
+    font-size: var(--fs-13);
+    color: var(--text);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-chip);
+    padding: var(--space-2) var(--space-3);
+    min-width: 180px;
+  }
+  .repo-filter__search:focus { outline: none; border-color: var(--border-strong); }
+
+  .repo-filter__group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .repo-filter__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .repo-filter__divider {
+    width: 1px;
+    align-self: stretch;
+    min-height: 1.4em;
+    background: var(--border);
+  }
+
+  .repo-filter__chip {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-chip);
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .repo-filter__chip:hover { border-color: var(--border-strong); }
+  .repo-filter__chip--on {
+    color: var(--brand);
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+  }
+  .repo-filter__chip--failing.repo-filter__chip--on {
+    color: var(--bad-solid);
+    border-color: var(--bad-solid);
+    background: color-mix(in srgb, var(--bad-solid) 16%, transparent);
+  }
+  .repo-filter__chip--passing.repo-filter__chip--on {
+    color: var(--ok-border);
+    border-color: var(--ok-border);
+    background: color-mix(in srgb, var(--ok-border) 16%, transparent);
+  }
+
+  .state-msg__action {
+    font: inherit;
+    color: var(--brand);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
   /* On narrow widths the name + metrics line stop competing for one row and stack. */
   @media (max-width: 720px) {
     .repo-board > header {
