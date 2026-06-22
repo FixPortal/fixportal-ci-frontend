@@ -178,6 +178,7 @@ export function CiBoardContent() {
 
   return (
     <main className="dashboard-page" tabIndex={-1}>
+      <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
         <span className="dashboard__scope">{snapshot.data.org} · {isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}</span>
         <span className="dashboard__toolbar-right">
@@ -211,6 +212,7 @@ export function CiBoardContent() {
         nextPr={nextPr}
         ciTrend={snapshot.data.ciTrend ?? []}
       />
+      </div>
       <div className="repo-list">
         {repoListContent}
       </div>

@@ -137,7 +137,26 @@
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
-    padding: var(--space-6) var(--space-6) var(--space-12);
+    /* No top padding: the sticky toolbar+summary block must sit flush under the
+       header so it freezes immediately. Any top padding here scrolls away first,
+       giving a brief unfrozen jump before the block sticks. The block's own
+       padding restores the gap below the header. */
+    padding: 0 var(--space-6) var(--space-12);
+  }
+
+  /* Freeze the toolbar (scope, hide-no-ci, collapse-all, updated) together with
+     the summary band so the whole region above the repo list stays put while the
+     repos scroll under it. Wrapping both in one sticky element means a single
+     offset — top = header height — instead of a brittle stack of per-row offsets.
+     --ci-header-h defaults to the un-logo'd header height; hosts with a taller
+     logo override it. Opaque background covers repo cards scrolling underneath;
+     z-index sits under the header's 10. */
+  .dashboard__sticky {
+    position: sticky;
+    top: var(--ci-header-h, 56px);
+    z-index: 9;
+    background: var(--app-bg);
+    padding: var(--space-3) 0;
   }
 
   .dashboard__toolbar {
@@ -848,6 +867,9 @@
      now the card itself (formerly .pr-modal__panel), and ::backdrop replaces the
      old .pr-modal__backdrop element. */
   .pr-modal {
+    /* Native modal <dialog> centers via the UA `margin: auto`; set it explicitly
+       so a host app's `* { margin: 0 }` reset can't pin the card to the top-left. */
+    margin: auto;
     width: min(440px, calc(100vw - 32px));
     background: var(--card-bg);
     border: 1px solid var(--border-strong);
