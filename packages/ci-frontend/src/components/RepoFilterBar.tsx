@@ -44,7 +44,7 @@ function RepoFilterBarImpl({
   onToggleHasOpenPrs,
 }: RepoFilterBarProps) {
   return (
-    <div className="dashboard__filter-bar" role="group" aria-label="Filter repositories">
+    <div className="dashboard__filter-bar" role="search" aria-label="Filter repositories">
       <input
         type="search"
         className="repo-filter__search"
