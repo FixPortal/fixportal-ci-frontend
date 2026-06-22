@@ -1,5 +1,29 @@
 // Extends Vitest's `expect` with the jest-dom matchers (toBeInTheDocument, etc.).
 import '@testing-library/jest-dom/vitest'
+
+// jsdom does not implement matchMedia. Stub it so components that call
+// window.matchMedia (e.g. the ThemeSwitcher in CiBoard) don't throw.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+})
+
+// jsdom does not implement ResizeObserver. Stub it so CiBoard's header-height
+// measurement effect doesn't throw.
+globalThis.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 // RTL auto-cleanup requires globals:true in vitest config. This project opts out
 // of globals, so we register cleanup explicitly here. Tests that already call
 // cleanup() in their own afterEach are unaffected -- a double-call is a no-op.

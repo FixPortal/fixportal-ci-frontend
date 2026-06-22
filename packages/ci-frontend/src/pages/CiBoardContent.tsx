@@ -15,6 +15,9 @@ import { StatusLegend } from '../components/StatusLegend'
 import { PullRequestStepper } from '../components/PullRequestStepper'
 import { flattenOpenPrs } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
+import { useRepoFilters } from '../hooks/useRepoFilters'
+import { applyRepoFilters } from '../lib/applyRepoFilters'
+import { RepoFilterBar } from '../components/RepoFilterBar'
 
 // Apply the Hide No-CI toggle to a repo list. Shared by the pre-early-return
 // openPrs computation and the post-guard visibleRepos so the filter shape lives
@@ -33,8 +36,20 @@ function buildRepoList(
   showGroups: boolean,
   isNoCiHidden: boolean,
   collapse: ReturnType<typeof useCollapseState>,
+  filtersActive: boolean,
+  onClearFilters: () => void,
 ) {
   if (visibleRepos.length === 0) {
+    if (filtersActive) {
+      return (
+        <div className="state-msg">
+          No repositories match the current filters.{' '}
+          <button type="button" className="state-msg__action" onClick={onClearFilters}>
+            Clear filters
+          </button>
+        </div>
+      )
+    }
     if (isNoCiHidden) {
       return <div className="state-msg">All repositories are No-CI — hidden.</div>
     }
@@ -92,6 +107,7 @@ export function CiBoardContent() {
   const snapshot = useDashboardSnapshot()
   const collapse = useCollapseState()
   const hideNoCi = useHideNoCi()
+  const filters = useRepoFilters()
   const isAdmin = useCiAdmin()
   const { adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
   const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
@@ -104,14 +120,18 @@ export function CiBoardContent() {
     const repos = snapshot.data?.repositories ?? []
     return isAdmin ? repos : repos.filter(r => !r.private)
   }, [isAdmin, snapshot.data])
-  const visibleRepos = useMemo(
+  const noCiFiltered = useMemo(
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
-    [repositories, hideNoCi.hidden]
+    [repositories, hideNoCi.hidden],
+  )
+  const visibleRepos = useMemo(
+    () => applyRepoFilters(noCiFiltered, filters.filters),
+    [noCiFiltered, filters.filters],
   )
   const summary = useMemo(() => {
-    if (isAdmin && !hideNoCi.hidden) return snapshot.data?.summary ?? []
+    if (isAdmin && !hideNoCi.hidden && !filters.isActive) return snapshot.data?.summary ?? []
     return computeSummary(visibleRepos)
-  }, [isAdmin, hideNoCi.hidden, snapshot.data, visibleRepos])
+  }, [isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
   const lastMergedPr = useMemo(() => {
     const raw = snapshot.data?.lastMergedPr ?? null
     return raw && visibleRepos.some(r => r.name === raw.repo) ? raw : null
@@ -161,7 +181,7 @@ export function CiBoardContent() {
   // and re-traversed twice per render (the onClick and the button label).
   const noCiCount = repositories.filter(isNoCi).length
   const repoNames = visibleRepos.map(r => r.name)
-  const hiddenCount = repositories.length - visibleRepos.length
+  const hiddenCount = repositories.length - noCiFiltered.length
   const publicRepos = visibleRepos.filter(r => !r.private)
   const privateRepos = visibleRepos.filter(r => r.private)
   const showGroups = publicRepos.length > 0 && privateRepos.length > 0
@@ -174,7 +194,10 @@ export function CiBoardContent() {
   // is currently hiding. openPrs is computed above before the early returns.
   const nextPr = openPrs[0] ?? null
 
-  const repoListContent = buildRepoList(visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, collapse)
+  const repoListContent = buildRepoList(
+    visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, collapse,
+    filters.isActive, filters.clear,
+  )
 
   return (
     <main className="dashboard-page" tabIndex={-1}>
@@ -205,6 +228,14 @@ export function CiBoardContent() {
           </span>
         </span>
       </div>
+      <RepoFilterBar
+        filters={filters.filters}
+        isAdmin={isAdmin}
+        onSearch={filters.setSearch}
+        onToggleVisibility={filters.toggleVisibility}
+        onToggleCiStatus={filters.toggleCiStatus}
+        onToggleHasOpenPrs={filters.toggleHasOpenPrs}
+      />
       <SummaryStrip
         summary={summary}
         onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
