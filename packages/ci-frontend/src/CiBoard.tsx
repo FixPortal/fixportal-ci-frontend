@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider, QueryClientContext } from '@tanstack/react-query'
 import { CiAdminProvider } from './CiAdminContext'
@@ -138,12 +138,30 @@ export function CiBoard({
   // Label reflects whether the board actually consumes a privileged data source,
   // not merely that a signal was passed — matches the toolbar scope descriptor.
   const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
+
+  // The sticky toolbar+summary band freezes at top = the header's height. That
+  // height varies with the host's logo, so measure it and publish the exact value
+  // as --ci-header-h rather than guessing — a stale guess makes the band creep a
+  // few px before it sticks. The CSS default (56px) covers first paint / SSR.
+  const headerRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const header = headerRef.current
+    if (!header) return
+    const publishHeight = () => {
+      header.parentElement?.style.setProperty('--ci-header-h', `${header.offsetHeight}px`)
+    }
+    publishHeight()
+    const observer = new ResizeObserver(publishHeight)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace }}>
       <QueryClientSafeProvider>
         <div className="ci-page">
           <div className="ci-embed">
-            <header className="ci-embed__header">
+            <header ref={headerRef} className="ci-embed__header">
               <span className="ci-embed__lockup">
                 {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
                 <span className="ci-embed__descriptor">
