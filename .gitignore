@@ -5,6 +5,10 @@ dist/
 .env.*
 !.env.example
 coverage/
+*.tsbuildinfo
+
+# Superpowers runtime/scratch (plans live in docs/superpowers/, which IS tracked)
+.superpowers/
 
 # Knowledge-graph artifacts (generated — graphify agent graph, understand-anything human graph)
 graphify-out/
