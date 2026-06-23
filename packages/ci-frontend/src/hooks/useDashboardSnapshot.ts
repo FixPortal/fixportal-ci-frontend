@@ -40,11 +40,13 @@ export function useDashboardSnapshot() {
     queryKey,
     queryFn,
     refetchInterval: 60_000,
-    // The 60s poll already drives freshness; without these, an incidental tab
-    // focus refetches and re-renders the whole board between ticks. Set per-query
-    // (not on the shared app QueryClient) so the host app is unaffected;
-    // structural sharing then lets the memoised boards skip a no-change tick.
+    // Keep polling while the tab is backgrounded so returning to it shows fresh
+    // data, not a snapshot frozen at blur. staleTime gates focus refetches: a
+    // return within 30s reuses cache, a later one refetches. Structural sharing
+    // (react-query default) means a no-change tick skips the memoised-board
+    // re-render, so focus refetch is cheap. Set per-query (not on the shared app
+    // QueryClient) so the host app is unaffected.
+    refetchIntervalInBackground: true,
     staleTime: 30_000,
-    refetchOnWindowFocus: false,
   })
 }
