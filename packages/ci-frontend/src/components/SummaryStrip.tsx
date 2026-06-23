@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CiTrendBucket, MergedPr, SummaryCount } from '../api/types'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import { formatCompactNumber } from '../lib/formatCompactNumber'
@@ -65,7 +65,7 @@ function toneFor(key: string, count: number): string {
 }
 
 export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ciTrend = EMPTY_TREND }: SummaryStripProps) {
-  const byKey = new Map(summary.map(s => [s.key, s.count]))
+  const byKey = useMemo(() => new Map(summary.map(s => [s.key, s.count])), [summary])
 
   const [trendInfoOpen, setTrendInfoOpen] = useState(false)
   const trendLabelRef = useRef<HTMLDivElement>(null)

@@ -47,7 +47,9 @@
   --border-strong: #334155;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
-  --text-faint: #64748b;
+  /* #64748b on #020617 is ~4.23:1 — below the 4.5:1 AA threshold for small text.
+     Lightened to #94a3b8 (~7.4:1) in dark mode only; light-mode value is unchanged. */
+  --text-faint: #94a3b8;
 
   --bad-text: #fecaca;
 
@@ -62,7 +64,7 @@
     --border-strong: #334155;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
-    --text-faint: #64748b;
+    --text-faint: #94a3b8;
 
     --bad-text: #fecaca;
 
