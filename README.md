@@ -42,6 +42,13 @@ a read-only guest snapshot so you see real CI data without any further configura
 To use your own backend, replace `BACKEND_URL` with your backend's origin (no trailing slash).
 The dashboard proxies all `/api/` requests to that origin.
 
+> [!TIP]
+> **Want a dashboard of your own GitHub org or account?** This repo is display-only — the GitHub
+> connection lives in the backend. The companion
+> [`fixportal-ci-backend`](https://github.com/FixPortal/fixportal-ci-backend) repo's
+> `docker compose up` brings up this board UI **and** a backend wired to your GitHub: set
+> `GITHUB_TOKEN` and `GITHUB_OWNER` in its `.env` and it auto-discovers every repo. No further setup.
+
 ## Quick start — clone and run (dev mode)
 
 ```bash
