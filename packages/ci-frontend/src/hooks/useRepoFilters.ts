@@ -1,5 +1,5 @@
 // src/hooks/useRepoFilters.ts
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useCiConfig } from '../CiConfigContext'
 import {
   emptyFilters,
@@ -76,10 +76,7 @@ export function useRepoFilters() {
   const toggleHasOpenPrs = useCallback(() => setFilters(f => ({ ...f, hasOpenPrs: !f.hasOpenPrs })), [])
   const clear = useCallback(() => setFilters(emptyFilters()), [])
 
-  const isActive = useMemo(
-    () => filters.search.trim() !== '' || filters.visibility.size > 0 || filters.ciStatus.size > 0 || filters.hasOpenPrs,
-    [filters],
-  )
+  const isActive = filters.search.trim() !== '' || filters.visibility.size > 0 || filters.ciStatus.size > 0 || filters.hasOpenPrs
 
   return { filters, setSearch, toggleVisibility, toggleCiStatus, toggleHasOpenPrs, clear, isActive }
 }

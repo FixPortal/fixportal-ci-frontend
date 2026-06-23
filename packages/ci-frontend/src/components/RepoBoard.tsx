@@ -21,6 +21,7 @@ export const RepoBoard = memo(function RepoBoard({
 }) {
   const pullRequests = repository.pullRequests ?? []
   const noCi = isNoCi(repository)
+  const ghHref = isAllowedHref(repository.htmlUrl)
   return (
     <section className={`repo-board${collapsed ? ' repo-board--collapsed' : ''}${noCi ? ' repo-board--no-ci' : ''}`}>
       <header>
@@ -31,8 +32,8 @@ export const RepoBoard = memo(function RepoBoard({
         {noCi && <span className="repo-board__noci-tag">No CI</span>}
         <RepoMetricsLine metrics={repository.metrics} />
         <RepoActivityIndicator repository={repository} />
-        {isAllowedHref(repository.htmlUrl) !== '#' ? (
-          <a className="repo-board__gh-link" href={isAllowedHref(repository.htmlUrl)} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
+        {ghHref !== '#' ? (
+          <a className="repo-board__gh-link" href={ghHref} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
             GitHub ↗
           </a>
         ) : (
