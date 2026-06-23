@@ -1,6 +1,16 @@
 // src/components/RepoFilterBar.tsx
-import { memo } from 'react'
+import React, { memo } from 'react'
 import type { CiStatus, RepoFilters, Visibility } from '../lib/applyRepoFilters'
+
+const fieldsetStyle: React.CSSProperties = {
+  border: 'none',
+  margin: 0,
+  padding: 0,
+  minWidth: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 'var(--space-2)',
+}
 
 interface RepoFilterBarProps {
   filters: RepoFilters
@@ -44,7 +54,7 @@ function RepoFilterBarImpl({
   onToggleHasOpenPrs,
 }: RepoFilterBarProps) {
   return (
-    <div className="dashboard__filter-bar" role="search" aria-label="Filter repositories">
+    <search role="search" className="dashboard__filter-bar" aria-label="Filter repositories">
       <input
         type="search"
         className="repo-filter__search"
@@ -57,26 +67,27 @@ function RepoFilterBarImpl({
       {isAdmin && (
         <>
           <span className="repo-filter__divider" aria-hidden="true" />
-          <div className="repo-filter__group" role="group" aria-label="Visibility">
+          <fieldset className="repo-filter__group" style={fieldsetStyle} aria-label="Visibility">
             <span className="repo-filter__label">Visibility</span>
             <Chip label="Public" pressed={filters.visibility.has('public')} onClick={() => onToggleVisibility('public')} />
             <Chip label="Private" pressed={filters.visibility.has('private')} onClick={() => onToggleVisibility('private')} />
-          </div>
+          </fieldset>
         </>
       )}
 
       <span className="repo-filter__divider" aria-hidden="true" />
-      <div className="repo-filter__group" role="group" aria-label="CI Status">
+      <fieldset className="repo-filter__group" style={fieldsetStyle} aria-label="CI Status">
         <span className="repo-filter__label">CI Status</span>
         <Chip label="Failing" tone="failing" pressed={filters.ciStatus.has('failing')} onClick={() => onToggleCiStatus('failing')} />
         <Chip label="Passing" tone="passing" pressed={filters.ciStatus.has('passing')} onClick={() => onToggleCiStatus('passing')} />
         <Chip label="No-CI" pressed={filters.ciStatus.has('no-ci')} onClick={() => onToggleCiStatus('no-ci')} />
-      </div>
+      </fieldset>
 
       <span className="repo-filter__divider" aria-hidden="true" />
       <Chip label="Has PRs" pressed={filters.hasOpenPrs} onClick={onToggleHasOpenPrs} />
-    </div>
+    </search>
   )
 }
 
 export const RepoFilterBar = memo(RepoFilterBarImpl)
+
