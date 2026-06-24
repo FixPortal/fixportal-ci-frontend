@@ -39,14 +39,17 @@ export function useDashboardSnapshot() {
   return useQuery({
     queryKey,
     queryFn,
-    refetchInterval: 60_000,
+    // Backend regenerates the snapshot ~every 60s, so poll at 30s to halve the
+    // worst-case tail between a backend refresh and the board reflecting it
+    // (a new PR was taking up to ~2min: ~60s backend + ~60s frontend).
+    refetchInterval: 30_000,
     // Keep polling while the tab is backgrounded so returning to it shows fresh
     // data, not a snapshot frozen at blur. staleTime gates focus refetches: a
-    // return within 30s reuses cache, a later one refetches. Structural sharing
+    // return within 15s reuses cache, a later one refetches. Structural sharing
     // (react-query default) means a no-change tick skips the memoised-board
     // re-render, so focus refetch is cheap. Set per-query (not on the shared app
     // QueryClient) so the host app is unaffected.
     refetchIntervalInBackground: true,
-    staleTime: 30_000,
+    staleTime: 15_000,
   })
 }
