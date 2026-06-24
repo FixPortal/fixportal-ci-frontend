@@ -81,6 +81,13 @@ docker run -p 8080:8080 -e BACKEND_URL=https://your-backend.example.com ci-front
 The image runs nginx on port **8080** (non-root; nginx cannot bind ports below 1024). Map
 accordingly: `-p 80:8080` or `-p 443:8080` behind a TLS terminator.
 
+> [!NOTE]
+> The proxy forwards the **upstream's** hostname as the `Host` header (derived from
+> `BACKEND_URL`), which is required for a correct TLS SNI handshake against an HTTPS backend.
+> If your backend instead routes on the original client `Host` (name-based virtual hosting),
+> it may reject the request — edit `nginx.conf.template` to `proxy_set_header Host $host;`,
+> accepting that this disables SNI for HTTPS upstreams.
+
 ## Using the library in your own app
 
 ```bash

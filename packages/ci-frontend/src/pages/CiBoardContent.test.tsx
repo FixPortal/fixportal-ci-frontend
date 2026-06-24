@@ -34,7 +34,7 @@ describe('CiBoardContent filtering', () => {
     renderBoard()
     expect(await screen.findByText('engine')).toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox'), 'zzz-no-match')
-    expect(await screen.findByText(/no repositories match the current filters/i)).toBeInTheDocument()
+    expect(await screen.findByText(/no repositories match the active filters/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /clear filters/i }))
     expect(await screen.findByText('engine')).toBeInTheDocument()
   })

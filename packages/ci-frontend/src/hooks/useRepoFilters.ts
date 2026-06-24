@@ -10,11 +10,23 @@ import {
 
 const DEFAULT_KEY = 'ci-dashboard:repo-filters'
 
+const VISIBILITIES: readonly Visibility[] = ['public', 'private']
+const CI_STATUSES: readonly CiStatus[] = ['failing', 'passing', 'no-ci']
+
 interface Persisted {
   search?: string
-  visibility?: Visibility[]
-  ciStatus?: CiStatus[]
+  visibility?: unknown
+  ciStatus?: unknown
   hasOpenPrs?: boolean
+}
+
+// Rehydrate a persisted array as a Set of known members only. localStorage is
+// untrusted (hand-edits, version skew), so drop anything outside the enum rather
+// than letting an arbitrary string into a Set<Visibility>/Set<CiStatus> — it
+// would never match a real bucket but would render a stale chip pressed.
+function loadSet<T>(raw: unknown, valid: readonly T[]): Set<T> {
+  if (!Array.isArray(raw)) return new Set()
+  return new Set(raw.filter((x): x is T => (valid as readonly unknown[]).includes(x)))
 }
 
 function load(key: string): RepoFilters {
@@ -24,8 +36,8 @@ function load(key: string): RepoFilters {
     const p = JSON.parse(raw) as Persisted
     return {
       search: typeof p.search === 'string' ? p.search : '',
-      visibility: new Set(Array.isArray(p.visibility) ? p.visibility : []),
-      ciStatus: new Set(Array.isArray(p.ciStatus) ? p.ciStatus : []),
+      visibility: loadSet(p.visibility, VISIBILITIES),
+      ciStatus: loadSet(p.ciStatus, CI_STATUSES),
       hasOpenPrs: p.hasOpenPrs === true,
     }
   } catch {
@@ -57,6 +69,9 @@ function toggleIn<T>(set: Set<T>, value: T): Set<T> {
 // useCollapseState. Sets are serialised as arrays.
 export function useRepoFilters() {
   const { storageNamespace } = useCiConfig()
+  // storageNamespace must be stable for the component lifetime: the initial state
+  // is seeded once from load(key), so a mid-life namespace change would persist the
+  // old filters under the new key without re-reading it. Every host sets it once.
   const key = storageNamespace ? `${DEFAULT_KEY}:${storageNamespace}` : DEFAULT_KEY
   const [filters, setFilters] = useState<RepoFilters>(() => load(key))
 
