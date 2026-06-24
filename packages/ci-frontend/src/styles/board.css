@@ -463,7 +463,14 @@
     padding: var(--space-2) var(--space-3);
     min-width: 180px;
   }
-  .repo-filter__search:focus { outline: none; border-color: var(--border-strong); }
+  /* Match the board's interactive-element focus pattern (see .chip:focus-visible)
+     — a real outline, not a low-contrast border swap that fails WCAG 2.4.11.
+     :focus-visible keeps the ring off mouse clicks. */
+  .repo-filter__search:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-color: var(--border-strong);
+  }
 
   .repo-filter__group {
     display: inline-flex;

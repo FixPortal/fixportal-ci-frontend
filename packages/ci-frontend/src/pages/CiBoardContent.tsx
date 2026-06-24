@@ -35,15 +35,23 @@ function buildRepoList(
   privateRepos: RepositorySnapshot[],
   showGroups: boolean,
   isNoCiHidden: boolean,
+  noCiHidEverything: boolean,
   collapse: ReturnType<typeof useCollapseState>,
   filtersActive: boolean,
   onClearFilters: () => void,
 ) {
   if (visibleRepos.length === 0) {
+    // Hide No-CI alone has emptied the board: clearing filters cannot restore
+    // anything, so don't offer a "Clear filters" affordance that wouldn't help —
+    // name the real cause (the toggle lives in the toolbar). Checked before the
+    // filtersActive branch so the combined state isn't mislabelled.
+    if (noCiHidEverything) {
+      return <div className="state-msg">All repositories are No-CI — hidden.</div>
+    }
     if (filtersActive) {
       return (
         <div className="state-msg">
-          No repositories match the current filters.{' '}
+          No repositories match the active filters.{' '}
           <button type="button" className="state-msg__action" onClick={onClearFilters}>
             Clear filters
           </button>
@@ -194,8 +202,11 @@ export function CiBoardContent() {
   // is currently hiding. openPrs is computed above before the early returns.
   const nextPr = openPrs[0] ?? null
 
+  // Hide No-CI removed every repo on its own (independent of the filter bar) —
+  // drives the empty-state copy so "Clear filters" isn't offered when it can't help.
+  const noCiHidEverything = hideNoCi.hidden && noCiFiltered.length === 0
   const repoListContent = buildRepoList(
-    visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, collapse,
+    visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, noCiHidEverything, collapse,
     filters.isActive, filters.clear,
   )
 
