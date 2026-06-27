@@ -803,99 +803,107 @@
      as first-class signals next to the workflow chips. */
   .chip--joblane { border-style: solid; }
 
-  /* ---- Status legend (board footer, decodes the dot colour language) ------- */
-  .status-legend {
-    margin-top: var(--space-6);
-    padding: var(--space-3) var(--space-4);
-    border: 1px dashed var(--border);
-    border-radius: var(--r-panel);
+  /* ---- Collapsible legend row (sticky header, below SummaryStrip) ---------- */
+  .legend-row {
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  .legend-row__toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    color: var(--text-muted);
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-2) var(--space-4);
-    font-family: var(--font-mono);
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+  }
+
+  .legend-row__toggle:hover {
+    color: var(--text);
+  }
+
+  .legend-row__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-bottom: var(--space-2);
+  }
+
+  .legend-row__status,
+  .legend-row__metrics,
+  .legend-row__defs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
     font-size: var(--fs-11);
     color: var(--text-muted);
   }
-  .status-legend__title {
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+
+  .legend-row__label {
+    font-weight: 600;
+    min-width: 5rem;
     color: var(--text-muted);
   }
-  .status-legend__item {
+
+  .legend-row__item {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-1);
   }
 
-  /* Swatches mirror the live dots: same colours, same square-failure shape cue.
-     2px is the data-viz micro-radius exception (cf. .ci-weather / failure dot). */
-  .status-legend__dot {
+  .legend-row__dot {
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--unknown);
   }
-  .status-legend__dot[data-state="success"] {
+
+  .legend-row__dot[data-state="success"] {
     background: var(--ok-border);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
   }
-  .status-legend__dot[data-state="failure"] {
+
+  .legend-row__dot[data-state="failure"] {
     background: var(--bad-solid);
     border-radius: 2px;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent);
   }
-  .status-legend__dot[data-state="running"] {
+
+  .legend-row__dot[data-state="running"] {
     background: var(--run);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent);
   }
-  .status-legend__dot[data-state="unknown"] {
+
+  .legend-row__dot[data-state="unknown"] {
     background: transparent;
     border: 1.5px dashed var(--unknown);
   }
-  /* No-CI repos are marked by an indigo left edge on the card; the swatch shows it. */
-  .status-legend__noci {
+
+  .legend-row__noci {
     flex: none;
     width: 18px;
-    height: 12px;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    box-shadow: inset 3px 0 0 var(--no-ci);
+    height: 8px;
+    border-left: 3px solid var(--no-ci);
     background: var(--card-bg);
   }
-  .status-legend__gloss b {
+
+  .legend-row__sep {
+    color: var(--border-strong);
+  }
+
+  .legend-row__gloss b {
     color: var(--text-muted);
     font-weight: 600;
   }
-  .status-legend + .metrics-legend {
-    margin-top: var(--space-2);
-  }
 
-  /* ---- Metrics legend (board footer) --------------------------------------- */
-  .metrics-legend {
-    margin-top: var(--space-6);
-    padding: var(--space-3) var(--space-4);
-    border: 1px dashed var(--border);
-    border-radius: var(--r-panel);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-2) var(--space-4);
-    font-family: var(--font-mono);
-    font-size: var(--fs-11);
-    color: var(--text-muted);
-  }
-
-  .metrics-legend__title {
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  .metrics-legend__item b {
-    color: var(--text-muted);
-    font-weight: 600;
+  .legend-row__defs {
+    padding-left: 5.4rem;
+    color: var(--text-faint);
   }
 
   /* ---- Per-repo header activity indicator ---------------------------------- */
