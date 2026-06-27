@@ -195,6 +195,7 @@ export function CiBoardContent() {
   const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
   const allCollapsibleKeys = [...repoNames, ...sectionKeys]
   const allCollapsed = collapse.allCollapsed(allCollapsibleKeys)
+  const isScopeFiltered = filters.isActive || hideNoCi.hidden
   // The stepper opens at the head of this oldest-first list, so its first entry
   // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
   // applied) so the card and stepper never advertise a PR from a repo the board
@@ -213,7 +214,17 @@ export function CiBoardContent() {
     <main className="dashboard-page" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
-        <span className="dashboard__scope">{snapshot.data.org} · {isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}</span>
+        <span className="dashboard__scope">
+          {snapshot.data.org}
+          {isScopeFiltered
+            ? (
+              <> · <span className="dashboard__scope-count">
+                {visibleRepos.length} of {repositories.length} repositories
+              </span></>
+            )
+            : ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
+          }
+        </span>
         <span className="dashboard__toolbar-right">
           {noCiCount > 0 && (
             <button

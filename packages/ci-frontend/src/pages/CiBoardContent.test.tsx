@@ -48,3 +48,30 @@ describe('CiBoardContent filtering', () => {
     expect(screen.getByText('engine')).toBeInTheDocument()
   })
 })
+
+describe('CiBoardContent scope text', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('shows static "all repositories" scope when no filters are active', async () => {
+    renderBoard()
+    expect(await screen.findByText(/all repositories/)).toBeInTheDocument()
+  })
+
+  it('shows live count in scope when a filter chip is active', async () => {
+    renderBoard()
+    expect(await screen.findByText('engine')).toBeInTheDocument()
+    const bar = screen.getByRole('search')
+    await userEvent.click(within(bar).getByRole('button', { name: /failing/i }))
+    expect(await screen.findByText(/1 of 2 repositories/)).toBeInTheDocument()
+  })
+
+  it('reverts to static scope when filters are cleared', async () => {
+    renderBoard()
+    expect(await screen.findByText('engine')).toBeInTheDocument()
+    const bar = screen.getByRole('search')
+    await userEvent.click(within(bar).getByRole('button', { name: /failing/i }))
+    expect(await screen.findByText(/1 of 2 repositories/)).toBeInTheDocument()
+    await userEvent.click(within(bar).getByRole('button', { name: /failing/i }))
+    expect(await screen.findByText(/all repositories/)).toBeInTheDocument()
+  })
+})
