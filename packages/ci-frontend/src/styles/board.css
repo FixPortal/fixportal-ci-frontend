@@ -832,6 +832,12 @@
     color: var(--text);
   }
 
+  .legend-row__toggle:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+    border-radius: var(--r-control);
+  }
+
   .legend-row__content {
     display: flex;
     flex-direction: column;
