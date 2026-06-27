@@ -172,6 +172,10 @@
     color: var(--text-muted);
   }
 
+  .dashboard__scope-count {
+    color: var(--run);
+  }
+
   .dashboard__refreshed {
     display: inline-flex;
     align-items: center;
