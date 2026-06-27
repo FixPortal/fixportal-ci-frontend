@@ -74,4 +74,25 @@ describe('CiBoardContent scope text', () => {
     await userEvent.click(within(bar).getByRole('button', { name: /failing/i }))
     expect(await screen.findByText(/all repositories/)).toBeInTheDocument()
   })
+
+  it('shows live count in scope when Hide No-CI is active', async () => {
+    const snapshotWithNoCi = {
+      ...snapshot,
+      repositories: [
+        ...snapshot.repositories,
+        { name: 'static-site', htmlUrl: '', private: false, workflows: [], pullRequests: [], metrics: null, deploys: [], packages: [] },
+      ],
+    }
+    render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => snapshotWithNoCi}
+        adminSnapshotFetcher={async () => snapshotWithNoCi}
+        storageNamespace="test-noci"
+      />,
+    )
+    expect(await screen.findByText('static-site')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /hide no-ci/i }))
+    expect(await screen.findByText(/2 of 3 repositories/)).toBeInTheDocument()
+  })
 })
