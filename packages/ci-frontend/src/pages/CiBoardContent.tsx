@@ -10,8 +10,7 @@ import { computeSummary } from '../lib/computeSummary'
 import { SummaryStrip } from '../components/SummaryStrip'
 import { RepoBoard } from '../components/RepoBoard'
 import { RepoSection } from '../components/RepoSection'
-import { MetricsLegend } from '../components/MetricsLegend'
-import { StatusLegend } from '../components/StatusLegend'
+import { LegendRow } from '../components/LegendRow'
 import { PullRequestStepper } from '../components/PullRequestStepper'
 import { flattenOpenPrs } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
@@ -254,12 +253,11 @@ export function CiBoardContent() {
         nextPr={nextPr}
         ciTrend={snapshot.data.ciTrend ?? []}
       />
+      <LegendRow />
       </div>
       <div className="repo-list">
         {repoListContent}
       </div>
-      <StatusLegend />
-      <MetricsLegend />
       {stepperOpen && openPrs.length > 0 && (
         <PullRequestStepper prs={openPrs} onClose={() => setStepperOpen(false)} />
       )}
