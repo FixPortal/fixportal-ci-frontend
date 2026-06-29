@@ -969,7 +969,7 @@
   }
 
   .legend-row__metrics a:hover {
-    color: var(--text-muted);
+    color: var(--text);
   }
 
   /* ---- Per-repo header activity indicator ---------------------------------- */
