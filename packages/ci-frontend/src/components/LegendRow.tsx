@@ -41,15 +41,13 @@ export function LegendRow() {
           </div>
           <div className="legend-row__metrics">
             <a className="legend-row__label" href="https://github.com/terryyin/lizard" target="_blank" rel="noopener noreferrer">Lizard metrics</a>
-          </div>
-          <div className="legend-row__defs">
-            <span><b>NLOC</b> non-comment lines of code</span>
+            <span><b>NLOC</b> <span className="legend-row__def-desc">non-comment lines of code</span></span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><a href="https://en.wikipedia.org/wiki/Cyclomatic_complexity" target="_blank" rel="noopener noreferrer"><b>avg CCN</b></a> cyclomatic complexity</span>
+            <span><a href="https://en.wikipedia.org/wiki/Cyclomatic_complexity" target="_blank" rel="noopener noreferrer"><b>avg CCN</b></a> <span className="legend-row__def-desc">cyclomatic complexity</span></span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><b>functions</b> count</span>
+            <span><b>functions</b> <span className="legend-row__def-desc">count</span></span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><b>complex</b> functions over CCN&nbsp;15</span>
+            <span><b>complex</b> <span className="legend-row__def-desc">functions over CCN&nbsp;15</span></span>
           </div>
         </div>
       )}

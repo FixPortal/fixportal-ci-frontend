@@ -841,8 +841,11 @@
     border: none;
     padding: var(--space-1) var(--space-2);
     cursor: pointer;
-    font-size: var(--fs-12);
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
     font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--text-muted);
     display: flex;
     align-items: center;
@@ -868,21 +871,29 @@
   }
 
   .legend-row__status,
-  .legend-row__metrics,
-  .legend-row__defs {
+  .legend-row__metrics {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    flex-wrap: wrap;
+    gap: var(--space-4);
+    font-family: var(--font-mono);
     font-size: var(--fs-13);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--text-muted);
   }
 
   .legend-row__label {
+    font-size: var(--fs-11);
     font-weight: 600;
+    letter-spacing: 0.12em;
     min-width: 5rem;
     color: var(--text-muted);
     text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .legend-row__label + * {
+    margin-left: auto;
   }
 
   a.legend-row__label {
@@ -944,19 +955,20 @@
     font-weight: 600;
   }
 
-  .legend-row__defs {
-    padding-left: 5.4rem;
-    color: var(--text-faint);
+  .legend-row__def-desc {
+    font-family: var(--font-sans);
+    text-transform: none;
+    letter-spacing: 0;
   }
 
-  .legend-row__defs a {
+  .legend-row__metrics a {
     color: inherit;
     text-decoration: underline;
     text-decoration-style: dotted;
     text-underline-offset: 2px;
   }
 
-  .legend-row__defs a:hover {
+  .legend-row__metrics a:hover {
     color: var(--text-muted);
   }
 
