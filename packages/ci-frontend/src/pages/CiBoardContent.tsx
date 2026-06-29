@@ -225,7 +225,21 @@ export function CiBoardContent() {
             : ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
           }
         </span>
-        <span className="dashboard__toolbar-right">
+        <span className="dashboard__refreshed">
+          <span className="live-dot" aria-hidden="true" />
+          updated {formatRelativeTime(refreshedAt)}
+        </span>
+      </div>
+      <div className="dashboard__filter-row">
+        <RepoFilterBar
+          filters={filters.filters}
+          isAdmin={isAdmin}
+          onSearch={filters.setSearch}
+          onToggleVisibility={filters.toggleVisibility}
+          onToggleCiStatus={filters.toggleCiStatus}
+          onToggleHasOpenPrs={filters.toggleHasOpenPrs}
+        />
+        <div className="dashboard__board-controls">
           {noCiCount > 0 && (
             <button
               type="button"
@@ -243,20 +257,8 @@ export function CiBoardContent() {
           >
             {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
           </button>
-          <span className="dashboard__refreshed">
-            <span className="live-dot" aria-hidden="true" />
-            updated {formatRelativeTime(refreshedAt)}
-          </span>
-        </span>
+        </div>
       </div>
-      <RepoFilterBar
-        filters={filters.filters}
-        isAdmin={isAdmin}
-        onSearch={filters.setSearch}
-        onToggleVisibility={filters.toggleVisibility}
-        onToggleCiStatus={filters.toggleCiStatus}
-        onToggleHasOpenPrs={filters.toggleHasOpenPrs}
-      />
       <SummaryStrip
         summary={summary}
         onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}

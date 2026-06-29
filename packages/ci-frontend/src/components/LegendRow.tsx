@@ -40,12 +40,12 @@ export function LegendRow() {
             </span>
           </div>
           <div className="legend-row__metrics">
-            <span className="legend-row__label">Lizard metrics</span>
+            <a className="legend-row__label" href="https://github.com/terryyin/lizard" target="_blank" rel="noopener noreferrer">Lizard metrics</a>
           </div>
           <div className="legend-row__defs">
-            <span><b>NLOC</b> non-comment lines</span>
+            <span><b>NLOC</b> non-comment lines of code</span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><b>avg CCN</b> cyclomatic complexity</span>
+            <span><a href="https://en.wikipedia.org/wiki/Cyclomatic_complexity" target="_blank" rel="noopener noreferrer"><b>avg CCN</b></a> cyclomatic complexity</span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
             <span><b>functions</b> count</span>
             <span className="legend-row__sep" aria-hidden="true">·</span>
