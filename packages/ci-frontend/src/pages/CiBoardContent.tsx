@@ -214,17 +214,14 @@ export function CiBoardContent() {
     <main className="dashboard-page" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
-        <span className="dashboard__scope">
-          {snapshot.data.org}
-          {isScopeFiltered
-            ? (
-              <> · <span className="dashboard__scope-count">
-                {visibleRepos.length} of {repositories.length} repositories
-              </span></>
-            )
-            : ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
-          }
-        </span>
+        <input
+          type="search"
+          className="repo-filter__search"
+          placeholder="Filter repos..."
+          aria-label="Filter repos by name"
+          value={filters.filters.search}
+          onChange={e => filters.setSearch(e.target.value)}
+        />
         <span className="dashboard__refreshed">
           <span className="live-dot" aria-hidden="true" />
           updated {formatRelativeTime(refreshedAt)}
@@ -234,6 +231,7 @@ export function CiBoardContent() {
         <RepoFilterBar
           filters={filters.filters}
           isAdmin={isAdmin}
+          hideSearch={true}
           onSearch={filters.setSearch}
           onToggleVisibility={filters.toggleVisibility}
           onToggleCiStatus={filters.toggleCiStatus}
@@ -267,6 +265,17 @@ export function CiBoardContent() {
         ciTrend={snapshot.data.ciTrend ?? []}
       />
       <LegendRow />
+      </div>
+      <div className="dashboard__repo-scope">
+        {snapshot.data.org}
+        {isScopeFiltered
+          ? (
+            <> · <span className="dashboard__scope-count">
+              {visibleRepos.length} of {repositories.length} repositories
+            </span></>
+          )
+          : ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
+        }
       </div>
       <div className="repo-list">
         {repoListContent}

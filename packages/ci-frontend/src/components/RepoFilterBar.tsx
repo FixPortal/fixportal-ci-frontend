@@ -15,6 +15,7 @@ const fieldsetStyle: React.CSSProperties = {
 interface RepoFilterBarProps {
   filters: RepoFilters
   isAdmin: boolean
+  hideSearch?: boolean
   onSearch: (value: string) => void
   onToggleVisibility: (v: Visibility) => void
   onToggleCiStatus: (s: CiStatus) => void
@@ -48,21 +49,25 @@ function Chip(props: {
 function RepoFilterBarImpl({
   filters,
   isAdmin,
+  hideSearch,
   onSearch,
   onToggleVisibility,
   onToggleCiStatus,
   onToggleHasOpenPrs,
 }: RepoFilterBarProps) {
+  const hasLeadingContent = !hideSearch || isAdmin
   return (
     <search role="search" className="dashboard__filter-bar" aria-label="Filter repositories">
-      <input
-        type="search"
-        className="repo-filter__search"
-        placeholder="Filter repos..."
-        aria-label="Filter repos by name"
-        value={filters.search}
-        onChange={e => onSearch(e.target.value)}
-      />
+      {!hideSearch && (
+        <input
+          type="search"
+          className="repo-filter__search"
+          placeholder="Filter repos..."
+          aria-label="Filter repos by name"
+          value={filters.search}
+          onChange={e => onSearch(e.target.value)}
+        />
+      )}
 
       {isAdmin && (
         <>
@@ -75,7 +80,7 @@ function RepoFilterBarImpl({
         </>
       )}
 
-      <span className="repo-filter__divider" aria-hidden="true" />
+      {hasLeadingContent && <span className="repo-filter__divider" aria-hidden="true" />}
       <fieldset className="repo-filter__group" style={fieldsetStyle} aria-label="CI Status">
         <span className="repo-filter__label">CI Status</span>
         <Chip label="Failing" tone="failing" pressed={filters.ciStatus.has('failing')} onClick={() => onToggleCiStatus('failing')} />
