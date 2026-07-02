@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import type { QueryFunction } from '@tanstack/react-query'
 import { getDashboardSnapshot } from '../api/getDashboardSnapshot'
 import { useCiConfig } from '../CiConfigContext'
 import { useCiAdmin } from '../CiAdminContext'
@@ -10,7 +11,10 @@ export function useDashboardSnapshot() {
 
   const queryKeyPrefix = 'dashboard-snapshot'
   let queryKey: unknown[]
-  let queryFn: () => Promise<DashboardSnapshot | null>
+  // QueryFunction (not a bare () => Promise) so the internal fetch branches can
+  // accept React Query's { signal } and abort superseded requests; host-supplied
+  // custom fetchers stay zero-arg and are still assignable to this type.
+  let queryFn: QueryFunction<DashboardSnapshot | null>
 
   // The QueryClient is shared with the host app, so custom-fetcher branches must
   // not alias on a fixed sentinel — fold in the caller's cache key to keep
@@ -21,7 +25,7 @@ export function useDashboardSnapshot() {
     queryFn = adminSnapshotFetcher
   } else if (isAdmin && adminSnapshotUrl) {
     queryKey = [queryKeyPrefix, adminSnapshotUrl]
-    queryFn = () => getDashboardSnapshot(adminSnapshotUrl)
+    queryFn = ({ signal }) => getDashboardSnapshot(adminSnapshotUrl, signal)
   } else if (isAdmin && snapshotFetcher) {
     // A2: an admin who supplied only the shared snapshotFetcher (no admin-specific
     // one) still uses it — and so still sends auth headers — rather than falling
@@ -34,7 +38,7 @@ export function useDashboardSnapshot() {
   } else {
     const snapshotUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
     queryKey = [queryKeyPrefix, snapshotUrl]
-    queryFn = () => getDashboardSnapshot(snapshotUrl)
+    queryFn = ({ signal }) => getDashboardSnapshot(snapshotUrl, signal)
   }
   return useQuery({
     queryKey,

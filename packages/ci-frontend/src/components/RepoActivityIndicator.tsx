@@ -10,18 +10,18 @@ export function RepoActivityIndicator({ repository }: { repository: RepositorySn
       {prCount > 0 && <span className="repo-activity__pr">{prCount} PR</span>}
       <span className="repo-activity__sig">
         CI
-        <img
-          src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'/>"
+        <span
           className="repo-activity__dot"
+          role="img"
           data-activity={ci}
           aria-label={`CI ${ci}`}
         />
       </span>
       <span className="repo-activity__sig">
         CD
-        <img
-          src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'/>"
+        <span
           className="repo-activity__dot"
+          role="img"
           data-activity={cd}
           aria-label={`CD ${cd}`}
         />

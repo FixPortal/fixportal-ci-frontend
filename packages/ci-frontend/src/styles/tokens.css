@@ -40,7 +40,7 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
-:root[data-theme="dark"] {
+.ci-page[data-theme="dark"] {
   --app-bg: #020617;
   --card-bg: #0f172a;
   --border: #1e293b;
@@ -57,7 +57,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  .ci-page:not([data-theme="light"]) {
     --app-bg: #020617;
     --card-bg: #0f172a;
     --border: #1e293b;

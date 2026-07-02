@@ -58,7 +58,7 @@
   --fs-24: 24px;
 }
 
-:root[data-theme="dark"] .ci-page {
+.ci-page[data-theme="dark"] {
   --surface-2: #1c2538;
   --run: #60a5fa;
   --pkg: #a78bfa;
@@ -1002,6 +1002,7 @@
   }
 
   .repo-activity__dot {
+    display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: 50%;

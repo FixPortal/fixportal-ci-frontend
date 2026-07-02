@@ -15,7 +15,11 @@ function meta(wf: WorkflowSnapshot): string {
 // reference (structural sharing), so the chip skips re-rendering.
 export const SignalChip = memo(function SignalChip({ workflow }: { workflow: WorkflowSnapshot }) {
   const url = workflow.lastRun?.htmlUrl
-  const linkable = Boolean(url)
+  // Derive linkability from the sanitized href, not raw truthiness: a URL that is
+  // truthy but rejected by isAllowedHref (non-http(s), protocol-relative, …) must
+  // degrade to a static span like every sibling chip, not a dead <a href="#">.
+  const href = isAllowedHref(url)
+  const linkable = href !== '#'
   const className = `chip chip--${workflow.state}${linkable ? '' : ' chip--static'}`
   const body = (
     <>
@@ -28,7 +32,7 @@ export const SignalChip = memo(function SignalChip({ workflow }: { workflow: Wor
   )
   // Open the run in a new tab so the always-on board never navigates away.
   return linkable ? (
-    <a className={className} href={isAllowedHref(url)} title={stateLabel(workflow.state)} target="_blank" rel="noopener noreferrer">{body}</a>
+    <a className={className} href={href} title={stateLabel(workflow.state)} target="_blank" rel="noopener noreferrer">{body}</a>
   ) : (
     <span className={className} title={stateLabel(workflow.state)}>{body}</span>
   )
