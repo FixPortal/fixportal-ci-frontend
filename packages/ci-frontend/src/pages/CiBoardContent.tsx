@@ -16,6 +16,7 @@ import { flattenOpenPrs } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { useRepoFilters } from '../hooks/useRepoFilters'
 import { applyRepoFilters } from '../lib/applyRepoFilters'
+import type { Visibility } from '../lib/applyRepoFilters'
 import { RepoFilterBar } from '../components/RepoFilterBar'
 
 // Apply the Hide No-CI toggle to a repo list. Shared by the pre-early-return
@@ -131,9 +132,18 @@ export function CiBoardContent() {
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
     [repositories, hideNoCi.hidden],
   )
+  // The Visibility filter's controls are admin-only (RepoFilterBar gates the
+  // fieldset on isAdmin), but its effect is role-independent. A visibility
+  // selection persisted from a prior admin session would otherwise blank a
+  // signed-out viewer's board with no visible chip to undo it — so drop the
+  // group for non-admins, who already see only public repos anyway.
+  const effectiveFilters = useMemo(
+    () => (isAdmin ? filters.filters : { ...filters.filters, visibility: new Set<Visibility>() }),
+    [isAdmin, filters.filters],
+  )
   const visibleRepos = useMemo(
-    () => applyRepoFilters(noCiFiltered, filters.filters),
-    [noCiFiltered, filters.filters],
+    () => applyRepoFilters(noCiFiltered, effectiveFilters),
+    [noCiFiltered, effectiveFilters],
   )
   const summary = useMemo(() => {
     if (isAdmin && !hideNoCi.hidden && !filters.isActive) return snapshot.data?.summary ?? []
@@ -204,7 +214,7 @@ export function CiBoardContent() {
 
   // Hide No-CI removed every repo on its own (independent of the filter bar) —
   // drives the empty-state copy so "Clear filters" isn't offered when it can't help.
-  const noCiHidEverything = hideNoCi.hidden && noCiFiltered.length === 0
+  const noCiHidEverything = hideNoCi.hidden && noCiFiltered.length === 0 && repositories.length > 0
   const repoListContent = buildRepoList(
     visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, noCiHidEverything, collapse,
     filters.isActive, filters.clear,

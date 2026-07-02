@@ -14,7 +14,9 @@ test('fetches the snapshot from the supplied CI API base and returns it', async 
 
   const snapshot = await getDashboardSnapshot('https://ci.test/api/dashboard/snapshot')
 
-  expect(fetchMock).toHaveBeenCalledWith('https://ci.test/api/dashboard/snapshot')
+  // fetch is called with an options object carrying React Query's abort signal
+  // (undefined here — no signal passed in this direct call).
+  expect(fetchMock).toHaveBeenCalledWith('https://ci.test/api/dashboard/snapshot', { signal: undefined })
   expect(snapshot).toMatchObject({ org: 'FixPortal', repositories: [] })
 })
 

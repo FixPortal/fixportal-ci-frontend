@@ -6,7 +6,14 @@ const DEFAULT_KEY = 'ci-dashboard:collapsed'
 function load(key: string): Set<string> {
   try {
     const raw = localStorage.getItem(key)
-    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
+    // Validate element types rather than casting — corrupt / version-skewed
+    // storage (e.g. a JSON array of non-strings) would otherwise seed a
+    // Set<number> masquerading as Set<string>, so isCollapsed(name) silently
+    // misses on every string lookup. Mirrors useRepoFilters.loadSet's hardening.
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return new Set(
+      Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [],
+    )
   } catch {
     return new Set()
   }

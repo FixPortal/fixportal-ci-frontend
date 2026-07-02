@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { QueryClient, QueryClientProvider, QueryClientContext } from '@tanstack/react-query'
 import { CiAdminProvider } from './CiAdminContext'
 import { CiConfigProvider, useCiConfig, DEFAULT_CI_API_BASE } from './CiConfigContext'
@@ -34,26 +34,28 @@ export interface CiBoardProps {
 
 function QueryClientSafeProvider({ children }: { children: ReactNode }) {
   const existingClient = useContext(QueryClientContext)
-  const [localClient] = useState(() => {
-    if (!existingClient) {
-      return new QueryClient({
+  // Create the fallback client unconditionally: a spare, unused QueryClient is
+  // inert while a host client exists, and this removes the non-null assertion that
+  // would otherwise pass a null client to QueryClientProvider if the host's own
+  // provider ever disappeared after mount.
+  const [localClient] = useState(
+    () =>
+      new QueryClient({
         defaultOptions: {
           queries: {
             retry: 1,
             refetchOnWindowFocus: false,
           },
         },
-      })
-    }
-    return null
-  })
+      }),
+  )
 
   if (existingClient) {
     return <>{children}</>
   }
 
   return (
-    <QueryClientProvider client={localClient!}>
+    <QueryClientProvider client={localClient}>
       {children}
     </QueryClientProvider>
   )
@@ -66,7 +68,7 @@ function QueryClientSafeProvider({ children }: { children: ReactNode }) {
 // own tokens (e.g. the simulator) skip the vendored set.
 type Theme = 'light' | 'dark' | 'system'
 
-function ThemeSwitcher() {
+function ThemeSwitcher({ pageRef }: { pageRef: RefObject<HTMLDivElement | null> }) {
   // Namespace the theme key like the other storage hooks, so co-hosted boards
   // with distinct storageNamespace values don't clobber each other's preference.
   const { storageNamespace } = useCiConfig()
@@ -82,7 +84,13 @@ function ThemeSwitcher() {
   })
 
   useEffect(() => {
-    const root = document.documentElement
+    // Apply the theme to the board's OWN container (.ci-page), not
+    // document.documentElement. As a published embeddable component the board must
+    // not overwrite the host page's <html data-theme> (nor fight a co-hosted board
+    // over that single global slot). The attribute lives on .ci-page and is removed
+    // with the board's subtree on unmount, so no explicit cleanup is required.
+    const root = pageRef.current
+    if (!root) return
     const applyTheme = () => {
       if (theme === 'system') {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -104,7 +112,7 @@ function ThemeSwitcher() {
       return () => mediaQuery.removeEventListener('change', applyTheme)
     }
     return undefined
-  }, [theme, themeKey])
+  }, [theme, themeKey, pageRef])
 
   return (
     <div className="ci-theme-select-container">
@@ -114,9 +122,9 @@ function ThemeSwitcher() {
         className="ci-theme-select"
         aria-label="Select theme"
       >
-        <option value="system">💻 System</option>
-        <option value="light">☀️ Light</option>
-        <option value="dark">🌙 Dark</option>
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
       </select>
     </div>
   )
@@ -144,6 +152,9 @@ export function CiBoard({
   // as --ci-header-h rather than guessing — a stale guess makes the band creep a
   // few px before it sticks. The CSS default (56px) covers first paint / SSR.
   const headerRef = useRef<HTMLElement>(null)
+  // The theme switcher applies `data-theme` to this container, not <html>, so the
+  // board's theme never leaks onto the host page.
+  const pageRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const header = headerRef.current
     if (!header) return
@@ -159,7 +170,7 @@ export function CiBoard({
   return (
     <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace }}>
       <QueryClientSafeProvider>
-        <div className="ci-page">
+        <div className="ci-page" ref={pageRef}>
           <div className="ci-embed">
             <header ref={headerRef} className="ci-embed__header">
               <span className="ci-embed__lockup">
@@ -170,7 +181,7 @@ export function CiBoard({
               </span>
               {showThemeSwitcher && (
                 <div style={{ marginLeft: 'auto' }}>
-                  <ThemeSwitcher />
+                  <ThemeSwitcher pageRef={pageRef} />
                 </div>
               )}
             </header>
