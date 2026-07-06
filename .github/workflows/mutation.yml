@@ -1,0 +1,34 @@
+name: mutation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  stryker-ci-frontend:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Run Stryker
+        run: npm run test:mutation -w @fix-portal/ci-frontend
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: packages/ci-frontend/reports/mutation/**

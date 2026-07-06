@@ -7,6 +7,10 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# StrykerJS mutation testing output
+reports/
+.stryker-tmp/
+
 # Superpowers runtime/scratch (plans live in docs/superpowers/, which IS tracked)
 .superpowers/
 
