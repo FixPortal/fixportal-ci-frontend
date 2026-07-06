@@ -16,8 +16,9 @@ jobs:
   stryker-ci-frontend:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: true
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -34,7 +35,7 @@ jobs:
 
       - name: Upload mutation report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: mutation-report
           path: packages/ci-frontend/reports/mutation/**
