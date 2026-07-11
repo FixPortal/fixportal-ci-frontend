@@ -24,7 +24,11 @@
   --border-strong: #cbd5e1;
   --text: #1f2937;
   --text-muted: #5f6472;
-  --text-faint: #94a3b8;
+  /* #94a3b8 on #f7f8fa is ~2.41:1 — fails WCAG AA (4.5:1) for the 10px
+     uppercase footer tagline, its only consumer. Darkened to #5b6b85
+     (~5.08:1) in light mode only; dark-mode value is unchanged (already
+     ~7.4:1 there — see the .ci-page[data-theme="dark"] block below). */
+  --text-faint: #5b6b85;
 
   --brand: #0d9488;
 
