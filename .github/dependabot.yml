@@ -21,6 +21,17 @@ updates:
       - dependency-name: typescript
         update-types:
           - version-update:semver-major
+      # vitest 4.1.10 regressed `.rejects.toThrow(<message>)`: the matcher cannot
+      # read the rejected Error's message, so the regex form reports `got ''` and
+      # the string form crashes on `undefined.indexOf`. Held at 4.1.8 (see the pins
+      # in packages/ci-frontend/package.json). Only 4.1.10 is blocked, so a fixed
+      # 4.1.11+ flows in normally; drop these two entries and the pins when it lands.
+      - dependency-name: vitest
+        versions:
+          - 4.1.10
+      - dependency-name: "@vitest/coverage-v8"
+        versions:
+          - 4.1.10
 
   - package-ecosystem: github-actions
     directory: /
