@@ -198,6 +198,18 @@
     color: var(--text-muted);
   }
 
+  .dashboard__refresh-state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .dashboard__refresh-warning {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--bad-text);
+  }
+
   .live-dot {
     width: 7px;
     height: 7px;

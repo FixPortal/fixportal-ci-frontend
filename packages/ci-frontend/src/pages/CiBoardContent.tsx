@@ -183,10 +183,19 @@ export function CiBoardContent() {
     )
   }
 
-  if (snapshot.isError) {
+  if (snapshot.isError && !snapshot.data) {
     return (
       <main className="dashboard-page">
-        <div className="state-msg state-msg--error">Dashboard unavailable.</div>
+        <div className="state-msg state-msg--error">
+          Dashboard unavailable. Retrying automatically.{' '}
+          <button
+            type="button"
+            className="state-msg__action"
+            onClick={() => void snapshot.refetch()}
+          >
+            Retry now
+          </button>
+        </div>
       </main>
     )
   }
@@ -241,9 +250,16 @@ export function CiBoardContent() {
           value={filters.filters.search}
           onChange={e => filters.setSearch(e.target.value)}
         />
-        <span className="dashboard__refreshed">
-          <span className="live-dot" aria-hidden="true" />
-          updated {formatRelativeTime(refreshedAt)}
+        <span className="dashboard__refresh-state">
+          <span className="dashboard__refreshed">
+            <span className="live-dot" aria-hidden="true" />
+            updated {formatRelativeTime(refreshedAt)}
+          </span>
+          {snapshot.isError && (
+            <span className="dashboard__refresh-warning" role="status">
+              refresh failed · retrying
+            </span>
+          )}
         </span>
       </div>
       <div className="dashboard__filter-row">
