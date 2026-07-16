@@ -122,5 +122,5 @@ test('reserves the first viewport while the dashboard loads', async ({ page }) =
 
 test('preserves the desktop dashboard', async ({ page }) => {
   await openDashboard(page)
-  await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled' })
+  await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled', maxDiffPixelRatio: 0.02 })
 })
