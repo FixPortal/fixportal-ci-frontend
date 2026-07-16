@@ -220,6 +220,22 @@
 
   .state-msg--error { color: var(--bad-text); }
 
+  .dashboard-page--loading {
+    box-sizing: border-box;
+    min-height: calc(100vh - var(--ci-header-h, 56px));
+  }
+
+  .dashboard__loading-panels { opacity: 0.65; }
+  .dashboard__loading-panel { min-height: 140px; }
+  .dashboard__loading-line {
+    display: block;
+    width: 100%;
+    height: var(--space-3);
+    border-radius: var(--r-control);
+    background: var(--surface-2);
+  }
+  .dashboard__loading-line--short { width: 45%; }
+
   /* ---- Summary panels ------------------------------------------------------ */
 
   .summary-panels {
@@ -561,6 +577,20 @@
 
   /* On narrow widths the name + metrics line stop competing for one row and stack. */
   @media (max-width: 720px) {
+    .dashboard-page {
+      box-sizing: border-box;
+      padding-inline: var(--space-4);
+    }
+    .ci-embed__header {
+      flex-wrap: wrap;
+      padding-inline: var(--space-4);
+    }
+    .dashboard__filter-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .dashboard__board-controls { margin-left: 0; }
+    .summary-panel { min-width: 0; }
     .repo-board > header {
       flex-direction: column;
       align-items: flex-start;
