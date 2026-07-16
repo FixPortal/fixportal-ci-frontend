@@ -51,9 +51,20 @@ const snapshot = {
 async function openDashboard(page: Page, responseDelay = 0) {
   await page.route('**/api/dashboard/snapshot', async route => {
     if (responseDelay > 0) await new Promise(resolve => setTimeout(resolve, responseDelay))
+    const refreshedAt = new Date().toISOString()
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ ...snapshot, refreshedAt: new Date().toISOString() }),
+      body: JSON.stringify({
+        ...snapshot,
+        refreshedAt,
+        repositories: snapshot.repositories.map(repository => ({
+          ...repository,
+          workflows: repository.workflows.map(workflow => ({
+            ...workflow,
+            lastRun: workflow.lastRun ? { ...workflow.lastRun, updatedAt: refreshedAt } : null,
+          })),
+        })),
+      }),
     })
   })
   await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
@@ -76,9 +87,14 @@ async function installClsObserver(page: Page) {
 }
 
 test('fits the dashboard within a phone viewport', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
+  // Windows reserves a 15px vertical scrollbar gutter inside a 390px window.
+  await page.setViewportSize({ width: 375, height: 844 })
   await openDashboard(page)
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  const documentWidth = await page.evaluate(() => ({
+    client: document.documentElement.clientWidth,
+    scroll: document.documentElement.scrollWidth,
+  }))
+  expect(documentWidth.scroll).toBeLessThanOrEqual(documentWidth.client)
 })
 
 test('keeps cold-load CLS within the good threshold', async ({ page }) => {
