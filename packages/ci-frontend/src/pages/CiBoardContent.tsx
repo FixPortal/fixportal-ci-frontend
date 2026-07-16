@@ -168,8 +168,17 @@ export function CiBoardContent() {
 
   if (snapshot.isPending) {
     return (
-      <main className="dashboard-page">
+      <main className="dashboard-page dashboard-page--loading" key="loading">
         <div className="state-msg">Loading dashboard…</div>
+        <div className="summary-panels dashboard__loading-panels" aria-hidden="true">
+          {[0, 1, 2].map(panel => (
+            <div className="summary-panel dashboard__loading-panel" key={panel}>
+              <span className="dashboard__loading-line dashboard__loading-line--short" />
+              <span className="dashboard__loading-line" />
+              <span className="dashboard__loading-line" />
+            </div>
+          ))}
+        </div>
       </main>
     )
   }
@@ -221,7 +230,7 @@ export function CiBoardContent() {
   )
 
   return (
-    <main className="dashboard-page" tabIndex={-1}>
+    <main className="dashboard-page" key="dashboard" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
         <input
