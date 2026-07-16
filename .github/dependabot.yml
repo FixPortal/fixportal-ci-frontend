@@ -23,9 +23,11 @@ updates:
           - version-update:semver-major
       # vitest 4.1.10 regressed `.rejects.toThrow(<message>)`: the matcher cannot
       # read the rejected Error's message, so the regex form reports `got ''` and
-      # the string form crashes on `undefined.indexOf`. Held at 4.1.8 (see the pins
-      # in packages/ci-frontend/package.json). Only 4.1.10 is blocked, so a fixed
-      # 4.1.11+ flows in normally; drop these two entries and the pins when it lands.
+      # the string form crashes on `undefined.indexOf`. 4.1.9 is verified unaffected
+      # (it reads the message correctly), and the exact pins in
+      # packages/ci-frontend/package.json currently sit there. ONLY 4.1.10 is blocked,
+      # so a fixed 4.1.11+ flows in normally; drop these two entries and relax the
+      # pins to a caret range once a release carrying the fix is in.
       - dependency-name: vitest
         versions:
           - 4.1.10
