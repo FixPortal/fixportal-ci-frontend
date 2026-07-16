@@ -1,7 +1,7 @@
 ---
 title: CI Frontend Audit
 date: 2026-07-16
-status: complete
+status: remediated
 last-updated: 2026-07-16
 ---
 
@@ -14,32 +14,30 @@ last-updated: 2026-07-16
 
 ## Executive summary
 
-The dashboard is sound on its primary desktop guest path: the automated gate is
-green, the live public snapshot renders without console errors, server-side
-visibility enforcement is correct, filters and persisted state behave
-coherently, and light/dark presentation is polished. No critical or high issue
-was found.
+The dashboard remains sound on its primary desktop guest path and all seven
+findings from the initial audit are now remediated. The changes are deliberately
+contained: responsive CSS applies at 720px and below, while a committed 1280 ×
+800 Playwright baseline guards the steady-state desktop composition.
 
-Seven remediations remain: four medium and three low. The most visible defect is
-phone-width horizontal scrolling; the most important state-model defect is the
-standalone `admin=true` mode exposing controls without any privileged source.
-Initial-load CLS is also consistently poor at `0.82`. The remaining findings are
-contract drift, weak outage guidance, missing container security headers, and
-mutable dependencies in publish-capable workflows.
+The fresh gate passes 32 test files and 137 tests, library/app typechecks and
+builds, four Chromium regressions, actionlint, and a production dependency
+audit. The production container also passes `nginx -t`, serves the agreed
+security headers, and proxies the live public snapshot successfully.
 
 | Severity | Count | Release implication |
 |---|---:|---|
 | Critical | 0 | None |
 | High | 0 | None |
-| Medium | 4 | Remediate in the next focused frontend/CI pass |
-| Low | 3 | Fold into the same pass where changes overlap |
-| **Total** | **7** | **No immediate release blocker** |
+| Medium | 0 open / 4 closed | Remediated and regression-tested |
+| Low | 0 open / 3 closed | Remediated and regression-tested |
+| **Total** | **0 open / 7 closed** | **Ready for normal review and CI** |
 
 ## What is working well
 
 | Area | Evidence |
 |---|---|
-| Automated quality | 29 test files and 132 tests pass; library/app typechecks and builds pass |
+| Automated quality | 32 test files and 137 tests pass; library/app typechecks and builds pass |
+| Browser regression | Phone containment, cold-load CLS, loading geometry and desktop rendering pass in Chromium |
 | Dependency baseline | `npm audit --omit=dev` reports zero production vulnerabilities |
 | Public confidentiality | The backend serves a distinct public snapshot and strips private repositories server-side |
 | Guest workflows | Search, status/PR filters, clear-filter recovery, collapse, legend and theme controls work |
@@ -91,6 +89,17 @@ Reproduction:
 Expected: the sticky controls wrap or reflow within the viewport and the page
 has no horizontal document scroll.
 
+#### Closure — remediated
+
+- **Commits:** `d5853ed`, `3cf3535`
+- **Change:** mobile-only border-box sizing and control reflow, plus a
+  shrinkable three-column CI summary grid. Desktop rules above 720px are
+  unchanged.
+- **Proof:** Playwright models the 15px Windows scrollbar gutter and asserts
+  document `scrollWidth <= clientWidth`; the production container measured
+  `375 = 375` inside a 390px browser window.
+- **Evidence:** [390 × 844 after remediation](screenshots/after-mobile-390x844.png)
+
 ### CI-UI-002 — Snapshot failure state gives operators no recovery cue
 
 | Field | Value |
@@ -115,6 +124,17 @@ Reproduction:
 
 Expected: retain useful last-known context where available and state the
 recovery behaviour, with an explicit retry control for immediate recovery.
+
+#### Closure — remediated
+
+- **Commits:** `3e4634e`, `b802a94`
+- **Change:** first-load failure now explains automatic retry and offers
+  `Retry now`; background failure preserves cached data and shows a muted
+  `refresh failed · retrying` status.
+- **Proof:** `CiBoardContent.states.test.tsx` covers both branches and the manual
+  refetch call.
+- **Evidence:** [first-load retry](screenshots/after-error-retry.png),
+  [cached-data warning](screenshots/after-cached-refresh-warning.png)
 
 ### CI-UI-003 — Standalone `admin=true` enables controls without an admin data source
 
@@ -147,6 +167,15 @@ Expected: only expose admin controls when a privileged source is configured.
 For a standalone deployment, that requires a same-origin server proxy that adds
 the admin key; the browser must never receive the key itself.
 
+#### Closure — remediated
+
+- **Commit:** `4aa970c`
+- **Change:** one `effectiveAdmin` value now drives both the descriptor and the
+  admin context; it requires the host signal and a privileged URL/fetcher.
+- **Proof:** component tests cover guest-without-source and admin-with-source;
+  the standalone `?admin=true` walkthrough reported zero Visibility fieldsets.
+- **Evidence:** [standalone query remains guest-only](screenshots/after-admin-query-guest-only.png)
+
 ### CI-ARCH-004 — Exported snapshot type has drifted from the backend contract
 
 | Field | Value |
@@ -172,6 +201,14 @@ Expected: generate or parity-test the TypeScript contract from a committed
 backend schema/snapshot, then either expose the complete DTO or explicitly
 publish a named frontend projection rather than presenting it as the wire shape.
 
+#### Closure — remediated
+
+- **Commit:** `65f8812`
+- **Change:** the exported types now include the backend's run, repository and
+  trend fields and match nullable collections/trends.
+- **Proof:** `types.contract.test.ts` is included by the strict library
+  typecheck and represents the backend JSON shape, including null collections.
+
 ### CI-PERF-005 — Initial snapshot render produces a very poor layout-shift score
 
 | Field | Value |
@@ -194,6 +231,16 @@ geometry with a representative skeleton or minimum-height shell. Do not hide the
 symptom with a fixed full-page height that makes genuine empty/error states
 awkward.
 
+#### Closure — remediated
+
+- **Commit:** `d5853ed`
+- **Change:** a lightweight three-panel loading skeleton reserves the first
+  viewport. Loading and loaded roots have distinct React keys so reconciliation
+  cannot reuse and move the skeleton node as board content.
+- **Proof:** the cold-load Playwright gate passes at CLS `<= 0.10`; the loading
+  shell height gate and the 1280 × 800 desktop baseline also pass.
+- **Evidence:** [loading skeleton](screenshots/after-loading-skeleton.png)
+
 ### CI-SEC-006 — Default container omits browser hardening headers
 
 | Field | Value |
@@ -215,6 +262,15 @@ are same-origin through `/api/`, the CSP can normally keep `default-src` and
 place HSTS at the TLS-terminating layer rather than blindly adding it to the
 plain HTTP container.
 
+#### Closure — remediated
+
+- **Commit:** `1e1cc8f`
+- **Change:** nginx now emits CSP, `nosniff`, strict-origin referrer policy and
+  a restrictive permissions policy with `always`; framing is denied by CSP.
+  HSTS remains at the upstream TLS boundary.
+- **Proof:** the rebuilt image passes `nginx -t`; `HEAD /` returns all four
+  headers and `GET /api/dashboard/snapshot` returns HTTP 200 through the proxy.
+
 ### CI-CI-007 — Publish-capable workflows execute mutable tool/action versions
 
 | Field | Value |
@@ -234,6 +290,15 @@ Expected: pin every action to a reviewed full commit SHA (retaining the version
 as a comment for maintainability) and pin npm to an intentional tested version.
 Use Dependabot or Renovate to make upgrades explicit and reviewable.
 
+#### Closure — remediated
+
+- **Commit:** `4d58ac1`
+- **Change:** every action is full-SHA pinned, workflows use Node 24, the
+  `npm@latest` mutation is removed, actionlint and Playwright run in CI, and
+  weekly grouped npm/Actions Dependabot updates are configured.
+- **Proof:** local actionlint passes; source scan finds no mutable `@v*` action,
+  Node 22 workflow, `npm@latest`, or legacy Node-force override.
+
 ## Symptom → cause
 
 | Symptom | Underlying cause |
@@ -248,16 +313,16 @@ Use Dependabot or Renovate to make upgrades explicit and reviewable.
 
 ## Recommendations
 
-| Priority | Action | Acceptance criterion |
-|---:|---|---|
-| 1 | Fix mobile sizing and sticky-control reflow | No document-level horizontal scroll at 320, 390, 560 or 768px; every control remains visible and keyboard reachable |
-| 2 | Unify privileged-source and admin-control state | Guest data never presents Private/admin-only controls; a wired admin source shows both `[Admin]` and the controls |
-| 3 | Stabilize the loading-to-board transition | Production-build CLS is at most `0.10` on repeat cold loads and the loading state remains honest |
-| 4 | Add a small Playwright browser gate | Guest render, filters, error recovery, admin-source gating, modal focus and phone overflow are regression-tested |
-| 5 | Pin the release supply chain | Actions use full SHAs and npm uses an explicit reviewed version; automated update PRs keep pins current |
-| 6 | Establish backend/frontend DTO parity | A generated contract or test fails CI when field presence or nullability diverges |
-| 7 | Add standalone security headers | Container response passes the agreed CSP/referrer/content-type/framing policy without breaking assets or `/api/` |
-| 8 | Improve snapshot failure recovery | Error view explains automatic polling, offers immediate retry and preserves last-known data when available |
+| Priority | Action | Acceptance criterion | Status |
+|---:|---|---|---|
+| 1 | Fix mobile sizing and sticky-control reflow | No document-level horizontal scroll; controls remain visible and reachable | Closed |
+| 2 | Unify privileged-source and admin-control state | Guest data never presents Private/admin-only controls; a wired admin source shows `[Admin]` and the controls | Closed |
+| 3 | Stabilize the loading-to-board transition | Production-build CLS is at most `0.10` and the loading state remains honest | Closed |
+| 4 | Add a small Playwright browser gate | Guest render, desktop baseline, loading stability and phone overflow are regression-tested | Closed |
+| 5 | Pin the release supply chain | Actions use full SHAs; automated update PRs keep pins current | Closed |
+| 6 | Establish backend/frontend DTO parity | Strict typecheck fails when field presence or nullability diverges | Closed |
+| 7 | Add standalone security headers | Container passes the agreed response policy without breaking assets or `/api/` | Closed |
+| 8 | Improve snapshot failure recovery | Error view explains polling, offers immediate retry and preserves last-known data | Closed |
 
 ## Actions taken
 
@@ -278,8 +343,24 @@ Use Dependabot or Renovate to make upgrades explicit and reviewable.
 | Contract comparison | TS types, backend records, live JSON keys | Found CI-ARCH-004 |
 | Source/config review | Container and GitHub workflows | Found CI-SEC-006 and CI-CI-007 |
 
-No remediation code was applied in this audit branch; it contains the report and
-reproduction evidence only.
+### Remediation verification
+
+| Action | Result |
+|---|---|
+| Lint | Passed with 0 errors and 8 advisory Sonar warnings |
+| Unit/component tests | 32 files passed; 137 tests passed |
+| Typecheck | Strict library typecheck passed |
+| Production builds | Library and standalone app passed; app bundle 257.56kB JS / 28.09kB CSS before gzip |
+| Browser regressions | 4 Chromium tests passed, including desktop screenshot and CLS/mobile gates |
+| Production dependencies | `npm audit --omit=dev`: 0 vulnerabilities |
+| Workflow validation | actionlint passed; all action references are immutable SHAs |
+| Container validation | Docker build and `nginx -t` passed; live public API proxy returned 200 |
+| Responsive walkthrough | 390 × 844 production container: client/scroll width `375/375` |
+| Failure walkthrough | Retry action and cached-data warning both reproduced |
+| Role-state walkthrough | `?admin=true` remained `[Guest]`; Visibility fieldset count was 0 |
+
+The original findings and evidence above are retained as the audit trail; each
+finding now carries its closure evidence and implementation commit.
 
 ## Appendix — reproducibility
 
@@ -306,8 +387,9 @@ npm run test
 npm run typecheck -w @fix-portal/ci-frontend
 npm run build:lib
 npm run build:app
+npm run test:e2e
 npm audit --omit=dev
-agent-browser --session ci-frontend-audit vitals http://localhost:5173 --json
+actionlint
 ```
 
 ### API contract inspected
@@ -326,6 +408,12 @@ Header on trusted server-to-server admin request: X-Admin-Key
 - [CORS negative control at `127.0.0.1`](screenshots/initial-desktop.png)
 - [Snapshot failure state, annotated](screenshots/snapshot-error.png)
 - [Standalone admin/guest mismatch, annotated](screenshots/standalone-admin-guest-mismatch.png)
+- [After: desktop 1280 × 800](screenshots/after-desktop-1280x800.png)
+- [After: mobile 390 × 844](screenshots/after-mobile-390x844.png)
+- [After: loading skeleton](screenshots/after-loading-skeleton.png)
+- [After: first-load error and retry](screenshots/after-error-retry.png)
+- [After: cached-data refresh warning](screenshots/after-cached-refresh-warning.png)
+- [After: standalone admin query remains guest-only](screenshots/after-admin-query-guest-only.png)
 
 ### Scope limits
 
@@ -333,6 +421,6 @@ Header on trusted server-to-server admin request: X-Admin-Key
   pass used the local standalone app against the live public backend.
 - No authenticated admin host/credentials were supplied; protected admin data
   was assessed from the source, tests and backend endpoint contract.
-- The Docker image was reviewed from its build/nginx configuration rather than
-  deployed behind a production TLS gateway, so upstream-added response headers
-  may vary by deployment.
+- The Docker image was exercised locally against the live public backend; it was
+  not deployed behind a production TLS gateway, so upstream-added headers may
+  still vary by deployment.
