@@ -48,10 +48,9 @@ const snapshot = {
   ciTrend: [],
 }
 
-async function openDashboard(page: Page, responseDelay = 0) {
+async function openDashboard(page: Page, responseDelay = 0, refreshedAt = new Date().toISOString()) {
   await page.route('**/api/dashboard/snapshot', async route => {
     if (responseDelay > 0) await new Promise(resolve => setTimeout(resolve, responseDelay))
-    const refreshedAt = new Date().toISOString()
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -121,6 +120,8 @@ test('reserves the first viewport while the dashboard loads', async ({ page }) =
 })
 
 test('preserves the desktop dashboard', async ({ page }) => {
-  await openDashboard(page)
-  await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled', maxDiffPixelRatio: 0.02 })
+  const now = new Date('2026-07-16T10:00:00Z')
+  await page.clock.install({ time: now })
+  await openDashboard(page, 0, now.toISOString())
+  await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled', maxDiffPixelRatio: 0.017 })
 })
