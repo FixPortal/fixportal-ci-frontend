@@ -26,12 +26,6 @@ export function useDashboardSnapshot() {
   } else if (isAdmin && adminSnapshotUrl) {
     queryKey = [queryKeyPrefix, adminSnapshotUrl]
     queryFn = ({ signal }) => getDashboardSnapshot(adminSnapshotUrl, signal)
-  } else if (isAdmin && snapshotFetcher) {
-    // A2: an admin who supplied only the shared snapshotFetcher (no admin-specific
-    // one) still uses it — and so still sends auth headers — rather than falling
-    // through to an unauthenticated fetch. Namespaced apart from the guest path.
-    queryKey = [queryKeyPrefix, '__guest_fetcher__', 'admin-fallback', snapshotCacheKey].filter(Boolean)
-    queryFn = snapshotFetcher
   } else if (!isAdmin && snapshotFetcher) {
     queryKey = [queryKeyPrefix, '__guest_fetcher__', snapshotCacheKey].filter(Boolean)
     queryFn = snapshotFetcher

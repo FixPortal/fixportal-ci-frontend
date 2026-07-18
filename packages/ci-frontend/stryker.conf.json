@@ -6,7 +6,9 @@
   "reporters": ["html", "clear-text", "progress"],
   "mutate": [
     "src/**/*.ts",
+    "src/**/*.tsx",
     "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
     "!src/**/*.spec.ts",
     "!src/**/*.archunit.ts",
     "!src/**/*.d.ts"

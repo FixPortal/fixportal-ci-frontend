@@ -8,7 +8,7 @@ import { DefaultFooter } from './DefaultFooter'
 import type { DashboardSnapshot } from './api/types'
 
 export interface CiBoardProps {
-  /** Whether the viewer is an admin: sees private repos + actionable PR links. Host-computed. */
+  /** Whether the viewer is an admin: sees private repos + actionable PR links when an admin-specific snapshot URL or fetcher is also configured. Host-computed. */
   adminSignal: boolean
   /** Origin of the CI backend snapshot API (no trailing slash). Defaults to '' (relative URLs — requires a same-origin /api/ proxy). Pass 'https://ci.fixportal.org' to reach the public FixPortal backend. */
   apiBase?: string

@@ -15,7 +15,6 @@ permissions:
 jobs:
   stryker-ci-frontend:
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    continue-on-error: true
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7

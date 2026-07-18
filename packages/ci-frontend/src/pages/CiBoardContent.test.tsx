@@ -96,3 +96,43 @@ describe('CiBoardContent scope text', () => {
     expect(await screen.findByText(/2 of 3 repositories/)).toBeInTheDocument()
   })
 })
+
+describe('CiBoardContent public snapshot fallbacks', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('renders the public CI trend when the full trend is unavailable', async () => {
+    const publicSnapshot: DashboardSnapshot = {
+      ...snapshot,
+      summary: [{ key: 'failing', count: 0 }],
+      ciTrend: null,
+      publicCiTrend: [{ bucketStart: '2026-06-22T09:00:00Z', state: 'passing' }],
+    }
+
+    render(<CiBoard adminSignal={false} snapshotFetcher={async () => publicSnapshot} />)
+
+    expect(await screen.findByRole('img', { name: /CI health, last 24h: 0 failing, 1 healthy/i })).toBeInTheDocument()
+  })
+
+  it('renders the newest visible repository merge when the aggregate merge is unavailable', async () => {
+    const publicSnapshot: DashboardSnapshot = {
+      ...snapshot,
+      summary: [{ key: 'open-prs', count: 0 }],
+      repositories: snapshot.repositories.map((repository, index) => ({
+        ...repository,
+        lastMergedPr: {
+          number: index + 1,
+          title: index === 0 ? 'Older merge' : 'Newest merge',
+          author: 'chris',
+          repo: repository.name,
+          htmlUrl: `https://github.com/FixPortal/${repository.name}/pull/${index + 1}`,
+          mergedAt: index === 0 ? '2026-06-22T08:00:00Z' : '2026-06-22T09:00:00Z',
+        },
+      })),
+    }
+
+    render(<CiBoard adminSignal={false} snapshotFetcher={async () => publicSnapshot} />)
+
+    expect(await screen.findByText('Newest merge')).toBeInTheDocument()
+    expect(screen.queryByText('Older merge')).not.toBeInTheDocument()
+  })
+})
