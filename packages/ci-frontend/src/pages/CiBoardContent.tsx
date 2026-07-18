@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { RepositorySnapshot } from '../api/types'
+import type { MergedPr, RepositorySnapshot } from '../api/types'
 import { useDashboardSnapshot } from '../hooks/useDashboardSnapshot'
 import { useCollapseState } from '../hooks/useCollapseState'
 import { useHideNoCi } from '../hooks/useHideNoCi'
@@ -151,7 +151,13 @@ export function CiBoardContent() {
   }, [isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
   const lastMergedPr = useMemo(() => {
     const raw = snapshot.data?.lastMergedPr ?? null
-    return raw && visibleRepos.some(r => r.name === raw.repo) ? raw : null
+    if (raw && visibleRepos.some(r => r.name === raw.repo)) return raw
+    let latest: MergedPr | null = null
+    for (const repository of visibleRepos) {
+      const merged = repository.lastMergedPr
+      if (merged && (!latest || merged.mergedAt > latest.mergedAt)) latest = merged
+    }
+    return latest
   }, [snapshot.data, visibleRepos])
 
   // Computed before the early returns so nextPr and the stepper guard are
@@ -299,7 +305,7 @@ export function CiBoardContent() {
         onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
         lastMerged={lastMergedPr}
         nextPr={nextPr}
-        ciTrend={snapshot.data.ciTrend ?? []}
+        ciTrend={snapshot.data.ciTrend ?? snapshot.data.publicCiTrend ?? []}
       />
       <LegendRow />
       </div>
