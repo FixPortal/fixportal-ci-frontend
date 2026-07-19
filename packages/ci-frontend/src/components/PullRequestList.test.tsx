@@ -17,3 +17,12 @@ test('renders nothing when there are no pull requests', () => {
   const { container } = render(<PullRequestList pullRequests={[]} />)
   expect(container.firstChild).toBeNull()
 })
+
+test('renders static text, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
+  const rejected: PullRequest[] = [
+    { number: 9, title: 'Suspicious PR', author: 'mallory', htmlUrl: 'javascript:alert(1)', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
+  ]
+  render(<PullRequestList pullRequests={rejected} />)
+  expect(screen.queryByRole('link')).toBeNull()
+  expect(screen.getByText('Suspicious PR')).toBeInTheDocument()
+})

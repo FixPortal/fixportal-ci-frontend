@@ -35,6 +35,18 @@ describe('RepoBoard GitHub link', () => {
     )
     expect(screen.getByRole('link', { name: /open fixportal-engine on github/i })).toBeInTheDocument()
   })
+
+  it('renders a static "GitHub" label, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
+    render(
+      <RepoBoard
+        repository={repo({ name: 'fixportal-engine', htmlUrl: '//evil.example.com/path' })}
+        collapsed={false}
+        onToggle={() => {}}
+      />,
+    )
+    expect(screen.queryByRole('link', { name: /open fixportal-engine on github/i })).toBeNull()
+    expect(screen.getByText('GitHub')).toBeInTheDocument()
+  })
 })
 
 describe('RepoBoard No-CI treatment', () => {

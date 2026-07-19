@@ -18,3 +18,10 @@ test('renders nothing when there are no signals', () => {
   const { container } = render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[]} />)
   expect(container.firstChild).toBeNull()
 })
+
+test('renders a static chip, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
+  const rejected: JobSignal = { ...signal, htmlUrl: 'javascript:alert(1)' }
+  render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[rejected]} />)
+  expect(screen.queryByRole('link')).toBeNull()
+  expect(screen.getByText('Deploy (prod)').closest('.chip')).toHaveClass('chip--static')
+})
