@@ -31,4 +31,18 @@ describe('useCollapseState', () => {
     const { result } = renderHook(() => useCollapseState())
     expect(result.current.isCollapsed('x')).toBe(true)
   })
+
+  it('falls back to empty (nothing collapsed) on malformed JSON', () => {
+    localStorage.setItem('ci-dashboard:collapsed', '{not json')
+    const { result } = renderHook(() => useCollapseState())
+    expect(result.current.isCollapsed('a')).toBe(false)
+    expect(result.current.allCollapsed(['a'])).toBe(false)
+  })
+
+  it('drops non-string elements from a corrupt array (untrusted localStorage)', () => {
+    localStorage.setItem('ci-dashboard:collapsed', JSON.stringify(['x', 42, null, { y: 1 }]))
+    const { result } = renderHook(() => useCollapseState())
+    expect(result.current.isCollapsed('x')).toBe(true)
+    expect(result.current.isCollapsed('42')).toBe(false)
+  })
 })

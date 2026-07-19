@@ -90,6 +90,13 @@ describe('SummaryStrip last-merged', () => {
     expect(screen.getByText(/^\(.+\)$/, { selector: '.summary-panel__q-age' })).toBeInTheDocument()
     expect(screen.getByText('fixportal-engine #88')).toBeInTheDocument()
   })
+
+  it('renders a static block, not a dead link, when the last-merged htmlUrl is rejected by the sanitizer', () => {
+    const rejectedMerged: MergedPr = { ...merged, htmlUrl: 'javascript:alert(1)' }
+    render(<SummaryStrip summary={[{ key: 'open-prs', count: 1 }]} onOpenPrs={() => {}} lastMerged={rejectedMerged} />)
+    expect(screen.getByText(mergedTitle).closest('a')).toBeNull()
+    expect(screen.getByText(mergedTitle).closest('.summary-panel__merged--static')).not.toBeNull()
+  })
 })
 
 describe('SummaryStrip open-prs interactivity', () => {
