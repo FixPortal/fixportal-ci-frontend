@@ -43,3 +43,4 @@ jobs:
         with:
           name: mutation-report
           path: packages/ci-frontend/reports/mutation/**
+          if-no-files-found: error
