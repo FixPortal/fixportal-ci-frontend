@@ -34,6 +34,19 @@ function ciStatusOf(repo: RepositorySnapshot): CiStatus | null {
   return null
 }
 
+// The search box matches the repo name or any of its open PRs, by number or
+// title, so "181" and "decoder" both find the repo carrying that PR. Number
+// match is a substring of the decimal number with or without a leading '#'.
+function matchesQuery(repo: RepositorySnapshot, query: string): boolean {
+  if (repo.name.toLowerCase().includes(query)) return true
+  const prQuery = query.startsWith('#') ? query.slice(1) : query
+  return (repo.pullRequests ?? []).some(
+    pr =>
+      pr.title.toLowerCase().includes(query) ||
+      (prQuery !== '' && String(pr.number).includes(prQuery)),
+  )
+}
+
 // Pure, total filter over a repo list. Across groups: AND. Within a group: OR.
 // Empty group = no constraint.
 export function applyRepoFilters(
@@ -42,7 +55,7 @@ export function applyRepoFilters(
 ): RepositorySnapshot[] {
   const query = filters.search.trim().toLowerCase()
   return repos.filter(repo => {
-    if (query && !repo.name.toLowerCase().includes(query)) return false
+    if (query && !matchesQuery(repo, query)) return false
     if (filters.visibility.size > 0) {
       const v: Visibility = repo.private ? 'private' : 'public'
       if (!filters.visibility.has(v)) return false
