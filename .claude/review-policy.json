@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "PR review risk tiering. Read by ~/.claude/hooks/pr-review-policy.sh.",
+    "Any file matching 'high' => HIGH (Gitar + CodeRabbit). All files matching 'low' => LOW.",
+    "Everything else => NORMAL (Gitar only). No match anywhere => NORMAL, deliberately.",
+    "",
+    "Monorepo: apps/dashboard consumes packages/ci-frontend, which is PUBLISHED to a",
+    "registry (release.yml). Every package.json is therefore HIGH - a version or",
+    "dependency change here propagates to external consumers, not just to this build.",
+    "",
+    "LOW justification for THIS repo: only ROOT *.md and docs/ are low. Markdown inside",
+    "packages/** is NOT low - a readme can be shipped inside the published npm tarball.",
+    "The '*' in '*.md' does not cross a directory separator, so packages/**/*.md is",
+    "correctly excluded; do not 'tidy' this into '**/*.md'."
+  ],
+
+  "version": 1,
+
+  "high": [
+    ".claude/review-policy.json",
+    ".coderabbit.yaml",
+    ".gitignore",
+    ".github/workflows/**",
+    "package.json",
+    "package-lock.json",
+    "apps/dashboard/package.json",
+    "packages/ci-frontend/package.json"
+  ],
+
+  "low": [
+    "docs/**",
+    "*.md",
+    ".vscode/**"
+  ]
+}
