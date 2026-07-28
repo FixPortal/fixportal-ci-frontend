@@ -23,7 +23,7 @@ const running = repo({ name: 'web', workflows: [wf('running')] })
 const noCi = repo({ name: 'docs', workflows: [] })
 const privatePassing = repo({ name: 'secret', private: true, workflows: [wf('success')] })
 const withPr = repo({ name: 'review', workflows: [wf('success')], pullRequests: [
-  { number: 1, title: 't', author: 'a', htmlUrl: '', isDraft: false, createdAt: '2026-01-01' },
+  { number: 181, title: 'FIX Decoder', author: 'a', htmlUrl: '', isDraft: false, createdAt: '2026-01-01' },
 ] })
 const all = [failing, passing, running, noCi, privatePassing, withPr]
 
@@ -35,6 +35,13 @@ describe('applyRepoFilters', () => {
   it('matches the search substring case-insensitively against repo name', () => {
     expect(applyRepoFilters(all, filters({ search: 'ENG' })).map(r => r.name)).toEqual(['engine'])
     expect(applyRepoFilters(all, filters({ search: '  ' }))).toEqual(all) // whitespace-only = no filter
+  })
+
+  it('matches the search against open PR titles and numbers', () => {
+    expect(applyRepoFilters(all, filters({ search: 'decoder' })).map(r => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ search: '181' })).map(r => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ search: '#181' })).map(r => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ search: '#' }))).toEqual([]) // bare # is not "every repo with a PR"
   })
 
   it('filters by visibility (public only)', () => {

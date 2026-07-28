@@ -253,8 +253,8 @@ export function CiBoardContent() {
         <input
           type="search"
           className="repo-filter__search"
-          placeholder="Filter repos..."
-          aria-label="Filter repos by name"
+          placeholder="Filter repos or PRs..."
+          aria-label="Filter repos by name, or by PR number or title"
           value={filters.filters.search}
           onChange={e => filters.setSearch(e.target.value)}
         />
