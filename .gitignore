@@ -19,3 +19,6 @@ packages/ci-frontend/.stryker-tmp/
 # Knowledge-graph artifacts (generated — graphify agent graph, understand-anything human graph)
 graphify-out/
 .understand-anything/
+
+.claude/*
+!.claude/review-policy.json
