@@ -15,9 +15,11 @@ license: Apache-2.0
 # fixportal-ci-frontend
 
 > React CI dashboard — a component library and standalone app that render a GitHub organisation's
-> CI overview (workflow status, open PRs, deploy lanes, per-repo metrics, 24-hour trend) from a
-> single backend snapshot endpoint. No FixPortal-specific dependency required; brand and design
-> tokens are injectable.
+> CI overview (workflow status, open PRs, deploy lanes, per-repo metrics, 24-hour trend, per-PR
+> review signals) from a single backend snapshot endpoint. No FixPortal-specific dependency
+> required; brand and design tokens are injectable. Per-PR review signals appear only when the
+> backend snapshot supplies `reviewSignals` on a pull request; older or unconfigured backends are
+> rendered exactly as before.
 
 ![FixPortal CI dashboard](docs/dashboard.png)
 
