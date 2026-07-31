@@ -20,6 +20,15 @@ export interface WorkflowSnapshot {
   lastRun: WorkflowRun | null
 }
 
+export type ReviewSignalState = 'clean' | 'outstanding' | 'pending' | 'disabled'
+
+export interface ReviewSignal {
+  name: string
+  state: ReviewSignalState
+  count?: number | null
+  htmlUrl?: string | null
+}
+
 export interface PullRequest {
   number: number
   title: string
@@ -27,6 +36,10 @@ export interface PullRequest {
   htmlUrl: string
   isDraft: boolean
   createdAt: string
+  // Optional so a new frontend renders against an older backend, and so a bot PR
+  // (excluded from review enrichment) and a deployment with the feature off both
+  // arrive as "nothing to show" rather than as an empty-but-present row.
+  reviewSignals?: ReviewSignal[] | null
 }
 
 export interface RepoMetrics {
