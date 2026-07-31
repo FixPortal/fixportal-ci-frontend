@@ -755,6 +755,75 @@
     .chip--running .chip__dot { animation: none; }
   }
 
+  /* ---- Review pills -------------------------------------------------------- */
+
+  /* One row of per-reviewer states on a pull request. Reuses the .chip system
+     wholesale — only the state modifiers below are new. */
+  .review-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-2) 0;
+  }
+
+  /* Verified clean: the reviewer demonstrably ran and left nothing open. Mirrors
+     .chip--success so "green" means the same thing everywhere on the board. */
+  .chip--review-clean {
+    background: color-mix(in srgb, var(--ok-border) 7%, var(--surface-2));
+  }
+  .chip--review-clean .chip__dot {
+    background: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+  }
+
+  /* Outstanding items. Square LED, as .chip--failure: the one state that must
+     survive grayscale and red-green CVD without relying on the red. */
+  .chip--review-outstanding {
+    background: color-mix(in srgb, var(--bad-solid) 9%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--bad-solid) 32%, var(--border));
+  }
+  .chip--review-outstanding .chip__dot {
+    background: var(--bad-solid);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent);
+  }
+
+  /* Required, but no evidence it has run — a paused reviewer, or a PR opened
+     moments ago. Reads as absence, never as alarm: the .chip--unknown treatment. */
+  .chip--review-pending {
+    background: transparent;
+    border-style: dashed;
+    opacity: 0.72;
+  }
+  .chip--review-pending .chip__dot {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+    border: 1.5px solid var(--unknown);
+  }
+  .chip--review-pending .chip__label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Not required on this PR. Quieter than pending and lower contrast, so it reads
+     as "not applicable" from across the room rather than as a fourth status. */
+  .chip--review-disabled {
+    background: transparent;
+    border-style: dashed;
+    opacity: 0.45;
+  }
+  .chip--review-disabled .chip__dot {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+    border: 1.5px solid var(--border-strong);
+  }
+  .chip--review-disabled .chip__label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
   /* Repo with no workflows: quiet, dashed, matching the "unknown" absence cue. */
   .repo-board__empty {
     padding: var(--space-4);
