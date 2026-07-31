@@ -829,6 +829,26 @@
     font-weight: 500;
   }
 
+  /* A state outside the four this library knows -- a newer backend sending
+     something we cannot interpret. Must never read as settled, so it takes
+     the same dashed, hollow-dot family as .chip--review-pending rather than
+     falling back to the bare .chip look (solid border, filled dot). */
+  .chip--review-unknown {
+    background: transparent;
+    border-style: dashed;
+    opacity: 0.85;
+  }
+  .chip--review-unknown .chip__dot {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+    border: 1.5px solid var(--text-muted);
+  }
+  .chip--review-unknown .chip__label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
   /* Repo with no workflows: quiet, dashed, matching the "unknown" absence cue. */
   .repo-board__empty {
     padding: var(--space-4);

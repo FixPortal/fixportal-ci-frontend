@@ -26,7 +26,7 @@ const cssPath = fileURLToPath(new URL('./board.css', here))
 const css: string = readFileSync(cssPath, 'utf-8')
 
 describe('board.css review pill selectors', () => {
-  it.each(['clean', 'outstanding', 'pending', 'disabled'])('defines .chip--review-%s', state => {
+  it.each(['clean', 'outstanding', 'pending', 'disabled', 'unknown'])('defines .chip--review-%s', state => {
     expect(css).toContain(`.chip--review-${state}`)
   })
 })
