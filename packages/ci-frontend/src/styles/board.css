@@ -810,20 +810,19 @@
     font-weight: 500;
   }
 
-  /* Not required on this PR. Quieter than pending via opacity alone — dot and
-     label share the same --text-muted token as pending, so only the opacity
-     carries the hierarchy, keeping the pill's dot and label reading as one
-     consistent signal rather than pulling in different directions. */
+  /* Not required on this PR. Distinguished from pending by shape, not brightness:
+     opacity alone converged the two at wall-board distance / in greyscale, and
+     they mean opposite things for merging. The status light is dropped entirely
+     -- "not applicable" reads as a bare label with no indicator, rather than a
+     dimmer version of "nobody has looked yet". The .sr-only label still carries
+     "not required" for the non-visual path. */
   .chip--review-disabled {
     background: transparent;
     border-style: dashed;
     opacity: 0.70;
   }
   .chip--review-disabled .chip__dot {
-    width: 8px;
-    height: 8px;
-    background: transparent;
-    border: 1.5px solid var(--text-muted);
+    display: none;
   }
   .chip--review-disabled .chip__label {
     color: var(--text-muted);
