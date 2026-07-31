@@ -777,7 +777,7 @@
   }
 
   /* Outstanding items. Square LED, as .chip--failure: the one state that must
-     survive grayscale and red-green CVD without relying on the red. */
+     survive greyscale and red-green CVD without relying on the red. */
   .chip--review-outstanding {
     background: color-mix(in srgb, var(--bad-solid) 9%, var(--surface-2));
     border-color: color-mix(in srgb, var(--bad-solid) 32%, var(--border));
@@ -806,18 +806,20 @@
     font-weight: 500;
   }
 
-  /* Not required on this PR. Quieter than pending and lower contrast, so it reads
-     as "not applicable" from across the room rather than as a fourth status. */
+  /* Not required on this PR. Quieter than pending via opacity alone, so it reads
+     as "not applicable" from across the room rather than as a fourth status. The
+     dot border uses --text-muted (not --border-strong) so the outline itself
+     stays perceivable rather than fading to near-invisible under the opacity. */
   .chip--review-disabled {
     background: transparent;
     border-style: dashed;
-    opacity: 0.45;
+    opacity: 0.55;
   }
   .chip--review-disabled .chip__dot {
     width: 8px;
     height: 8px;
     background: transparent;
-    border: 1.5px solid var(--border-strong);
+    border: 1.5px solid var(--text-muted);
   }
   .chip--review-disabled .chip__label {
     color: var(--text-muted);
