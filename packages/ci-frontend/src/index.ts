@@ -7,6 +7,8 @@ export type {
   SignalState,
   WorkflowRun,
   WorkflowSnapshot,
+  ReviewSignalState,
+  ReviewSignal,
   PullRequest,
   RepoMetrics,
   JobSignal,
