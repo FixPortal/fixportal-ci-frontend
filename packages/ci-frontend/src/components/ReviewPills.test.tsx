@@ -64,3 +64,15 @@ test('applies a state-specific class so the four states are visually distinct', 
   expect(container.querySelector('.chip--review-clean')).not.toBeNull()
   expect(container.querySelector('.chip--review-pending')).not.toBeNull()
 })
+
+test('skips a malformed entry instead of throwing, and renders the valid one', () => {
+  const withBadEntry = [null, { name: 'Gitar', state: 'clean' }] as ReviewSignal[]
+  expect(() => render(<ReviewPills signals={withBadEntry} />)).not.toThrow()
+  expect(screen.getByText('Gitar')).toBeInTheDocument()
+})
+
+test('renders nothing when every entry is malformed', () => {
+  const allBad = [null, { name: 'no-state' }, 'not-an-object'] as unknown as ReviewSignal[]
+  const { container } = render(<ReviewPills signals={allBad} />)
+  expect(container.firstChild).toBeNull()
+})
