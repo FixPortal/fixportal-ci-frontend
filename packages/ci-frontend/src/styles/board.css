@@ -789,31 +789,35 @@
   }
 
   /* Required, but no evidence it has run — a paused reviewer, or a PR opened
-     moments ago. Reads as absence, never as alarm: the .chip--unknown treatment. */
+     moments ago. Reads as absence, never as alarm: dashed, hollow dot. Uses
+     --text-muted rather than .chip--unknown's --unknown token because opacity
+     composites the border toward the backdrop — --unknown's base contrast
+     (~2.645:1 light) cannot clear 3:1 at any opacity, so this state's contrast
+     has to stand on its own rather than borrowing .chip--unknown's dot colour. */
   .chip--review-pending {
     background: transparent;
     border-style: dashed;
-    opacity: 0.72;
+    opacity: 0.85;
   }
   .chip--review-pending .chip__dot {
     width: 8px;
     height: 8px;
     background: transparent;
-    border: 1.5px solid var(--unknown);
+    border: 1.5px solid var(--text-muted);
   }
   .chip--review-pending .chip__label {
     color: var(--text-muted);
     font-weight: 500;
   }
 
-  /* Not required on this PR. Quieter than pending via opacity alone, so it reads
-     as "not applicable" from across the room rather than as a fourth status. The
-     dot border uses --text-muted (not --border-strong) so the outline itself
-     stays perceivable rather than fading to near-invisible under the opacity. */
+  /* Not required on this PR. Quieter than pending via opacity alone — dot and
+     label share the same --text-muted token as pending, so only the opacity
+     carries the hierarchy, keeping the pill's dot and label reading as one
+     consistent signal rather than pulling in different directions. */
   .chip--review-disabled {
     background: transparent;
     border-style: dashed;
-    opacity: 0.55;
+    opacity: 0.70;
   }
   .chip--review-disabled .chip__dot {
     width: 8px;
