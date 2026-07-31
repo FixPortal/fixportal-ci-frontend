@@ -13,9 +13,21 @@ const LINKABLE: ReadonlySet<string> = new Set(['clean', 'outstanding'])
 // re-rendering every 20 seconds.
 export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: ReviewSignal[] | null }) {
   if (!signals || signals.length === 0) return null
+  // The snapshot boundary does no runtime validation of the array's CONTENTS (this is a
+  // published library -- consumers point it at their own backends), so a null or malformed
+  // entry can reach here despite the ReviewSignal[] type. A throw during render would
+  // propagate out of this dialog-mounted component with no ErrorBoundary anywhere in src,
+  // unmounting the stepper's <dialog> without running its cleanup effect -- onClose never
+  // fires, and the parent's stepperOpen sticks true, wedging the Open-PRs button for the
+  // rest of the session. Skip bad entries instead. Same posture as reviewSignalLabel's
+  // Record<string, string> keying: never assume the snapshot is total.
+  const wellFormed = signals.filter(
+    (s): s is ReviewSignal => typeof s === 'object' && s !== null && typeof s.name === 'string' && typeof s.state === 'string',
+  )
+  if (wellFormed.length === 0) return null
   return (
     <div className="review-pills">
-      {signals.map(signal => {
+      {wellFormed.map(signal => {
         const label = reviewSignalLabel(signal)
         // Derive linkability from the sanitized href, never from raw truthiness: a
         // URL that is truthy but rejected by isAllowedHref must degrade to a static
