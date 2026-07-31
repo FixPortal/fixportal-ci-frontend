@@ -14,8 +14,13 @@ function isSafeRelativeHref(url: string): boolean {
   return false
 }
 
-export function isAllowedHref(url: string | undefined | null): string {
-  if (!url) return '#'
+export function isAllowedHref(url: unknown): string {
+  // Untrusted-shape hardening: the snapshot boundary does no runtime validation
+  // (this is a published library -- consumers point it at their own backends),
+  // so a non-string (number, object, etc.) can reach here despite every call
+  // site's string-typed signature. Guard here, not per-call-site, so every
+  // caller -- present and future -- inherits the same root-cause fix.
+  if (typeof url !== 'string' || url.length === 0) return '#'
 
   if (isSafeRelativeHref(url)) {
     return url

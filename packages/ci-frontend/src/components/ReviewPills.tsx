@@ -12,7 +12,7 @@ const LINKABLE: ReadonlySet<string> = new Set(['clean', 'outstanding'])
 // preserves the signal array's reference (structural sharing), so the row skips
 // re-rendering every 20 seconds.
 export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: ReviewSignal[] | null }) {
-  if (!signals || signals.length === 0) return null
+  if (!Array.isArray(signals) || signals.length === 0) return null
   // The snapshot boundary does no runtime validation of the array's CONTENTS (this is a
   // published library -- consumers point it at their own backends), so a null or malformed
   // entry can reach here despite the ReviewSignal[] type. A throw during render would
