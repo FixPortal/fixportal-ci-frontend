@@ -21,10 +21,27 @@ test.each([[undefined], [null], [[] as ReviewSignal[]]])('renders nothing for %o
   expect(container.firstChild).toBeNull()
 })
 
+test.each([[{} as unknown as ReviewSignal[]], [3 as unknown as ReviewSignal[]], ['x' as unknown as ReviewSignal[]]])(
+  'renders nothing for non-array signals %o',
+  input => {
+    const { container } = render(<ReviewPills signals={input} />)
+    expect(container.firstChild).toBeNull()
+  },
+)
+
 test('shows the count only on an outstanding signal', () => {
   render(<ReviewPills signals={signals} />)
   expect(screen.getByText('3')).toBeInTheDocument()
   expect(screen.queryByText('0')).toBeNull()
+})
+
+test('does not show a count on a non-outstanding signal even when one is supplied', () => {
+  render(
+    <ReviewPills
+      signals={[{ name: 'Gitar', state: 'clean', count: 5 } as ReviewSignal]}
+    />,
+  )
+  expect(screen.queryByText('5')).toBeNull()
 })
 
 test('carries the state in words for screen readers, not colour alone', () => {
@@ -40,9 +57,22 @@ test('links an outstanding pill that has a safe url', () => {
   expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7/files')
 })
 
+test('links a clean pill that has a safe url', () => {
+  render(
+    <ReviewPills signals={[{ name: 'Gitar', state: 'clean', htmlUrl: 'https://github.com/x/y/pull/7' }]} />,
+  )
+  const link = screen.getByRole('link', { name: /Gitar/ })
+  expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7')
+})
+
 test('degrades to a static span when the url is rejected by the sanitizer', () => {
-  render(<ReviewPills signals={[{ name: 'CodeRabbit', state: 'outstanding', count: 1, htmlUrl: 'javascript:alert(1)' }]} />)
+  const { container } = render(
+    <ReviewPills signals={[{ name: 'CodeRabbit', state: 'outstanding', count: 1, htmlUrl: 'javascript:alert(1)' }]} />,
+  )
   expect(screen.queryByRole('link')).toBeNull()
+  // A link-role check alone would also pass for a bare <a> with no href attribute;
+  // assert there is no anchor element at all.
+  expect(container.querySelector('a')).toBeNull()
   expect(screen.getByText('CodeRabbit')).toBeInTheDocument()
 })
 
