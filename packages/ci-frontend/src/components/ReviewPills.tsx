@@ -8,6 +8,15 @@ import { reviewSignalLabel } from '../lib/reviewSignalLabel'
 // that lands on an empty page.
 const LINKABLE: ReadonlySet<string> = new Set(['clean', 'outstanding'])
 
+// The states this library has CSS for. An out-of-union state from a newer
+// backend must still render -- dropping it would read as "reviewer not
+// configured", a stronger and wronger claim than "we don't know its state"
+// -- but it must never inherit the bare `.chip` look (solid border, filled
+// dot) that an unmatched `chip--review-<raw state>` class would fall back
+// to, since that reads as settled. Route anything outside this set to the
+// dedicated `chip--review-unknown` modifier instead.
+const KNOWN_STATES: ReadonlySet<string> = new Set(['clean', 'outstanding', 'pending', 'disabled'])
+
 // Memoised for the same reason as SignalChip: on a no-change poll tick React Query
 // preserves the signal array's reference (structural sharing), so the row skips
 // re-rendering every 20 seconds.
@@ -27,14 +36,15 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
   if (wellFormed.length === 0) return null
   return (
     <div className="review-pills">
-      {wellFormed.map(signal => {
+      {wellFormed.map((signal, i) => {
         const label = reviewSignalLabel(signal)
         // Derive linkability from the sanitized href, never from raw truthiness: a
         // URL that is truthy but rejected by isAllowedHref must degrade to a static
         // span, not become a dead <a href="#"> (same rule as SignalChip).
         const href = LINKABLE.has(signal.state) ? isAllowedHref(signal.htmlUrl ?? undefined) : '#'
         const linkable = href !== '#'
-        const className = `chip chip--review-${signal.state}${linkable ? '' : ' chip--static'}`
+        const stateModifier = KNOWN_STATES.has(signal.state) ? signal.state : 'unknown'
+        const className = `chip chip--review-${stateModifier}${linkable ? '' : ' chip--static'}`
         const body = (
           <>
             <span className="chip__dot" aria-hidden="true" />
@@ -46,9 +56,12 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
             ) : null}
           </>
         )
+        // Untrusted snapshot data: nothing enforces one entry per reviewer name, so
+        // the index is folded into the key to keep duplicates from colliding.
+        const key = `${signal.name}-${i}`
         return linkable ? (
           <a
-            key={signal.name}
+            key={key}
             className={className}
             href={href}
             title={label}
@@ -58,7 +71,7 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
             {body}
           </a>
         ) : (
-          <span key={signal.name} className={className} title={label}>
+          <span key={key} className={className} title={label}>
             {body}
           </span>
         )

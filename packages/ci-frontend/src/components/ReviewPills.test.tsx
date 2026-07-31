@@ -106,3 +106,42 @@ test('renders nothing when every entry is malformed', () => {
   const { container } = render(<ReviewPills signals={allBad} />)
   expect(container.firstChild).toBeNull()
 })
+
+test('an unrecognised state still renders instead of vanishing', () => {
+  render(<ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />)
+  expect(screen.getByText('FutureBot')).toBeInTheDocument()
+})
+
+test('an unrecognised state gets the unknown modifier, never a class built from the raw state', () => {
+  const { container } = render(
+    <ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />,
+  )
+  expect(container.querySelector('.chip--review-unknown')).not.toBeNull()
+  expect(container.querySelector('.chip--review-errored')).toBeNull()
+})
+
+test('an unrecognised state carries the "status unknown" accessible label', () => {
+  render(<ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />)
+  expect(screen.getByText('FutureBot: status unknown')).toBeInTheDocument()
+})
+
+test('an unrecognised state never links', () => {
+  const { container } = render(
+    <ReviewPills
+      signals={[{ name: 'FutureBot', state: 'errored', htmlUrl: 'https://github.com/x/y/pull/7' } as unknown as ReviewSignal]}
+    />,
+  )
+  expect(container.querySelector('a')).toBeNull()
+})
+
+test('two signals with the same reviewer name both render without a key collision', () => {
+  render(
+    <ReviewPills
+      signals={[
+        { name: 'Gitar', state: 'clean' },
+        { name: 'Gitar', state: 'outstanding', count: 2 },
+      ]}
+    />,
+  )
+  expect(screen.getAllByText('Gitar')).toHaveLength(2)
+})
