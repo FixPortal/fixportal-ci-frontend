@@ -3,6 +3,7 @@ import type { OpenPr } from '../lib/flattenOpenPrs'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
 import { isAllowedHref } from '../lib/isAllowedHref'
+import { ReviewPills } from './ReviewPills'
 export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: () => void }) {
   const [i, setI] = useState(0)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -79,6 +80,7 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
           <span className="pr-card__meta">{formatRelativeTime(pr.createdAt)} · {pr.isDraft ? 'draft' : 'ready'}</span>
         </div>
         <div className="pr-card__title">{pr.title}</div>
+        <ReviewPills signals={pr.reviewSignals} />
         <div className="pr-card__foot">
           <span className="pr-card__author">@{pr.author}</span>
           {prHref !== '#' ? (
