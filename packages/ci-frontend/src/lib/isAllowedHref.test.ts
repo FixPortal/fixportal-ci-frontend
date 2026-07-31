@@ -48,4 +48,13 @@ describe('isAllowedHref', () => {
     expect(isAllowedHref(undefined)).toBe('#')
     expect(isAllowedHref(null)).toBe('#')
   })
+
+  it('returns # for a non-string input instead of throwing', () => {
+    // The snapshot boundary does no runtime validation, so a malformed backend
+    // response can hand this a shape other than string despite the type.
+    expect(isAllowedHref(42)).toBe('#')
+    expect(isAllowedHref({})).toBe('#')
+    expect(isAllowedHref(['/ci'])).toBe('#')
+    expect(isAllowedHref(true)).toBe('#')
+  })
 })

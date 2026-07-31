@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import { PullRequestList } from './PullRequestList'
-import type { PullRequest } from '../api/types'
+import type { PullRequest, ReviewSignal } from '../api/types'
 
 const prs: PullRequest[] = [
   { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: 'https://github.com/x/y/pull/7', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
@@ -25,4 +25,11 @@ test('renders static text, not a dead link, when htmlUrl is rejected by the sani
   render(<PullRequestList pullRequests={rejected} />)
   expect(screen.queryByRole('link')).toBeNull()
   expect(screen.getByText('Suspicious PR')).toBeInTheDocument()
+})
+
+test('does not render review pills -- they are a stepper-only affordance', () => {
+  const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'outstanding', count: 2 }]
+  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  expect(container.querySelector('.review-pills')).toBeNull()
 })
