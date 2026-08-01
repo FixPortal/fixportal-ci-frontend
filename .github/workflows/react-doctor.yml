@@ -1,0 +1,73 @@
+# React Doctor - finds security, performance, correctness, accessibility,
+# bundle-size, and architecture issues in React codebases.
+#
+# Docs: https://www.react.doctor/ci
+# Source: https://github.com/millionco/react-doctor
+
+name: React Doctor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  # Scans `main` on every push so you get a health-score trend on the
+  # default branch - useful for tracking the overall number commit-by-commit
+  # and catching regressions that slipped past PR review. PR-specific steps
+  # (the sticky summary comment) are skipped automatically on `push` events.
+  push:
+    branches: [main]
+
+permissions:
+  # `actions/checkout` needs this to read the repo source.
+  contents: read
+  # Two uses: (1) reads the PR's changed-file list so the scan only checks
+  # what the PR touched, and (2) posts/updates the sticky summary comment.
+  pull-requests: write
+  # The sticky-comment step uses GitHub's `issues.createComment` /
+  # `issues.updateComment` endpoints - PRs are issues under the hood.
+  issues: write
+  # The action publishes a "React Doctor" commit status carrying the score
+  # and the error/warning counts. Without this it skips that step.
+  statuses: write
+
+# Cancels any in-flight scan for the same PR (or branch, on push) the moment
+# a new commit arrives, so reviewers only ever see the latest run.
+concurrency:
+  group: react-doctor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  react-doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Keep the ACTION pin current, not just the CLI `version` below. The
+      # "Scan could not complete" failure that reddened every PR in
+      # fixportal-simulator-frontend came from the action's wrapper, not the
+      # CLI: its ensure-json-report step fails the job when react-doctor exits
+      # 0 without writing a report, which is what it does when a PR changes no
+      # React files. Same symptom as
+      # https://github.com/millionco/react-doctor/issues/1183.
+      - uses: millionco/react-doctor@01820bb4fd4d0a4aebcd8df2b2a143a098649cb2 # v2.2.8
+        with:
+          # Fail a PR on newly-introduced ERRORS. `blocking` defaults to `none`
+          # (advisory - findings reported, always exits 0), so leaving it unset
+          # means the check reports but never gates.
+          #
+          # No event guard needed: the action already refuses to fail on
+          # anything other than a pull_request, so the push-to-main health
+          # trend stays advisory. PR runs default to `scope: changed` -
+          # baseline mode, only issues the PR *introduces* - so pre-existing
+          # findings cannot red an unrelated branch.
+          blocking: error
+          # Pin the scanned tool, not just the action: `version` defaults to
+          # `latest`, so an upstream release can change the gate's behaviour
+          # with no change on our side. Matches fixportal-simulator-frontend
+          # so health scores stay comparable across the estate.
+          version: "0.7.6"
+        # Deliberately unscoped: no `directory` or `project` filter, so the
+        # scan runs from the repo root and covers both workspaces
+        # (apps/dashboard and packages/ci-frontend). That is also what keeps
+        # the root doctor.config.json in effect - the four rules disabled
+        # there during the 2026-06-23 remediation pass (f032f2b) would
+        # otherwise fire again under a workspace-scoped scan.
