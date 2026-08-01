@@ -15,7 +15,8 @@
     "dev": "npm run build:lib && npm run dev -w dashboard"
   },
   "overrides": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "qs": "^6.15.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
