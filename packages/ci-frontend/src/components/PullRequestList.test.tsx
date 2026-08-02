@@ -66,6 +66,7 @@ test('wraps the PR link and its pills in a shared line element', () => {
   const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
   const { container } = render(<PullRequestList pullRequests={withSignals} />)
   const line = container.querySelector('.repo-prs__line')
+  expect(line).not.toBeNull()
   expect(line?.querySelector('a')).not.toBeNull()
   expect(line?.querySelector('.review-pills')).not.toBeNull()
 })

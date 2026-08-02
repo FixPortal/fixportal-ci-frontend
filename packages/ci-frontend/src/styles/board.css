@@ -937,14 +937,20 @@
     margin: 0;
   }
 
-  .repo-prs__item a {
+  /* Child combinator, not descendant: .repo-prs__line also holds the
+     .review-pills anchors, and a bare `.repo-prs__item a` would match those
+     too. At (0,1,1) it would beat .chip's (0,1,0) and force pill links to
+     --text instead of .chip's --text-muted. Currently inert (every glyph
+     inside a pill sets its own colour) but the tighter selector removes the
+     trap instead of relying on that coincidence. */
+  .repo-prs__line > a {
     display: inline-flex;
     gap: var(--space-2);
     text-decoration: none;
     color: var(--text);
   }
 
-  .repo-prs__item a:hover .repo-prs__title { text-decoration: underline; }
+  .repo-prs__line > a:hover .repo-prs__title { text-decoration: underline; }
 
   .repo-prs__num {
     font-family: var(--font-mono);
