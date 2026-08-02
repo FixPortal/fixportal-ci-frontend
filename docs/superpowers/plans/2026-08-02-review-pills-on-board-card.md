@@ -332,13 +332,24 @@ git commit -m "release: bump @fix-portal/ci-frontend to 2.2.0"
 
 - [ ] **Step 1: Typecheck**
 
-Run from the repo root:
+There is **no root `tsconfig.json`** in this repo — the house gate's
+`npx tsc -b --noEmit` from the root fails with `TS5083: Cannot read file
+'tsconfig.json'` on any branch, which is a missing config, not a type error.
+Typecheck each package against its own config instead.
+
+Run from `packages/ci-frontend`:
 
 ```
-npx tsc -b --noEmit
+npx tsc -p tsconfig.json --noEmit
 ```
 
-Expected: exit 0, no output.
+Then from `apps/dashboard`:
+
+```
+npx tsc -p tsconfig.json --noEmit
+```
+
+Expected: exit 0 from both, no output.
 
 - [ ] **Step 2: Lint**
 
