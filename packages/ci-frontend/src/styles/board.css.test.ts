@@ -36,11 +36,17 @@ describe('board.css review pill selectors', () => {
 // rules would leave every component test green while the pills lost their
 // right alignment and silently re-grew the vertical margin they exist to avoid.
 describe('board.css PR-row layout', () => {
-  it('defines .repo-prs__line', () => {
-    expect(css).toContain('.repo-prs__line')
+  it('right-aligns the pills against the PR link', () => {
+    const match = css.match(/\.repo-prs__line\s*\{([^}]*)\}/)
+    expect(match).not.toBeNull()
+    const body = match![1].replace(/\s+/g, ' ')
+    expect(body).toContain('justify-content: space-between')
   })
 
   it('zeroes the review-pills margin inside a PR row', () => {
-    expect(css).toContain('.repo-prs__line .review-pills')
+    const match = css.match(/\.repo-prs__line \.review-pills\s*\{([^}]*)\}/)
+    expect(match).not.toBeNull()
+    const body = match![1].replace(/\s+/g, ' ')
+    expect(body).toContain('margin: 0')
   })
 })

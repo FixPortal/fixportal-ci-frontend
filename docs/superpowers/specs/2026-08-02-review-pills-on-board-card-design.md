@@ -17,7 +17,13 @@ about 1050px carrying a number, a title and a meta line. The right-hand two
 thirds are empty.
 
 Placing the pills at the right edge of the existing row therefore costs **no
-extra height at all** and consumes space that was already dead. The density
+extra line** — the row stays one text line, not two — and consumes space that
+was already dead. It is not literally free in pixels: `.chip` is 12px text at
+`line-height: 1` plus 4px top/bottom padding plus a 1px border (~22px total),
+a few pixels taller than the PR title's ~19px line box at the host's default
+font, so a row carrying pills grows by that difference; the
+`@media (pointer: coarse)` rule bumps `.chip` padding to 8px/12px (~30px
+total), so on a touch-pointer device the growth is closer to 11px. The density
 objection applied to pills on their own line; it does not apply to pills in the
 row's unused right margin.
 
