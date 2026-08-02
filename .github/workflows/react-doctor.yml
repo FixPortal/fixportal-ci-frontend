@@ -40,6 +40,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history, not the default shallow clone. React Doctor's PR mode
+          # is baseline-relative: it diffs against `main` to report only what
+          # the PR introduces. With no merge base in the clone that comparison
+          # cannot run, and it silently degrades to listing EVERY issue in the
+          # changed files, pre-existing ones included - which under
+          # `blocking: error` can red a branch for findings it did not create.
+          # The action warns about this in its own summary comment.
+          fetch-depth: 0
 
       # Keep the ACTION pin current, not just the CLI `version` below. The
       # "Scan could not complete" failure that reddened every PR in
