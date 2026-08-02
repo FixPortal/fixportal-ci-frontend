@@ -135,7 +135,13 @@ failures.
   fallback.
 
 `board.css.test.ts` gains a presence check for `.repo-prs__line`, matching how
-that suite already guards the other board rules.
+that suite already guards the `.chip--review-*` rules: no render-level test
+asserts a selector actually exists in the stylesheet, so deleting the rule
+would leave every component test green while the pills silently lost their
+alignment.
+
+No README change. Its intro blockquote already describes per-PR review signals
+without naming a placement, so it stays correct.
 
 No new ArchUnitTS rule: `PullRequestList` importing a sibling component is an
 already-permitted edge.
