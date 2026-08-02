@@ -912,6 +912,31 @@
     gap: var(--space-2);
   }
 
+  /* The PR link and its review pills share one line. `space-between` is doing
+     all the responsive work here, with no breakpoint and no JS:
+       - both fit on one line -> title left, pills hard right, in the ~1050px
+         row's otherwise dead right-hand space, costing zero extra height;
+       - pills wrap onto their own line -> that line holds a single item, which
+         `space-between` places at flex-start, so the cluster sits left-aligned
+         under the title rather than stranded at the right edge.
+     `margin-left: auto` on the pills would give the first behaviour and get the
+     second wrong. Nothing is hidden and no title is truncated at any width. */
+  .repo-prs__line {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* .review-pills ships with `margin: var(--space-2) 0` for the stepper's card,
+     where the pills own a line. In a board row that margin would add height to
+     every PR -- the exact cost this placement exists to avoid -- so it is zeroed
+     here only. The stepper's copy keeps it. */
+  .repo-prs__line .review-pills {
+    margin: 0;
+  }
+
   .repo-prs__item a {
     display: inline-flex;
     gap: var(--space-2);

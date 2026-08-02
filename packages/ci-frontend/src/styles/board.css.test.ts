@@ -30,3 +30,17 @@ describe('board.css review pill selectors', () => {
     expect(css).toContain(`.chip--review-${state}`)
   })
 })
+
+// Same reasoning as the pill-state block above: a render test only asserts the
+// class is on the element, never that board.css defines it. Deleting these two
+// rules would leave every component test green while the pills lost their
+// right alignment and silently re-grew the vertical margin they exist to avoid.
+describe('board.css PR-row layout', () => {
+  it('defines .repo-prs__line', () => {
+    expect(css).toContain('.repo-prs__line')
+  })
+
+  it('zeroes the review-pills margin inside a PR row', () => {
+    expect(css).toContain('.repo-prs__line .review-pills')
+  })
+})
