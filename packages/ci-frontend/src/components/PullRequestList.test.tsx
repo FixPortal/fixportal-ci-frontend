@@ -27,9 +27,45 @@ test('renders static text, not a dead link, when htmlUrl is rejected by the sani
   expect(screen.getByText('Suspicious PR')).toBeInTheDocument()
 })
 
-test('does not render review pills -- they are a stepper-only affordance', () => {
-  const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'outstanding', count: 2 }]
+test('renders one review pill per signal on the PR row', () => {
+  const reviewSignals: ReviewSignal[] = [
+    { name: 'CodeRabbit', state: 'outstanding', count: 2 },
+    { name: 'Gitar', state: 'clean' },
+  ]
   const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
   const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  expect(container.querySelectorAll('.review-pills .chip')).toHaveLength(2)
+  expect(screen.getByText('CodeRabbit')).toBeInTheDocument()
+  expect(screen.getByText('Gitar')).toBeInTheDocument()
+})
+
+// The backend ships the feature off (ReviewSignals:Reviewers is empty), so the
+// no-signals path is the live one until that config lands. It must render byte
+// for byte what it rendered before this change.
+test('renders no pills when the PR carries no review signals', () => {
+  const { container } = render(<PullRequestList pullRequests={prs} />)
   expect(container.querySelector('.review-pills')).toBeNull()
+})
+
+// Pills carry their own links to a reviewer's threads or alerts. Nested inside
+// the PR anchor they would be interactive content within interactive content --
+// invalid HTML, and a click that resolves to whichever the browser prefers.
+test('renders the pills outside the PR anchor, not nested within it', () => {
+  const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
+  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  const pills = container.querySelector('.review-pills')
+  expect(pills).not.toBeNull()
+  expect(pills?.closest('a')).toBeNull()
+})
+
+// The wrapper is not cosmetic: board.css hangs the right-alignment and the
+// responsive wrap off .repo-prs__line, so losing it silently un-styles the row.
+test('wraps the PR link and its pills in a shared line element', () => {
+  const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
+  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  const line = container.querySelector('.repo-prs__line')
+  expect(line?.querySelector('a')).not.toBeNull()
+  expect(line?.querySelector('.review-pills')).not.toBeNull()
 })
