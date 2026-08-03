@@ -15,12 +15,27 @@ export interface RepoFilters {
   visibility: Set<Visibility>
   ciStatus: Set<CiStatus>
   hasOpenPrs: boolean
+  readyToMerge: boolean
 }
 
 // Fresh, independent Sets on every call. Never expose a shared singleton — a
 // mutable default would leak state across hook instances and tests.
 export function emptyFilters(): RepoFilters {
-  return { search: '', visibility: new Set(), ciStatus: new Set(), hasOpenPrs: false }
+  return {
+    search: '',
+    visibility: new Set(),
+    ciStatus: new Set(),
+    hasOpenPrs: false,
+    readyToMerge: false,
+  }
+}
+
+// A repo qualifies when it carries at least one pull request the backend has judged
+// ready. Strict `=== true` on purpose: the field is tri-state, and both false ("not
+// ready") and null/undefined ("not yet determined", or an older backend that does not
+// send it at all) must fail the test rather than be coerced.
+export function hasReadyPr(repo: RepositorySnapshot): boolean {
+  return (repo.pullRequests ?? []).some(pr => pr.readyToMerge === true)
 }
 
 // The CI bucket a repo belongs to, or null when it sits outside all buckets
@@ -65,6 +80,7 @@ export function applyRepoFilters(
       if (bucket === null || !filters.ciStatus.has(bucket)) return false
     }
     if (filters.hasOpenPrs && (repo.pullRequests?.length ?? 0) === 0) return false
+    if (filters.readyToMerge && !hasReadyPr(repo)) return false
     return true
   })
 }

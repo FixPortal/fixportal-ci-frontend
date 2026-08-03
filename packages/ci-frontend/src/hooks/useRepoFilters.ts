@@ -18,6 +18,7 @@ interface Persisted {
   visibility?: unknown
   ciStatus?: unknown
   hasOpenPrs?: boolean
+  readyToMerge?: boolean
 }
 
 // Rehydrate a persisted array as a Set of known members only. localStorage is
@@ -39,6 +40,7 @@ function load(key: string): RepoFilters {
       visibility: loadSet(p.visibility, VISIBILITIES),
       ciStatus: loadSet(p.ciStatus, CI_STATUSES),
       hasOpenPrs: p.hasOpenPrs === true,
+      readyToMerge: p.readyToMerge === true,
     }
   } catch {
     return emptyFilters()
@@ -52,6 +54,7 @@ function save(key: string, f: RepoFilters) {
       visibility: [...f.visibility],
       ciStatus: [...f.ciStatus],
       hasOpenPrs: f.hasOpenPrs,
+      readyToMerge: f.readyToMerge,
     }))
   } catch {
     // ignore (private mode / quota) — filter state is best-effort
@@ -89,9 +92,24 @@ export function useRepoFilters() {
     [],
   )
   const toggleHasOpenPrs = useCallback(() => setFilters(f => ({ ...f, hasOpenPrs: !f.hasOpenPrs })), [])
+  const toggleReadyToMerge = useCallback(() => setFilters(f => ({ ...f, readyToMerge: !f.readyToMerge })), [])
   const clear = useCallback(() => setFilters(emptyFilters()), [])
 
-  const isActive = filters.search.trim() !== '' || filters.visibility.size > 0 || filters.ciStatus.size > 0 || filters.hasOpenPrs
+  const isActive =
+    filters.search.trim() !== '' ||
+    filters.visibility.size > 0 ||
+    filters.ciStatus.size > 0 ||
+    filters.hasOpenPrs ||
+    filters.readyToMerge
 
-  return { filters, setSearch, toggleVisibility, toggleCiStatus, toggleHasOpenPrs, clear, isActive }
+  return {
+    filters,
+    setSearch,
+    toggleVisibility,
+    toggleCiStatus,
+    toggleHasOpenPrs,
+    toggleReadyToMerge,
+    clear,
+    isActive,
+  }
 }
