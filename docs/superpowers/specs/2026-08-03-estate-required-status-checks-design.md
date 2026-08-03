@@ -237,24 +237,53 @@ the rollout over time.
 ## Per-repository carve-outs
 
 - **C1 — `fixportal-simulator-frontend`.** Its primary `ci.yml` carries a workflow-level
-  path filter, so it does not run on every pull request. The filter moves to job-level
-  `if:` conditions; the workflow then always runs, jobs skip as before, and the gate
-  always reports. Five other path-filtered workflows exist across the estate
-  (`infra.yml`, `mutation-web.yml`, `publish-demo-host.yml`, `deploy-content.yml`,
+  path filter, but the filter's first entry is `'**'`, which matches every path — so it
+  is a no-op and the workflow does in fact run on every pull request. No surgery is
+  required for the gate to report. The dead filter should still be deleted, because
+  anyone narrowing it later would silently stop the required context reporting and block
+  every merge in the repository, with nothing connecting the two changes.
+  This repository is **deferred**: it carries substantial uncommitted work (staged
+  deletions, twelve modified files, six new components), and a rollout must not be
+  entangled with work in progress. Five other path-filtered workflows exist across the
+  estate (`infra.yml`, `mutation-web.yml`, `publish-demo-host.yml`, `deploy-content.yml`,
   `dotnet-tests.yml`) but none hosts a gate, so none needs changing.
-- **C2 — `fixportal-diagnostic-explorer`.** CI is split across files: `backend` lives in
-  `dotnet-tests.yml`, with `coverage` and `stryker-web` elsewhere. `dotnet-tests.yml`
-  carries a workflow-level path filter, so hosting the gate there would violate the
-  constraint C1 exists to enforce — the gate would not report on a pull request that
-  misses the filter, and that pull request would never be mergeable. This repository
-  therefore takes the C1 treatment as well: the filter on `dotnet-tests.yml` moves to
-  job-level `if:` conditions, and the gate is hosted there over `backend`. Mutation
-  testing lives in another file and is deliberately not merge-blocking.
+- **C2 — `fixportal-diagnostic-explorer`.** Its CI is split across `ci.yml` (`backend`),
+  `coverage.yml`, the path-filtered `dotnet-tests.yml` (`unit-tests`) and the
+  path-filtered `mutation-web.yml` (`stryker-web`). `ci.yml` is unfiltered, so it hosts
+  the gate over `backend` and no filter surgery is required. The path-filtered workflows
+  host nothing and are deliberately not merge-blocking.
 - **C3 — `fixportal-qa`.** Its guard job is named `Review policy guard`; it is renamed to
-  `Review policy intact` to match the other 24 repositories. It has no build, so its gate
-  wraps `Docs (markdownlint)`.
+  `Review policy intact` to match the rest of the estate. It has no build, so its gate
+  wraps the `docs` job.
 - **C4 — `personal-resumes`.** Reports only `[code]smith` and `Gitar`; it has no CI to
   gate. Per D8 it receives no `CI Gate` requirement and no new workflow.
+- **C5 — `fixportal-initiator`.** Has `ci.yml` but no `review-policy-guard.yml`, so
+  `Review policy intact` never reports there and requiring it would block every merge.
+  Required set is `["CI Gate"]` alone. That it lacks the guard the rest of the estate
+  carries is a real gap, but adding the workflow is a separate change and not folded in
+  here.
+- **C6 — `fixportal-engineering-system`.** Has only `review-policy-guard.yml` and no
+  `ci.yml` — no build, no tests, nothing for a gate to aggregate. Required set is
+  `["Review policy intact"]` alone.
+- **C7 — `fixportal-quickfixn`.** Two pull-request workflows each expose a `build` job.
+  Resolved by inspection: `dotnet.yml` is upstream's and is scoped to `master`, so it
+  never runs on a pull request against this fork's default branch; `fixportal-ci.yml` is
+  the FixPortal one and is scoped to `fpsim`. The gate hosts in `fixportal-ci.yml`, and
+  this repository's base branch is **`fpsim`, not `main`** — any tooling that assumes
+  `origin/main` is wrong here.
+- **C8 — not cloned locally.** `fixportal-agents-skills`, `fixportal-claude` and
+  `fixportal-claude-skills` had no local checkout. Now cloned and gated.
+  `fixportal-claude` needed one extra change: it is a configuration-backup repository
+  using a fail-safe allow-list `.gitignore` (`/*`, then explicit un-ignores), so
+  `/.github/*` swallowed the new script. Three matching entries were added. Without them
+  the gate would fail in CI on a file that exists locally and is absent from the clone
+  the runner checks out — the worst shape of this bug, because it looks like a script
+  error rather than a packaging one.
+
+Per-repository required sets are therefore not universally the same pair. C5 and C6 each
+take one context, and C4 takes none. The apply script's precondition — refusing any
+repository where a required context has not been observed reporting — is what makes this
+safe: a mis-set context is refused rather than applied.
 
 ## Automation
 
