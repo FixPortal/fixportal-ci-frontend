@@ -22,3 +22,6 @@ graphify-out/
 
 .claude/*
 !.claude/review-policy.json
+
+# Local runs of the gate assertion; never an artefact of CI.
+.github/scripts/__pycache__/
