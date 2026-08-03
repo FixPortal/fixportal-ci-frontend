@@ -1,7 +1,11 @@
 # Estate-wide required status checks
 
 **Date:** 2026-08-03
-**Status:** Approved, not yet implemented
+**Status:** Implemented 2026-08-03. 28 of 29 repositories carry the
+`required_status_checks` rule (verified by re-reading each ruleset from the API on
+2026-08-04). `personal-resumes` is excluded by D8/C4. `fixportal-ide` is the one
+unintended gap: it has a `require-pr-to-default` ruleset with no
+`required_status_checks` rule and is still to be rolled out.
 **Scope:** All 29 non-archived repositories in the `FixPortal` GitHub organisation, plus
 the `scaffold-ci` and `scaffold-repo` skills.
 
@@ -261,9 +265,9 @@ the rollout over time.
   required for the gate to report. The dead filter should still be deleted, because
   anyone narrowing it later would silently stop the required context reporting and block
   every merge in the repository, with nothing connecting the two changes.
-  This repository is **deferred**: it carries substantial uncommitted work (staged
-  deletions, twelve modified files, six new components), and a rollout must not be
-  entangled with work in progress. Five other path-filtered workflows exist across the
+  This repository was deferred during the rollout because it carried substantial
+  uncommitted work; it has since been gated and its ruleset now carries the rule.
+  Deleting the dead filter remains outstanding. Five other path-filtered workflows exist across the
   estate (`infra.yml`, `mutation-web.yml`, `publish-demo-host.yml`, `deploy-content.yml`,
   `dotnet-tests.yml`) but none hosts a gate, so none needs changing.
 - **C2 — `fixportal-diagnostic-explorer`.** Its CI is split across `ci.yml` (`backend`),
