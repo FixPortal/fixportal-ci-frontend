@@ -110,7 +110,29 @@ applied. The gate hook applies that label at PR-create time when it computes HIG
 every rollout pull request must have its labels read back after creation and the label
 stripped if present.
 
-### D7 — Merge authority
+### D7 — Gate coverage is asserted, not trusted
+
+The gate is only as good as its `needs:` list, and nothing about adding a new quality job
+prompts anyone to wire it in. A `gate-coverage` job therefore parses the hosting workflow
+and fails if any job in the file is absent from the gate's `needs:` and not named in
+`GATE_EXEMPT`. `ci-gate` depends on it, so drift fails the required context.
+
+It is a separate job rather than a step inside `ci-gate` deliberately: the gate blocks
+every merge in the repository, so it stays a pure aggregator of `needs.*.result` with no
+checkout, no parser and no network. The moving parts live somewhere that can fail without
+implicating the mechanism itself.
+
+`GATE_EXEMPT` is an explicit job-id list rather than an inferred rule (such as "anything
+with a push-only `if:`"). Exemption is a decision, and a decision that grants itself
+automatically is not reviewable.
+
+### D8 — `personal-resumes` gets no CI
+
+It has no build, no tests and nothing to gate. Adding a CI workflow purely so the
+requirement has something to attach to would be process for its own sake. It is recorded
+as a deliberate gap: the one repository in the estate where anything can merge.
+
+### D9 — Merge authority
 
 Chris authorised creating and rebase-merging the rollout pull requests without further
 sign-off, conditional on CI passing. Green CI must be positively verified per pull
@@ -121,10 +143,23 @@ request before merging, not assumed.
 Added to the workflow file containing each repository's quality jobs:
 
 ```yaml
+  gate-coverage:
+    name: Gate coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every job in this workflow is gated
+        env:
+          # Jobs deliberately outside the gate, by job id. Push-only publish and
+          # deploy work belongs here; quality jobs never do.
+          GATE_EXEMPT: docker
+        run: ./.github/scripts/assert-gate-coverage.sh .github/workflows/ci.yml
+
   ci-gate:
     name: CI Gate
     if: always()
-    needs: [build]           # per-repo: the quality jobs in THIS file
+    needs: [build, gate-coverage]   # per-repo: the quality jobs in THIS file
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -212,8 +247,7 @@ the rollout over time.
   `Review policy intact` to match the other 24 repositories. It has no build, so its gate
   wraps `Docs (markdownlint)`.
 - **C4 — `personal-resumes`.** Reports only `[code]smith` and `Gitar`; it has no CI to
-  gate. It receives no `CI Gate` requirement and is recorded as a known gap rather than
-  given a gate that wraps nothing.
+  gate. Per D8 it receives no `CI Gate` requirement and no new workflow.
 
 ## Automation
 
@@ -275,5 +309,8 @@ references it, in that order.
   chosen names are produced by workflows in the repository itself, so the failure is
   self-inflicted and self-fixable, but it is still the sharpest edge here.
 - `skipped`-counts-as-pass means a mis-authored `if:` silently satisfies the gate (D5).
-- The gate is only as good as its `needs:` list. A quality job added later but not added
-  to `needs:` is not merge-blocking, and nothing detects that.
+  `gate-coverage` does not help here: it proves a job is wired into the gate, not that
+  the job actually ran.
+- `gate-coverage` only sees the workflow file it is given. A quality job added to a
+  *different* workflow in the same repository is still not merge-blocking, and nothing
+  detects that.
