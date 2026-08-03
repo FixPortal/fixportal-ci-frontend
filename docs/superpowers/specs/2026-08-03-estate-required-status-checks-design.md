@@ -126,6 +126,25 @@ implicating the mechanism itself.
 with a push-only `if:`"). Exemption is a decision, and a decision that grants itself
 automatically is not reviewable.
 
+### D10 — the assertion runs as Python, with no shell in the path
+
+It began as a bash script wrapping a Python heredoc. Three repositories then failed the
+new required check with `assert-gate-coverage.sh: line 12: set: pipefail / : invalid
+option name` — bash reading the last word of `set -euo pipefail` as `pipefail\r`, because
+the file was checked out with CRLF.
+
+The instructive part is why the other repositories passed: **every committed blob carried
+CRLF, including theirs.** They passed by accident of checkout configuration, and
+`fixportal-codestyle` and `fixportal-learning` have near-identical `.gitattributes` yet
+behaved differently. So the green repositories were never correct, merely lucky.
+
+Fixing it per repository with `.gitattributes` was rejected on that basis: it would leave
+every repository one `* text=auto eol=crlf` away from a red required check, and the
+symptom points at the gate rather than at line endings, so the next person to hit it pays
+the same diagnosis cost. The logic was already Python and Python is indifferent to CRLF,
+so the wrapper was removed rather than repaired. Verified against a deliberately
+CRLF-mangled copy.
+
 ### D8 — `personal-resumes` gets no CI
 
 It has no build, no tests and nothing to gate. Adding a CI workflow purely so the
@@ -159,8 +178,8 @@ Added to the workflow file containing each repository's quality jobs:
           # Jobs deliberately outside the gate, by job id. Push-only publish and
           # deploy work belongs here; quality jobs never do.
           GATE_EXEMPT: docker
-        # Invoked via bash: the script is committed 100644, so direct execution fails.
-        run: bash .github/scripts/assert-gate-coverage.sh .github/workflows/ci.yml
+        # python3 directly, never through a shell wrapper -- see D10.
+        run: python3 .github/scripts/assert_gate_coverage.py .github/workflows/ci.yml
 
   ci-gate:
     name: CI Gate
