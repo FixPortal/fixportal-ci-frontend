@@ -16,16 +16,20 @@ gate_job="${GATE_JOB:-ci-gate}"
 
 python3 - "$workflow" "$gate_job" <<'PY'
 import os
-import subprocess
 import sys
 
 try:
     import yaml
 except ImportError:
-    # Present on GitHub's ubuntu images, but not guaranteed on every runner, and this
-    # job failing for want of a parser would read as gate drift.
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "pyyaml"])
-    import yaml
+    # Deliberately fails rather than installing PyYAML here. This script decides merge
+    # eligibility for every pull request, so fetching an unpinned package from PyPI at
+    # CI time would put an arbitrary-at-install-time dependency in the gating path.
+    # PyYAML ships with GitHub's ubuntu images; a runner without it is a runner-image
+    # problem, and should be loud.
+    sys.exit(
+        "python3 cannot import yaml. Provide PyYAML in the runner image rather than "
+        "installing it at CI time -- this script gates merges."
+    )
 
 workflow_path, gate_job = sys.argv[1], sys.argv[2]
 
