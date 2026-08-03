@@ -2,10 +2,13 @@
 
 **Date:** 2026-08-03
 **Status:** Implemented 2026-08-03. 28 of 29 repositories carry the
-`required_status_checks` rule (verified by re-reading each ruleset from the API on
-2026-08-04). `personal-resumes` is excluded by D8/C4. `fixportal-ide` is the one
-unintended gap: it has a `require-pr-to-default` ruleset with no
-`required_status_checks` rule and is still to be rolled out.
+`required_status_checks` rule; `personal-resumes` is the only exclusion, by D8/C4.
+Verified by re-reading each ruleset from the API on 2026-08-04 — and note that a
+single read is not proof: two repositories first came back without the rule and
+returned it on a second read minutes later, with nothing applied in between. Treat a
+`MISSING` result as unconfirmed until a second read agrees. The rollout is applied and
+audited with `~/.agents/scripts/apply-required-checks.ps1`, which lives outside every
+repository and carries the per-repo ruleset-name overrides.
 **Scope:** All 29 non-archived repositories in the `FixPortal` GitHub organisation, plus
 the `scaffold-ci` and `scaffold-repo` skills.
 
