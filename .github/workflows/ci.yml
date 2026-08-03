@@ -89,6 +89,9 @@ jobs:
     needs: [build, gate-coverage]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # No token at all: this job only reads GitHub-controlled needs.*.result values, and
+    # it is the one job that decides what can merge.
+    permissions: {}
     steps:
       - name: Fail if any upstream job did not succeed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

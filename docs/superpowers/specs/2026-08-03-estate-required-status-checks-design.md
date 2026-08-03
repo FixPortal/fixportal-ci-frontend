@@ -147,14 +147,20 @@ Added to the workflow file containing each repository's quality jobs:
     name: Gate coverage
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
       - name: Assert every job in this workflow is gated
         env:
           # Jobs deliberately outside the gate, by job id. Push-only publish and
           # deploy work belongs here; quality jobs never do.
           GATE_EXEMPT: docker
-        run: ./.github/scripts/assert-gate-coverage.sh .github/workflows/ci.yml
+        # Invoked via bash: the script is committed 100644, so direct execution fails.
+        run: bash .github/scripts/assert-gate-coverage.sh .github/workflows/ci.yml
 
   ci-gate:
     name: CI Gate
@@ -162,6 +168,7 @@ Added to the workflow file containing each repository's quality jobs:
     needs: [build, gate-coverage]   # per-repo: the quality jobs in THIS file
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
     steps:
       - name: Fail if any upstream job did not succeed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
