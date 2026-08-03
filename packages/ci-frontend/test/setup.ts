@@ -20,6 +20,7 @@ Object.defineProperty(window, 'matchMedia', {
 // jsdom does not implement ResizeObserver. Stub it so CiBoard's header-height
 // measurement effect doesn't throw.
 globalThis.ResizeObserver = class ResizeObserver {
+  constructor(_callback: ResizeObserverCallback) {}
   observe() {}
   unobserve() {}
   disconnect() {}
