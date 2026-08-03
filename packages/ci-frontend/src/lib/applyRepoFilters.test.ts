@@ -27,6 +27,54 @@ const withPr = repo({ name: 'review', workflows: [wf('success')], pullRequests: 
 ] })
 const all = [failing, passing, running, noCi, privatePassing, withPr]
 
+function pr(number: number, readyToMerge?: boolean | null) {
+  return {
+    number,
+    title: `PR ${number}`,
+    author: 'a',
+    htmlUrl: '',
+    isDraft: false,
+    createdAt: '2026-01-01',
+    ...(readyToMerge === undefined ? {} : { readyToMerge }),
+  }
+}
+
+describe('applyRepoFilters — readyToMerge', () => {
+  const ready = repo({ name: 'ready', pullRequests: [pr(1, true)] })
+  const notReady = repo({ name: 'not-ready', pullRequests: [pr(2, false)] })
+  const undetermined = repo({ name: 'undetermined', pullRequests: [pr(3, null)] })
+  // An older backend that does not send the field at all.
+  const absent = repo({ name: 'absent', pullRequests: [pr(4)] })
+  const mixed = repo({ name: 'mixed', pullRequests: [pr(5, false), pr(6, true)] })
+  const noPrs = repo({ name: 'quiet', pullRequests: [] })
+  const pool = [ready, notReady, undetermined, absent, mixed, noPrs]
+
+  it('keeps only repos with at least one ready pull request', () => {
+    const kept = applyRepoFilters(pool, filters({ readyToMerge: true })).map(r => r.name)
+    expect(kept).toEqual(['ready', 'mixed'])
+  })
+
+  // The field is tri-state; only an explicit true qualifies. Coercing null or a missing
+  // field would surface pull requests nobody has judged.
+  it('treats undetermined and absent verdicts as not ready', () => {
+    const kept = applyRepoFilters([undetermined, absent], filters({ readyToMerge: true }))
+    expect(kept).toEqual([])
+  })
+
+  it('is inert when off', () => {
+    expect(applyRepoFilters(pool, filters({ readyToMerge: false }))).toHaveLength(pool.length)
+  })
+
+  it('ANDs with the other groups rather than replacing them', () => {
+    const readyPrivate = repo({ name: 'hidden', private: true, pullRequests: [pr(7, true)] })
+    const kept = applyRepoFilters(
+      [ready, readyPrivate],
+      filters({ readyToMerge: true, visibility: new Set(['private'] as const) }),
+    )
+    expect(kept.map(r => r.name)).toEqual(['hidden'])
+  })
+})
+
 describe('applyRepoFilters', () => {
   it('returns the input unchanged when no filters are active', () => {
     expect(applyRepoFilters(all, emptyFilters())).toEqual(all)

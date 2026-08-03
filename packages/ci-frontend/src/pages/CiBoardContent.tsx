@@ -279,6 +279,7 @@ export function CiBoardContent() {
           onToggleVisibility={filters.toggleVisibility}
           onToggleCiStatus={filters.toggleCiStatus}
           onToggleHasOpenPrs={filters.toggleHasOpenPrs}
+          onToggleReadyToMerge={filters.toggleReadyToMerge}
         />
         <div className="dashboard__board-controls">
           {noCiCount > 0 && (

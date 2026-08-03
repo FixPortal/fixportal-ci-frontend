@@ -20,6 +20,7 @@ interface RepoFilterBarProps {
   onToggleVisibility: (v: Visibility) => void
   onToggleCiStatus: (s: CiStatus) => void
   onToggleHasOpenPrs: () => void
+  onToggleReadyToMerge: () => void
 }
 
 // `tone` maps a chip to a status colour class so Failing reads red and Passing
@@ -54,6 +55,7 @@ function RepoFilterBarImpl({
   onToggleVisibility,
   onToggleCiStatus,
   onToggleHasOpenPrs,
+  onToggleReadyToMerge,
 }: RepoFilterBarProps) {
   const hasLeadingContent = !hideSearch || isAdmin
   return (
@@ -90,6 +92,14 @@ function RepoFilterBarImpl({
 
       <span className="repo-filter__divider" aria-hidden="true" />
       <Chip label="Has PRs" pressed={filters.hasOpenPrs} onClick={onToggleHasOpenPrs} />
+      {/* Green like Passing: this is the "nothing is outstanding" chip, and it reads as
+          an affirmative state rather than a neutral narrowing. */}
+      <Chip
+        label="Ready to merge"
+        tone="passing"
+        pressed={filters.readyToMerge}
+        onClick={onToggleReadyToMerge}
+      />
     </search>
   )
 }

@@ -40,6 +40,11 @@ export interface PullRequest {
   // (excluded from review enrichment) and a deployment with the feature off both
   // arrive as "nothing to show" rather than as an empty-but-present row.
   reviewSignals?: ReviewSignal[] | null
+  // Tri-state, computed by the backend: true ready, false not ready, null/absent not
+  // yet determined. Deliberately not derived here — the three reasons reviewSignals may
+  // be null (feature off, excluded bot author, enrichment not yet run) are
+  // indistinguishable on the wire, and they do not all mean the same thing.
+  readyToMerge?: boolean | null
 }
 
 export interface RepoMetrics {

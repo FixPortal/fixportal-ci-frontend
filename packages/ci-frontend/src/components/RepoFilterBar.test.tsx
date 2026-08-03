@@ -13,6 +13,7 @@ function setup(over: Partial<Parameters<typeof RepoFilterBar>[0]> = {}) {
     onToggleVisibility: vi.fn(),
     onToggleCiStatus: vi.fn(),
     onToggleHasOpenPrs: vi.fn(),
+    onToggleReadyToMerge: vi.fn(),
     ...over,
   }
   render(<RepoFilterBar {...props} />)
@@ -20,6 +21,19 @@ function setup(over: Partial<Parameters<typeof RepoFilterBar>[0]> = {}) {
 }
 
 describe('RepoFilterBar', () => {
+  it('renders the ready-to-merge chip and toggles it', async () => {
+    const props = setup()
+    const chip = screen.getByRole('button', { name: /ready to merge/i })
+    expect(chip).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(chip)
+    expect(props.onToggleReadyToMerge).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the ready-to-merge chip as pressed when the filter is on', () => {
+    setup({ filters: { ...emptyFilters(), readyToMerge: true } })
+    expect(screen.getByRole('button', { name: /ready to merge/i })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('renders the visibility group for admins', () => {
     setup({ isAdmin: true })
     expect(screen.getByRole('button', { name: /public/i })).toBeInTheDocument()
