@@ -2,8 +2,8 @@ name: mutation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
+  schedule:
+    - cron: '45 5 * * 4'
 
 concurrency:
   group: mutation-${{ github.ref }}
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   stryker-ci-frontend:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
