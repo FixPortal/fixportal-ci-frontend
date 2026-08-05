@@ -28,6 +28,8 @@ export interface CiBoardProps {
   footerSlot?: ReactNode
   /** Optional namespace suffix for localStorage keys to avoid collisions when multiple boards run on the same origin. */
   storageNamespace?: string
+  /** Optional canonical owner/repository identity that limits this board to one already-authorised repository. */
+  repositoryScope?: string
   /** Whether to show the theme switcher (Light / Dark / System) in the header. Defaults to true. */
   showThemeSwitcher?: boolean
 }
@@ -141,6 +143,7 @@ export function CiBoard({
   logo,
   footerSlot,
   storageNamespace,
+  repositoryScope,
   showThemeSwitcher = true,
 }: CiBoardProps) {
   // Label reflects whether the board actually consumes a privileged data source,
@@ -168,7 +171,7 @@ export function CiBoard({
   }, [])
 
   return (
-    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace }}>
+    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace, repositoryScope }}>
       <QueryClientSafeProvider>
         <div className="ci-page" ref={pageRef}>
           <div className="ci-embed">

@@ -117,8 +117,9 @@ export function CiBoardContent() {
   const hideNoCi = useHideNoCi()
   const filters = useRepoFilters()
   const isAdmin = useCiAdmin()
-  const { adminSnapshotUrl, adminSnapshotFetcher } = useCiConfig()
+  const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope } = useCiConfig()
   const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
+  const hasRepositoryScope = repositoryScope !== undefined
   const [stepperOpen, setStepperOpen] = useState(false)
 
   // Memos must precede early returns (Rules of Hooks). snapshot.data is the stable
@@ -126,8 +127,11 @@ export function CiBoardContent() {
   // poll ticks, so these only recompute when data actually changes.
   const repositories = useMemo(() => {
     const repos = snapshot.data?.repositories ?? []
-    return isAdmin ? repos : repos.filter(r => !r.private)
-  }, [isAdmin, snapshot.data])
+    const authorised = isAdmin ? repos : repos.filter(r => !r.private)
+    if (!hasRepositoryScope) return authorised
+    const scope = repositoryScope.toLowerCase()
+    return authorised.filter(repository => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope)
+  }, [hasRepositoryScope, isAdmin, repositoryScope, snapshot.data])
   const noCiFiltered = useMemo(
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
     [repositories, hideNoCi.hidden],
@@ -146,9 +150,9 @@ export function CiBoardContent() {
     [noCiFiltered, effectiveFilters],
   )
   const summary = useMemo(() => {
-    if (isAdmin && !hideNoCi.hidden && !filters.isActive) return snapshot.data?.summary ?? []
+    if (isAdmin && !hasRepositoryScope && !hideNoCi.hidden && !filters.isActive) return snapshot.data?.summary ?? []
     return computeSummary(visibleRepos)
-  }, [isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
+  }, [hasRepositoryScope, isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
   const lastMergedPr = useMemo(() => {
     const raw = snapshot.data?.lastMergedPr ?? null
     if (raw && visibleRepos.some(r => r.name === raw.repo)) return raw
@@ -231,7 +235,7 @@ export function CiBoardContent() {
   const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
   const allCollapsibleKeys = [...repoNames, ...sectionKeys]
   const allCollapsed = collapse.allCollapsed(allCollapsibleKeys)
-  const isScopeFiltered = filters.isActive || hideNoCi.hidden
+  const isScopeFiltered = hasRepositoryScope || filters.isActive || hideNoCi.hidden
   // The stepper opens at the head of this oldest-first list, so its first entry
   // is "next in queue" — derive it from visibleRepos (the Hide No-CI filter
   // applied) so the card and stepper never advertise a PR from a repo the board

@@ -53,4 +53,31 @@ describe('CiBoard admin source gating', () => {
     expect(screen.getByText(/\[Admin\]/)).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Visibility' })).toBeInTheDocument()
   })
+
+  it('updates a controlled repository scope when the host rerenders', async () => {
+    const { rerender } = render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => snapshot}
+        adminSnapshotFetcher={async () => snapshot}
+        repositoryScope="fixportal/CI-FRONTEND"
+        storageNamespace="controlled-scope"
+      />,
+    )
+
+    expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
+    expect(screen.getByText(/1 of 1 repositories/)).toBeInTheDocument()
+
+    rerender(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => snapshot}
+        adminSnapshotFetcher={async () => snapshot}
+        repositoryScope="other/ci-frontend"
+        storageNamespace="controlled-scope"
+      />,
+    )
+
+    expect(await screen.findByText('No repositories found.')).toBeInTheDocument()
+  })
 })
