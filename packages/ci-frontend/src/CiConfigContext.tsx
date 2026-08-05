@@ -21,6 +21,8 @@ import type { DashboardSnapshot } from './api/types'
 // backed by distinct fetchers would otherwise alias the same cache entry — set a
 // distinct key per board/source to keep them separate. Optional; without one,
 // custom-fetcher branches fall back to a role sentinel.
+// repositoryScope: optional canonical owner/repository identity that limits the
+// rendered board to one already-authorised repository.
 export interface CiConfig {
   apiBase: string
   snapshotFetcher?: () => Promise<DashboardSnapshot | null>
@@ -29,6 +31,7 @@ export interface CiConfig {
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
   adminSnapshotCacheKey?: string
   storageNamespace?: string
+  repositoryScope?: string
 }
 
 export const DEFAULT_CI_API_BASE = ''

@@ -97,6 +97,102 @@ describe('CiBoardContent scope text', () => {
   })
 })
 
+describe('CiBoardContent controlled repository scope', () => {
+  beforeEach(() => localStorage.clear())
+
+  const scopedSnapshot: DashboardSnapshot = {
+    ...snapshot,
+    summary: [
+      { key: 'repos', count: 99 },
+      { key: 'failing', count: 88 },
+      { key: 'open-prs', count: 77 },
+    ],
+    lastMergedPr: {
+      number: 2,
+      title: 'Other merge',
+      author: 'chris',
+      repo: 'other',
+      htmlUrl: 'https://github.com/FixPortal/other/pull/2',
+      mergedAt: '2026-06-22T09:00:00Z',
+    },
+    repositories: [
+      {
+        name: 'controlled',
+        htmlUrl: '',
+        private: true,
+        workflows: [{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }],
+        pullRequests: [{ number: 1, title: 'Scoped PR', author: 'chris', htmlUrl: '', isDraft: false, createdAt: '2026-06-22T08:00:00Z' }],
+        metrics: null,
+        deploys: [],
+        packages: [],
+      },
+      {
+        name: 'controlled-extra',
+        htmlUrl: '',
+        private: false,
+        workflows: [{ name: 'ci', file: 'ci.yml', state: 'failure', lastRun: null }],
+        pullRequests: [{ number: 2, title: 'Other PR', author: 'chris', htmlUrl: '', isDraft: false, createdAt: '2026-06-22T07:00:00Z' }],
+        metrics: null,
+        deploys: [],
+        packages: [],
+      },
+    ],
+  }
+
+  function renderScopedBoard(repositoryScope?: string) {
+    return render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => scopedSnapshot}
+        adminSnapshotFetcher={async () => scopedSnapshot}
+        repositoryScope={repositoryScope}
+        storageNamespace="controlled-scope-content"
+      />,
+    )
+  }
+
+  it('uses a full case-insensitive owner/repository identity for private repositories', async () => {
+    renderScopedBoard('fIxPoRtAl/CoNtRoLlEd')
+
+    expect(await screen.findByText('controlled')).toBeInTheDocument()
+    expect(screen.queryByText('controlled-extra')).not.toBeInTheDocument()
+    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent('FixPortal · 1 of 1 repositories')
+  })
+
+  it.each(['other/controlled', 'FixPortal/control', 'FixPortal/controlled-ex'])(
+    'rejects non-exact repository scope %s',
+    async repositoryScope => {
+      renderScopedBoard(repositoryScope)
+
+      expect(await screen.findByText('No repositories found.')).toBeInTheDocument()
+    },
+  )
+
+  it('derives the summary, descriptor, counters, and stepper from the scoped repository', async () => {
+    renderScopedBoard('FixPortal/controlled')
+
+    expect(await screen.findByText('controlled')).toBeInTheDocument()
+    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent('FixPortal · 1 of 1 repositories')
+    expect(document.querySelector('[data-key="repos"]')).toHaveTextContent('1Repositories')
+    expect(screen.getByRole('button', { name: '1Open PR' })).toBeInTheDocument()
+    expect(screen.getByText('controlled #1')).toBeInTheDocument()
+    expect(screen.queryByText('Other merge')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: '1Open PR' }))
+    expect(await screen.findByRole('dialog', { name: 'Open pull requests' })).toHaveTextContent('controlled')
+    expect(screen.getByRole('dialog')).toHaveTextContent('1 / 1')
+    expect(screen.queryByText('Other PR')).not.toBeInTheDocument()
+  })
+
+  it('keeps the server summary and unfiltered descriptor when no scope is supplied', async () => {
+    renderScopedBoard()
+
+    expect(await screen.findByText('controlled-extra')).toBeInTheDocument()
+    expect(document.querySelector('[data-key="repos"]')).toHaveTextContent('99Repositories')
+    expect(screen.getByText(/all repositories/)).toBeInTheDocument()
+  })
+})
+
 describe('CiBoardContent public snapshot fallbacks', () => {
   beforeEach(() => localStorage.clear())
 
