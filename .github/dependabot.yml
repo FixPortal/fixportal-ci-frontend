@@ -1,8 +1,20 @@
 version: 2
 
+registries:
+  # @fixportal/design on GitHub Packages requires a token even to read. This is the
+  # ORG-LEVEL Dependabot secret (Org settings > Secrets > Dependabot >
+  # FIXPORTAL_PACKAGES_TOKEN, selected repositories) — Dependabot cannot read Actions
+  # secrets. Without it the npm sweep cannot check the private scope.
+  fixportal-github-packages-npm:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
+
 updates:
   - package-ecosystem: npm
     directory: /
+    registries:
+      - fixportal-github-packages-npm
     schedule:
       interval: weekly
       day: monday

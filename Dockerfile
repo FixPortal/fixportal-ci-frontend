@@ -3,7 +3,11 @@ WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 COPY packages/ci-frontend/package.json packages/ci-frontend/
 COPY apps/dashboard/package.json apps/dashboard/
-RUN npm ci
+# npm ci resolves the private @fixportal/* scope from GitHub Packages. The token
+# arrives as a BuildKit secret and the auth-line ~/.npmrc is written and removed
+# inside this one instruction, so it never lands in a layer or the pushed image.
+RUN --mount=type=secret,id=github_packages_token \
+    sh -c 'echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_packages_token)" > ~/.npmrc && npm ci && rm ~/.npmrc'
 COPY . .
 RUN npm run build:lib
 RUN npm run build:app

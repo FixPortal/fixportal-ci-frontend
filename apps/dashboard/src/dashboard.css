@@ -1,0 +1,23 @@
+/* Dashboard app-local token layer — sits between @fixportal/design/tokens.css
+ * (the house values, imported first in main.tsx) and the library's board.css.
+ * App-local overrides live HERE, after the tokens import, never in the package
+ * (ONBOARDING.md §7).
+ *
+ * The one override is an AA correction to --text-faint, measured when the
+ * library's vendored token set was fixed for the same defect (see
+ * packages/ci-frontend/src/styles/tokens.css and docs/ai-findings.md). The
+ * token's only consumer here is the footer's 10px uppercase tagline:
+ *   light: stock #94a3b8 on --app-bg #f7f8fa is ~2.41:1 — fails AA (4.5:1)
+ *   dark:  stock #64748b on --app-bg #020617 is ~4.23:1 — fails AA
+ * Candidate to upstream into @fixportal/design itself; delete this block once a
+ * release carries the darker light value and the lighter dark value. */
+:root,
+[data-theme='light'] {
+  /* ~5.08:1 on #f7f8fa */
+  --text-faint: #5b6b85;
+}
+
+[data-theme='dark'] {
+  /* ~7.4:1 on #020617 */
+  --text-faint: #94a3b8;
+}
