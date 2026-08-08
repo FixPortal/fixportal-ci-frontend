@@ -35,11 +35,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          # GitHub Packages auth line for the private @fixportal/* scope — the
+          # workspace-wide npm ci resolves the dashboard's @fixportal/design too.
+          registry-url: 'https://npm.pkg.github.com'
 
       - name: Configure registry
         run: npm config set @fix-portal:registry https://registry.npmjs.org
 
       - name: Install
+        env:
+          # PAT rather than GITHUB_TOKEN, so no per-repo package read-grant is
+          # needed (same wiring as the CI workflow's Install step).
+          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
         run: npm ci
 
       - name: Build library

@@ -31,8 +31,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          # Writes the GitHub Packages auth line into the runner's user .npmrc,
+          # resolved from NODE_AUTH_TOKEN at install time (the simulator-frontend
+          # pattern). The project .npmrc maps the @fixportal scope to that registry.
+          registry-url: 'https://npm.pkg.github.com'
 
       - name: Install
+        env:
+          # Authenticates npm ci against the private @fixportal/* scope. Uses the PAT
+          # rather than GITHUB_TOKEN so no per-repo package read-grant is needed (the
+          # grant is the operator step that bit every other consumer — see
+          # fixportal-assets/packages/design/ONBOARDING.md §1).
+          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
         run: npm ci
 
       - name: Audit production dependencies
@@ -132,6 +142,10 @@ jobs:
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # The Dockerfile's npm ci needs the private @fixportal/* scope; the PAT
+          # travels as a BuildKit secret so it never lands in a layer or the image.
+          secrets: |
+            github_packages_token=${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
           tags: |
             ghcr.io/fixportal/fixportal-ci-frontend:latest
             ghcr.io/fixportal/fixportal-ci-frontend:sha-${{ github.sha }}

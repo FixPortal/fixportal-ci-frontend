@@ -53,6 +53,14 @@ The dashboard proxies all `/api/` requests to that origin.
 
 ## Quick start — clone and run (dev mode)
 
+> [!NOTE]
+> Building from source requires read access to the private `@fixportal/design`
+> package on GitHub Packages (FixPortal-internal), because the dashboard app takes
+> its design tokens from the house design system. Without a granting token,
+> `npm install` fails with a 401 on that scope. External users don't need to build
+> from source: run the published image (above) or consume the published
+> `@fix-portal/ci-frontend` npm package, which has no private dependencies.
+
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
 cd fixportal-ci-frontend
@@ -66,12 +74,13 @@ to your backend's origin.
 
 ## Self-hosting with Docker
 
-Build the image from source and run it against your own backend:
+The published image needs no build at all (see the quick start above). Building the
+image from source requires the private-registry token from the dev-mode note:
 
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
 cd fixportal-ci-frontend
-docker build -t ci-frontend .
+docker build --secret id=github_packages_token,env=FIXPORTAL_PACKAGES_TOKEN -t ci-frontend .
 docker run -p 8080:8080 -e BACKEND_URL=https://your-backend.example.com ci-frontend
 ```
 
