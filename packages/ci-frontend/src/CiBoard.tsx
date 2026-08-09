@@ -179,7 +179,7 @@ export function CiBoard({
               <span className="ci-embed__lockup">
                 {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
                 <span className="ci-embed__descriptor">
-                  CI Dashboard {effectiveAdmin ? '[Admin]' : '[Guest]'}
+                  {effectiveAdmin ? '[Admin]' : '[Guest]'}
                 </span>
               </span>
               {showThemeSwitcher && (
