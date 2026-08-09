@@ -30,10 +30,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-          # This repo is PUBLIC: a fork PR can restore caches from the
-          # default-branch scope, so the private @fixportal/design tarball must
-          # never enter the shared npm cache.
+          # No npm caching, by either path: this repo is PUBLIC and a fork PR can
+          # restore caches from the default-branch scope, so the private
+          # @fixportal/design tarball must never enter the shared cache. The
+          # explicit cache: input is deliberately omitted — package-manager-cache
+          # only gates auto-detection, it does NOT override an explicit cache:
+          # (setup-node main.ts).
           package-manager-cache: false
           # Writes the GitHub Packages auth line into the runner's user .npmrc,
           # resolved from NODE_AUTH_TOKEN at install time (the simulator-frontend
