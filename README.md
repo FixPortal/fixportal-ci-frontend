@@ -74,6 +74,12 @@ Builds the library and starts the app on `http://localhost:5173`. Point it at a 
 copying `apps/dashboard/.env.example` to `apps/dashboard/.env` and setting `VITE_CI_API_BASE`
 to your backend's origin.
 
+Because the dev server origin (`http://localhost:5173`) differs from the backend's, the
+browser calls the API cross-origin, so the backend must allow-list the dev origin or every
+response is discarded. Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173`
+set (environment variable or `appsettings.Development.json`). The compose deployment does
+not need this — nginx proxies `/api/` same-origin.
+
 ## Self-hosting with Docker
 
 The published image needs no build at all (see the quick start above). Building the
@@ -186,6 +192,7 @@ npm run build:app   # type-check and build the standalone app
 | Container exits immediately: `Error: BACKEND_URL must be set` | `BACKEND_URL` env var was not passed to `docker run` | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command |
 | `/api/` requests return wrong paths or 404 | Trailing slash on `BACKEND_URL` causes nginx to strip the `/api/` prefix before forwarding | Remove the trailing slash from `BACKEND_URL` |
 | Dev mode ignores your backend | `VITE_CI_API_BASE` not set in `apps/dashboard/.env` | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin |
+| Dev mode sits at "Dashboard unavailable. Retrying automatically." | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173` |
 
 ## Contributing
 
