@@ -31,6 +31,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          # This repo is PUBLIC: a fork PR can restore caches from the
+          # default-branch scope, so the private @fixportal/design tarball must
+          # never enter the shared npm cache.
+          package-manager-cache: false
           # Writes the GitHub Packages auth line into the runner's user .npmrc,
           # resolved from NODE_AUTH_TOKEN at install time (the simulator-frontend
           # pattern). The project .npmrc maps the @fixportal scope to that registry.
@@ -43,7 +47,11 @@ jobs:
           # grant is the operator step that bit every other consumer — see
           # fixportal-assets/packages/design/ONBOARDING.md §1).
           NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
-        run: npm ci
+        # --ignore-scripts: nothing in the dependency tree needs a lifecycle script
+        # to build (esbuild ships its binary via optionalDependencies; Playwright
+        # browsers are installed explicitly below), so no third-party install code
+        # runs while the packages token is in the environment.
+        run: npm ci --ignore-scripts
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
