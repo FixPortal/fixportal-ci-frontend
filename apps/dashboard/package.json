@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@fix-portal/ci-frontend": "*",
-    "@fixportal/design": "^0.5.3",
+    "@fixportal/design": "^0.5.4",
     "@tanstack/react-query": "^5.101.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
