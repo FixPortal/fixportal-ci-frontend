@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { RepositorySnapshot } from '../api/types'
-import { computeSummary } from './computeSummary'
+import { computeSummary, withNlocAvailability } from './computeSummary'
+import type { SummaryCount } from '../api/types'
 
 function repo(over: Partial<RepositorySnapshot> = {}): RepositorySnapshot {
   return {
@@ -78,5 +79,38 @@ describe('computeSummary', () => {
     const s = computeSummary([r])
     expect(count(s, 'deploys-failing')).toBe(1)
     expect(count(s, 'packages-failing')).toBe(1)
+  })
+
+  it('marks an nloc bucket unavailable when every contributing repo lacks metrics', () => {
+    // CIF-002: a failed metrics scan must not render as a measured zero.
+    const s = computeSummary([repo(), repo({ name: 'fixportal-quickfixn' })])
+    expect(s.find(c => c.key === 'nloc-fixportal')?.unavailable).toBe(true)
+    expect(s.find(c => c.key === 'nloc-quickfixn')?.unavailable).toBe(true)
+  })
+
+  it('keeps an nloc bucket available when any contributing repo has metrics', () => {
+    const measured = repo({ metrics: { nloc: 100, avgComplexity: 2, functionCount: 5, highComplexityCount: 0, computedAt: '' } })
+    const s = computeSummary([measured, repo()])
+    expect(s.find(c => c.key === 'nloc-fixportal')?.unavailable).toBeUndefined()
+  })
+
+  it('treats an nloc bucket with no contributing repos as a true zero', () => {
+    const measured = repo({ metrics: { nloc: 100, avgComplexity: 2, functionCount: 5, highComplexityCount: 0, computedAt: '' } })
+    const s = computeSummary([measured])
+    expect(count(s, 'nloc-quickfixn')).toBe(0)
+    expect(s.find(c => c.key === 'nloc-quickfixn')?.unavailable).toBeUndefined()
+  })
+})
+
+describe('withNlocAvailability', () => {
+  it('marks nloc tiles on a server-shaped summary without touching other keys', () => {
+    const serverSummary: SummaryCount[] = [
+      { key: 'repos', count: 1 },
+      { key: 'nloc-fixportal', count: 0 },
+      { key: 'nloc-quickfixn', count: 0 },
+    ]
+    const marked = withNlocAvailability(serverSummary, [repo()])
+    expect(marked.find(c => c.key === 'nloc-fixportal')?.unavailable).toBe(true)
+    expect(marked.find(c => c.key === 'repos')?.unavailable).toBeUndefined()
   })
 })

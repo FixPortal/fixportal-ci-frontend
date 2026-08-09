@@ -65,7 +65,7 @@ function toneFor(key: string, count: number): string {
 }
 
 export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ciTrend = EMPTY_TREND }: SummaryStripProps) {
-  const byKey = useMemo(() => new Map(summary.map(s => [s.key, s.count])), [summary])
+  const byKey = useMemo(() => new Map(summary.map(s => [s.key, s])), [summary])
 
   const [trendInfoOpen, setTrendInfoOpen] = useState(false)
   const trendLabelRef = useRef<HTMLDivElement>(null)
@@ -89,10 +89,10 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
   return (
     <section className="summary-panels">
       {PANELS.map(panel => {
-        const items: { key: string; count: number }[] = []
+        const items: SummaryCount[] = []
         for (const k of panel.keys) {
-          const count = byKey.get(k)
-          if (count !== undefined) items.push({ key: k, count })
+          const entry = byKey.get(k)
+          if (entry) items.push(entry)
         }
         if (items.length === 0) return null
         const isReview = panel.title === 'Review'
@@ -104,9 +104,15 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
             <span className="summary-panel__title">{panel.title}</span>
             <div className="summary-panel__items">
               {items.map(item => {
+                // An unavailable tile renders as an unknown dash, never a digit —
+                // a failed scan must be distinguishable from a measured zero.
+                const unavailable = item.unavailable === true
+                const tone = unavailable ? 'unknown' : toneFor(item.key, item.count)
                 const body = (
                   <>
-                    <span className="summary__count">{formatCount(item.key, item.count)}</span>
+                    <span className="summary__count" aria-label={unavailable ? 'no data' : undefined}>
+                      {unavailable ? '—' : formatCount(item.key, item.count)}
+                    </span>
                     <span className="summary__label">{labelFor(item.key, item.count)}</span>
                   </>
                 )
@@ -117,14 +123,14 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                       type="button"
                       className="summary__item summary__item--btn"
                       data-key={item.key}
-                      data-tone={toneFor(item.key, item.count)}
+                      data-tone={tone}
                       onClick={onOpenPrs}
                       disabled={item.count === 0}
                     >{body}</button>
                   )
                 }
                 return (
-                  <div key={item.key} className="summary__item" data-key={item.key} data-tone={toneFor(item.key, item.count)}>{body}</div>
+                  <div key={item.key} className="summary__item" data-key={item.key} data-tone={tone}>{body}</div>
                 )
               })}
             </div>

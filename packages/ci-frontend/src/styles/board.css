@@ -6,7 +6,7 @@
   host application's global styles.
 
   TOKEN CONTRACT: this sheet DEFINES its app-local tokens (--surface-2, --run,
-  --pkg, --unknown, --no-ci, --r-* radii, the --space-* / --fs-* scales) on
+  --unknown, --no-ci, --r-* radii, the --space-* / --fs-* scales) on
   .ci-page, but CONSUMES ~15 "universal" tokens it does not define (--app-bg,
   --card-bg, --border, --border-strong, --text, --text-muted, --text-faint,
   --brand, --ok-border, --bad-solid, --bad-text, --warn-text, --warn-fill-deep,
@@ -31,7 +31,6 @@
 
   --surface-2: #f9fafb;
   --run: #2563eb;
-  --pkg: #7c3aed;
   --unknown: #94a0b3;
   --no-ci: #6b72b0;
   --r-control: 4px;
@@ -61,7 +60,6 @@
 .ci-page[data-theme="dark"] {
   --surface-2: #1c2538;
   --run: #60a5fa;
-  --pkg: #a78bfa;
   --unknown: #5d6880;
   --no-ci: #7c83b8;
 }
@@ -313,7 +311,7 @@
   .summary__count {
     font-family: var(--font-mono);
     font-weight: 600;
-    font-size: var(--fs-24);
+    font-size: var(--fs-14);
     line-height: 1;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
@@ -326,12 +324,28 @@
     color: var(--text-muted);
   }
 
+  /* CIF-D-001: size follows attention, not inventory. The quiet tier above is the
+     default — zeros and inventory stay small and muted, so a healthy board reads
+     as a quiet line. Only a non-zero attention count earns the hero size (the
+     tones below are all unreachable at zero — toneFor returns ok for 0), which
+     makes the first failure the loudest thing on the strip. */
+  .summary__item[data-tone="alert"] .summary__count,
+  .summary__item[data-tone="fail"] .summary__count,
+  .summary__item[data-tone="run"] .summary__count,
+  .summary__item[data-tone="review"] .summary__count,
+  .summary__item[data-tone="no-ci"] .summary__count {
+    font-size: var(--fs-24);
+  }
+
   /* Non-zero counts take their chip's colour; zero / inventory stay quiet. */
   .summary__item[data-tone="alert"] .summary__count { color: var(--warn-text); }
   .summary__item[data-tone="fail"] .summary__count { color: var(--bad-text); }
   .summary__item[data-tone="run"] .summary__count { color: var(--run); }
   .summary__item[data-tone="review"] .summary__count { color: var(--brand); }
   .summary__item[data-tone="no-ci"] .summary__count { color: var(--no-ci); }
+  /* A metric whose scan failed is unknown, not zero (CIF-002) — same grey the
+     unknown chip state uses. */
+  .summary__item[data-tone="unknown"] .summary__count { color: var(--unknown); }
 
   /* CI status uses a fixed 3-col grid so Running/Deploys-Running and
      Failing/Deploys-Failing align in columns regardless of which items are present. */
@@ -986,10 +1000,13 @@
     white-space: nowrap;
   }
 
-  /* Each lane gets its own accent so deploys and packages are told apart at a
-     glance; the chips keep their state colours. */
+  /* Lane accents: deploys keeps brand; packages goes neutral. A lane label is a
+     category marker, and the standard's category-marker guidance is neutral or
+     brand — the old --pkg purple was a fifth hue, off-standard post-adoption
+     (purple is reserved for outbound flow). The glyph + label text carry the
+     lane distinction; colour was redundant. */
   .repo-joblane--deploys .repo-joblane__label { color: var(--brand); }
-  .repo-joblane--packages .repo-joblane__label { color: var(--pkg); }
+  .repo-joblane--packages .repo-joblane__label { color: var(--text-muted); }
 
   .repo-joblane__chips {
     display: flex;

@@ -78,6 +78,10 @@ export interface RepositorySnapshot {
 export interface SummaryCount {
   key: string
   count: number
+  // Explicit "no value" state for enrichment-derived metrics: when the backing
+  // scan produced nothing, count is meaningless and the tile must render as
+  // unknown, never as a measured zero (CIF-002). Absent/false = count is real.
+  unavailable?: boolean
 }
 
 export interface MergedPr {
