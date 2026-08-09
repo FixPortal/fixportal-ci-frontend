@@ -6,7 +6,7 @@ import { useHideNoCi } from '../hooks/useHideNoCi'
 import { useCiAdmin } from '../CiAdminContext'
 import { useCiConfig } from '../CiConfigContext'
 import { isNoCi } from '../lib/isNoCi'
-import { computeSummary } from '../lib/computeSummary'
+import { computeSummary, withNlocAvailability } from '../lib/computeSummary'
 import { SummaryStrip } from '../components/SummaryStrip'
 import { RepoBoard } from '../components/RepoBoard'
 import { RepoSection } from '../components/RepoSection'
@@ -150,7 +150,11 @@ export function CiBoardContent() {
     [noCiFiltered, effectiveFilters],
   )
   const summary = useMemo(() => {
-    if (isAdmin && !hasRepositoryScope && !hideNoCi.hidden && !filters.isActive) return snapshot.data?.summary ?? []
+    if (isAdmin && !hasRepositoryScope && !hideNoCi.hidden && !filters.isActive) {
+      // The server's summary is plain key/count — re-derive the nloc no-value
+      // state from the repo list so a failed scan can't render as a measured 0.
+      return withNlocAvailability(snapshot.data?.summary ?? [], visibleRepos)
+    }
     return computeSummary(visibleRepos)
   }, [hasRepositoryScope, isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
   const lastMergedPr = useMemo(() => {

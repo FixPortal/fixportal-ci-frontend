@@ -30,6 +30,36 @@ describe('SummaryStrip No-CI tone', () => {
   })
 })
 
+describe('SummaryStrip unavailable metric', () => {
+  it('renders an unavailable tile as an unknown dash, never a digit (CIF-002)', () => {
+    render(
+      <SummaryStrip
+        summary={[{ key: 'nloc-fixportal', count: 0, unavailable: true }]}
+        onOpenPrs={() => {}}
+        lastMerged={null}
+      />,
+    )
+    const item = screen.getByText('FixPortal loc').closest('.summary__item')
+    expect(item?.getAttribute('data-tone')).toBe('unknown')
+    const countEl = item?.querySelector('.summary__count')
+    expect(countEl?.textContent).toBe('—')
+    expect(countEl?.getAttribute('aria-label')).toBe('no data')
+  })
+
+  it('renders an available zero as a real digit', () => {
+    render(
+      <SummaryStrip
+        summary={[{ key: 'nloc-fixportal', count: 0 }]}
+        onOpenPrs={() => {}}
+        lastMerged={null}
+      />,
+    )
+    const item = screen.getByText('FixPortal loc').closest('.summary__item')
+    expect(item?.getAttribute('data-tone')).toBe('ok')
+    expect(item?.querySelector('.summary__count')?.textContent).toBe('0')
+  })
+})
+
 describe('SummaryStrip CI weather bar', () => {
   const trend: CiTrendBucket[] = [
     { bucketStart: '2026-05-30T11:00:00Z', state: 'passing' },
