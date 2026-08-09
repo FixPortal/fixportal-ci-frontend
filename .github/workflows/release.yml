@@ -34,10 +34,9 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-          # PUBLIC repo — the private-package tarball must not enter the shared
-          # npm cache (fork PRs can restore default-branch caches). Same reasoning
-          # as ci.yml.
+          # No npm caching, by either path — PUBLIC repo, the private-package
+          # tarball must not enter the shared cache. Explicit cache: omitted AND
+          # auto-detection disabled (same reasoning as ci.yml).
           package-manager-cache: false
           # GitHub Packages auth line for the private @fixportal/* scope — the
           # workspace-wide npm ci resolves the dashboard's @fixportal/design too.
