@@ -4,9 +4,8 @@ import { createRoot } from 'react-dom/client'
 // the house design system rather than the library's vendored fallback set (which
 // exists for external consumers with no design system of their own — see the
 // header of packages/ci-frontend/src/styles/tokens.css). dashboard.css carries
-// the app-local AA override and the IBM Plex @font-face block (fonts preloaded
-// from public/fonts/ via index.html); board.css must come last (its token
-// contract).
+// the IBM Plex @font-face block (fonts preloaded from public/fonts/ via
+// index.html); board.css must come last (its token contract).
 import '@fixportal/design/tokens.css'
 import './dashboard.css'
 import '@fix-portal/ci-frontend/board.css'

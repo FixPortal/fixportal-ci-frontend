@@ -25,10 +25,14 @@ export const RepoBoard = memo(function RepoBoard({
   return (
     <section className={`repo-board${collapsed ? ' repo-board--collapsed' : ''}${noCi ? ' repo-board--no-ci' : ''}`}>
       <header>
-        <button type="button" className="repo-board__toggle" onClick={() => onToggle(repository.name)} aria-expanded={!collapsed}>
-          <span className="repo-board__chev" aria-hidden="true">▸</span>
-          {repository.name}
-        </button>
+        {/* Disclosure pattern: the repo name is the section heading, the toggle
+            lives inside it so screen-reader users can jump per repo by heading. */}
+        <h2 className="repo-board__heading">
+          <button type="button" className="repo-board__toggle" onClick={() => onToggle(repository.name)} aria-expanded={!collapsed}>
+            <span className="repo-board__chev" aria-hidden="true">▸</span>
+            {repository.name}
+          </button>
+        </h2>
         {noCi && <span className="repo-board__noci-tag">No CI</span>}
         <RepoMetricsLine metrics={repository.metrics} />
         <RepoActivityIndicator repository={repository} />

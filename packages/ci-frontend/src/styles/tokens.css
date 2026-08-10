@@ -21,7 +21,7 @@
   --app-bg: #f7f8fa;
   --card-bg: #ffffff;
   --border: #e5e7eb;
-  --border-strong: #cbd5e1;
+  --border-strong: #7c8ca2;
   --text: #1f2937;
   --text-muted: #5f6472;
   /* #94a3b8 on #f7f8fa is ~2.41:1 — fails WCAG AA (4.5:1) for the 10px
@@ -48,7 +48,7 @@
   --app-bg: #020617;
   --card-bg: #0f172a;
   --border: #1e293b;
-  --border-strong: #334155;
+  --border-strong: #5b6b85;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
   /* #64748b on #020617 is ~4.23:1 — below the 4.5:1 AA threshold for small text.
@@ -65,7 +65,7 @@
     --app-bg: #020617;
     --card-bg: #0f172a;
     --border: #1e293b;
-    --border-strong: #334155;
+    --border-strong: #5b6b85;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
     --text-faint: #94a3b8;

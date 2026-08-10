@@ -174,14 +174,19 @@ export function CiBoard({
     <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace, repositoryScope }}>
       <QueryClientSafeProvider>
         <div className="ci-page" ref={pageRef}>
+          {/* First tab stop: keyboard bypass of the ~11 toolbar controls before
+              the board (WCAG 2.4.1). Targets the <main> in CiBoardContent. */}
+          <a href="#ci-main" className="ci-skip-link">Skip to content</a>
           <div className="ci-embed">
             <header ref={headerRef} className="ci-embed__header">
-              <span className="ci-embed__lockup">
-                {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
+              <div className="ci-embed__lockup">
+                <h1 className="ci-embed__wordmark">
+                  {logo ?? <span className="ci-embed__wordmark-text">CI Dashboard</span>}
+                </h1>
                 <span className="ci-embed__descriptor">
                   {effectiveAdmin ? '[Admin]' : '[Guest]'}
                 </span>
-              </span>
+              </div>
               {showThemeSwitcher && (
                 <div style={{ marginLeft: 'auto' }}>
                   <ThemeSwitcher pageRef={pageRef} />
