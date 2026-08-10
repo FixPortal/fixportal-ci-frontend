@@ -150,6 +150,10 @@ export function CiBoard({
   // not merely that a signal was passed — matches the toolbar scope descriptor.
   const effectiveAdmin = adminSignal && Boolean(adminSnapshotUrl || adminSnapshotFetcher)
 
+  // Namespaced like the storage keys: multiple boards can share a host page, so
+  // the skip-link target id must not collide between instances.
+  const mainId = storageNamespace ? `ci-main-${storageNamespace}` : 'ci-main'
+
   // The sticky toolbar+summary band freezes at top = the header's height. That
   // height varies with the host's logo, so measure it and publish the exact value
   // as --ci-header-h rather than guessing — a stale guess makes the band creep a
@@ -176,7 +180,7 @@ export function CiBoard({
         <div className="ci-page" ref={pageRef}>
           {/* First tab stop: keyboard bypass of the ~11 toolbar controls before
               the board (WCAG 2.4.1). Targets the <main> in CiBoardContent. */}
-          <a href="#ci-main" className="ci-skip-link">Skip to content</a>
+          <a href={`#${mainId}`} className="ci-skip-link">Skip to content</a>
           <div className="ci-embed">
             <header ref={headerRef} className="ci-embed__header">
               <div className="ci-embed__lockup">

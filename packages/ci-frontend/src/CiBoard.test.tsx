@@ -22,6 +22,25 @@ const snapshot: DashboardSnapshot = {
   lastMergedPr: null,
 }
 
+describe('CiBoard landmark structure', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('renders the wordmark as the page h1 and a skip link as the first control', async () => {
+    render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={async () => snapshot}
+        storageNamespace="a11y-structure"
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' })).toBeInTheDocument()
+    // Namespaced target id: co-hosted boards on one page must not collide.
+    expect(screen.getByRole('link', { name: /skip to content/i })).toHaveAttribute('href', '#ci-main-a11y-structure')
+    expect(document.getElementById('ci-main-a11y-structure')).not.toBeNull()
+  })
+})
+
 describe('CiBoard admin source gating', () => {
   beforeEach(() => localStorage.clear())
 
