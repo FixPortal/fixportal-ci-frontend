@@ -55,6 +55,21 @@
   --fs-13: 13px;
   --fs-14: 14px;
   --fs-24: 24px;
+
+  /* AA text inks (A11Y-CIF-001/002). The universal status tokens (--brand,
+     --ok-border, --bad-solid) are fills/borders — UI chrome, fine at 3:1 — but
+     fall short of 4.5:1 as 11-14px text on light surfaces, so small text reads
+     these darker inks instead. Measured (sRGB relative luminance):
+       --brand-ink        5.5:1 on --card-bg, 4.7:1 on the 12% brand pill tint
+       --chip-on-ink      5.9:1 on the 16% brand chip tint
+       --chip-on-passing  5.6:1 on the 16% ok chip tint
+       --chip-on-failing  6.1:1 on the 16% bad chip tint (= light --bad-text)
+     Dark theme overrides below keep the universal tokens, which already pass
+     there (>=4.6:1) — except the failing-chip ink, lightened for the same reason. */
+  --brand-ink: #0f766e;
+  --chip-on-ink: #115e59;
+  --chip-on-passing-ink: #166534;
+  --chip-on-failing-ink: #991b1b;
 }
 
 .ci-page[data-theme="dark"] {
@@ -62,6 +77,12 @@
   --run: #60a5fa;
   --unknown: #5d6880;
   --no-ci: #7c83b8;
+
+  --brand-ink: var(--brand);
+  --chip-on-ink: var(--brand);
+  --chip-on-passing-ink: var(--ok-border);
+  /* #dc2626 on the dark 16% failing tint is 3.8:1; #f87171 measures 6.7:1. */
+  --chip-on-failing-ink: #f87171;
 }
 
 /* Keyframes must be top-level (cannot be nested). Renamed from the dashboard's
@@ -73,6 +94,23 @@
 
 .ci-page .ci-embed {
   flex: 1;
+}
+
+/* Skip link (WCAG 2.4.1): first tab stop, visually hidden until focused. */
+.ci-skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  transform: translateY(-300%);
+}
+.ci-skip-link:focus-visible {
+  transform: none;
 }
 
 .ci-embed {
@@ -97,7 +135,7 @@
   align-items: flex-end;
   gap: var(--space-3);
 }
-.ci-embed__wordmark { display: block; color: var(--text); }
+.ci-embed__wordmark { display: block; margin: 0; font-size: inherit; font-weight: inherit; color: var(--text); }
 /* Text fallback used when no `logo` node is passed to CiBoard. */
 .ci-embed__wordmark-text {
   font-family: var(--font-sans);
@@ -418,6 +456,13 @@
     color: var(--text-muted);
     font-weight: 400;
   }
+  /* h2 wrapper for the disclosure toggle (A11Y-CIF-005) — neutralise UA
+     heading styles; the button inside carries the visual style. */
+  .repo-board__heading {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
   .repo-board__noci-tag {
     font-family: var(--font-mono);
     font-size: var(--fs-11);
@@ -452,6 +497,8 @@
     background: none;
     border: none;
     padding: 0;
+    /* 2.5.8: lift the collapse toggle's pointer target to >=24px tall. */
+    min-height: 24px;
     cursor: pointer;
   }
 
@@ -470,6 +517,10 @@
     text-decoration: none;
     white-space: nowrap;
     flex-shrink: 0;
+    /* 2.5.8: >=24px pointer target without growing the header row visually. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
   }
   .repo-board__gh-link:hover { color: var(--text); text-decoration: underline; }
 
@@ -576,27 +627,28 @@
   }
   .repo-filter__chip:hover { border-color: var(--border-strong); }
   .repo-filter__chip--on {
-    color: var(--brand);
+    color: var(--chip-on-ink);
     border-color: var(--brand);
     background: color-mix(in srgb, var(--brand) 16%, transparent);
   }
   .repo-filter__chip--failing.repo-filter__chip--on {
-    color: var(--bad-solid);
+    color: var(--chip-on-failing-ink);
     border-color: var(--bad-solid);
     background: color-mix(in srgb, var(--bad-solid) 16%, transparent);
   }
   .repo-filter__chip--passing.repo-filter__chip--on {
-    color: var(--ok-border);
+    color: var(--chip-on-passing-ink);
     border-color: var(--ok-border);
     background: color-mix(in srgb, var(--ok-border) 16%, transparent);
   }
 
   .state-msg__action {
     font: inherit;
-    color: var(--brand);
+    color: var(--brand-ink);
     background: none;
     border: none;
-    padding: 0;
+    /* 2.5.8: the padding lifts the pointer target to >=24px tall. */
+    padding: var(--space-1) var(--space-2);
     cursor: pointer;
     text-decoration: underline;
   }
@@ -1005,7 +1057,7 @@
      brand — the old --pkg purple was a fifth hue, off-standard post-adoption
      (purple is reserved for outbound flow). The glyph + label text carry the
      lane distinction; colour was redundant. */
-  .repo-joblane--deploys .repo-joblane__label { color: var(--brand); }
+  .repo-joblane--deploys .repo-joblane__label { color: var(--brand-ink); }
   .repo-joblane--packages .repo-joblane__label { color: var(--text-muted); }
 
   .repo-joblane__chips {
@@ -1038,6 +1090,8 @@
     color: var(--text-muted);
     display: flex;
     align-items: center;
+    /* 2.5.8: >=24px pointer target. */
+    min-height: 24px;
     gap: var(--space-1);
     margin: 0 calc(-1 * var(--space-2)) var(--space-1);
   }
@@ -1173,7 +1227,7 @@
     font-family: var(--font-mono);
     font-size: var(--fs-11);
     letter-spacing: 0.04em;
-    color: var(--brand);
+    color: var(--brand-ink);
     background: color-mix(in srgb, var(--brand) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--border));
     border-radius: var(--r-control);
@@ -1250,7 +1304,7 @@
   .pr-card__title { margin: var(--space-3) 0 var(--space-2); font-size: var(--fs-14); font-weight: 600; line-height: 1.3; color: var(--text); }
   .pr-card__foot { display: flex; align-items: center; justify-content: space-between; }
   .pr-card__author { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
-  .pr-card__gh { font-size: var(--fs-12); color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border)); border-radius: var(--r-chip); padding: var(--space-1) var(--space-2); text-decoration: none; }
+  .pr-card__gh { font-size: var(--fs-12); color: var(--brand-ink); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border)); border-radius: var(--r-chip); padding: var(--space-1) var(--space-2); text-decoration: none; }
   .pr-modal__nav { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-4); }
   .pr-modal__nav button {
     font-family: var(--font-sans); font-size: var(--fs-12); color: var(--text);
@@ -1329,8 +1383,9 @@
   }
 
   .ci-trend-info-btn {
-    width: 14px;
-    height: 14px;
+    /* 24px: WCAG 2.5.8 minimum target size (was 14px, the one hard violation). */
+    width: 24px;
+    height: 24px;
     flex: none;
     border-radius: 50%;
     border: 1px solid var(--border-strong);
@@ -1441,7 +1496,7 @@
   color: var(--text-muted);
 }
 .site-footer__attrib a {
-  color: var(--brand);
+  color: var(--brand-ink);
   text-decoration: none;
   border-bottom: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
 }
@@ -1459,7 +1514,8 @@
   align-items: center;
 }
 .ci-theme-select {
-  padding: var(--space-hair) var(--space-2);
+  /* 2.5.8: space-1 vertical padding lifts the target to >=24px tall. */
+  padding: var(--space-1) var(--space-2);
   font-size: var(--fs-12);
   font-family: var(--font-sans);
   background: var(--card-bg);

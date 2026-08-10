@@ -182,7 +182,7 @@ export function CiBoardContent() {
 
   if (snapshot.isPending) {
     return (
-      <main className="dashboard-page dashboard-page--loading" key="loading">
+      <main id="ci-main" className="dashboard-page dashboard-page--loading" key="loading" tabIndex={-1}>
         <div className="state-msg">Loading dashboard…</div>
         <div className="summary-panels dashboard__loading-panels" aria-hidden="true">
           {[0, 1, 2].map(panel => (
@@ -199,7 +199,7 @@ export function CiBoardContent() {
 
   if (snapshot.isError && !snapshot.data) {
     return (
-      <main className="dashboard-page">
+      <main id="ci-main" className="dashboard-page" tabIndex={-1}>
         <div className="state-msg state-msg--error">
           Dashboard unavailable. Retrying automatically.{' '}
           <button
@@ -219,7 +219,7 @@ export function CiBoardContent() {
   // 204 -> null: backend is up but has not produced a snapshot yet.
   if (!snapshot.data) {
     return (
-      <main className="dashboard-page">
+      <main id="ci-main" className="dashboard-page" tabIndex={-1}>
         <div className="state-msg">Waiting for the first refresh…</div>
       </main>
     )
@@ -255,7 +255,7 @@ export function CiBoardContent() {
   )
 
   return (
-    <main className="dashboard-page" key="dashboard" tabIndex={-1}>
+    <main id="ci-main" className="dashboard-page" key="dashboard" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
         <input
