@@ -117,7 +117,10 @@ export function CiBoardContent() {
   const hideNoCi = useHideNoCi()
   const filters = useRepoFilters()
   const isAdmin = useCiAdmin()
-  const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope } = useCiConfig()
+  const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope, storageNamespace } = useCiConfig()
+  // Same derivation as the skip link in CiBoard — namespaced so co-hosted
+  // boards on one page don't duplicate the anchor id.
+  const mainId = storageNamespace ? `ci-main-${storageNamespace}` : 'ci-main'
   const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
   const hasRepositoryScope = repositoryScope !== undefined
   const [stepperOpen, setStepperOpen] = useState(false)
@@ -182,7 +185,7 @@ export function CiBoardContent() {
 
   if (snapshot.isPending) {
     return (
-      <main id="ci-main" className="dashboard-page dashboard-page--loading" key="loading" tabIndex={-1}>
+      <main id={mainId} className="dashboard-page dashboard-page--loading" key="loading" tabIndex={-1}>
         <div className="state-msg">Loading dashboard…</div>
         <div className="summary-panels dashboard__loading-panels" aria-hidden="true">
           {[0, 1, 2].map(panel => (
@@ -199,7 +202,7 @@ export function CiBoardContent() {
 
   if (snapshot.isError && !snapshot.data) {
     return (
-      <main id="ci-main" className="dashboard-page" tabIndex={-1}>
+      <main id={mainId} className="dashboard-page" tabIndex={-1}>
         <div className="state-msg state-msg--error">
           Dashboard unavailable. Retrying automatically.{' '}
           <button
@@ -219,7 +222,7 @@ export function CiBoardContent() {
   // 204 -> null: backend is up but has not produced a snapshot yet.
   if (!snapshot.data) {
     return (
-      <main id="ci-main" className="dashboard-page" tabIndex={-1}>
+      <main id={mainId} className="dashboard-page" tabIndex={-1}>
         <div className="state-msg">Waiting for the first refresh…</div>
       </main>
     )
@@ -255,7 +258,7 @@ export function CiBoardContent() {
   )
 
   return (
-    <main id="ci-main" className="dashboard-page" key="dashboard" tabIndex={-1}>
+    <main id={mainId} className="dashboard-page" key="dashboard" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
         <input

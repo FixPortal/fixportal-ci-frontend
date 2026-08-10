@@ -49,6 +49,18 @@ describe('RepoBoard GitHub link', () => {
   })
 })
 
+describe('RepoBoard heading structure', () => {
+  it('wraps the collapse toggle in a level-2 heading (disclosure pattern)', () => {
+    render(
+      <RepoBoard repository={repo({})} collapsed={false} onToggle={() => {}} />,
+    )
+    const heading = screen.getByRole('heading', { level: 2, name: 'fixportal-docs' })
+    expect(heading).toBeInTheDocument()
+    // The toggle keeps its own role/name inside the heading.
+    expect(screen.getByRole('button', { name: 'fixportal-docs' })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
 describe('RepoBoard No-CI treatment', () => {
   it('marks a zero-workflow repo with the No-CI class and a "No CI" tag', () => {
     const { container } = render(
