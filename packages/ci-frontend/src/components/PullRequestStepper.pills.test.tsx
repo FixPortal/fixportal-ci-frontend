@@ -32,6 +32,13 @@ test('renders no pill row for a PR with no signals', () => {
   expect(container.querySelector('.review-pills')).toBeNull()
 })
 
+test('renders the Ready to merge pill on the card, and only when the PR is ready', () => {
+  const { rerender } = render(<PullRequestStepper prs={[{ ...base, readyToMerge: true }]} onClose={() => {}} />)
+  expect(screen.getByText('Ready to merge')).toBeInTheDocument()
+  rerender(<PullRequestStepper prs={[{ ...base, readyToMerge: false }]} onClose={() => {}} />)
+  expect(screen.queryByText('Ready to merge')).toBeNull()
+})
+
 test('swaps the pills when paging to the next PR', () => {
   const first: OpenPr = { ...base, reviewSignals: [{ name: 'CodeRabbit', state: 'clean' }] }
   const second: OpenPr = { ...base, number: 182, createdAt: '2026-07-30T00:00:00Z', reviewSignals: [{ name: 'Gitar', state: 'pending' }] }

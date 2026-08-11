@@ -2,6 +2,7 @@ import type { PullRequest } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import { ReviewPills } from './ReviewPills'
+import { ReadyToMergePill } from './ReadyToMergePill'
 
 export function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
   if (pullRequests.length === 0) return null
@@ -31,7 +32,13 @@ export function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] 
                     <span className="repo-prs__title">{pr.title}</span>
                   </span>
                 )}
-                <ReviewPills signals={pr.reviewSignals} />
+                {/* Both badge groups share one flex child so .repo-prs__line's
+                    space-between keeps them together on the right, rather than
+                    stranding the verdict pill in the middle of the row. */}
+                <div className="repo-prs__badges">
+                  <ReadyToMergePill ready={pr.readyToMerge} />
+                  <ReviewPills signals={pr.reviewSignals} />
+                </div>
               </div>
               <span className="repo-prs__meta">
                 {pr.author} · {formatRelativeTime(pr.createdAt)}{pr.isDraft ? ' · draft' : ''}

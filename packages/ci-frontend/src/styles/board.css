@@ -915,6 +915,30 @@
     font-weight: 500;
   }
 
+  /* ---- Ready-to-merge verdict --------------------------------------------- */
+
+  /* The whole-PR verdict, sitting next to the per-reviewer pills without being
+     one of them: same tinted-fill family as the "Ready to merge" filter chip
+     (.repo-filter__chip--passing.--on), so the affirmative green means the same
+     thing in the filter bar and on the row. Louder than .chip--review-clean --
+     full 16% tint, coloured border, bold label -- because it is the one pill
+     that answers the question the board exists to answer.
+     Ink is --chip-on-passing-ink, not --ok-border: the label is 12px text on the
+     16% tint, the exact pairing measured at 5.6:1 in the token block. */
+  .chip--ready {
+    color: var(--chip-on-passing-ink);
+    border-color: var(--ok-border);
+    background: color-mix(in srgb, var(--ok-border) 16%, transparent);
+  }
+  .chip--ready .chip__label {
+    color: var(--chip-on-passing-ink);
+    font-weight: 700;
+  }
+  .chip--ready .chip__dot {
+    background: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+  }
+
   /* Repo with no workflows: quiet, dashed, matching the "unknown" absence cue. */
   .repo-board__empty {
     padding: var(--space-4);
@@ -991,6 +1015,16 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* The row's right-hand group: the ready verdict plus the review pills. One flex
+     child, so .repo-prs__line's space-between pushes both to the right together
+     instead of spreading three children across the row. */
+  .repo-prs__badges {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }
