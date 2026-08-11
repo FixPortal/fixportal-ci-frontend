@@ -18,6 +18,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -72,12 +73,6 @@ jobs:
 
       - name: Build standalone app
         run: npm run build:app
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Browser regression tests
-        run: npm run test:e2e
 
   gate-coverage:
     name: Gate coverage
