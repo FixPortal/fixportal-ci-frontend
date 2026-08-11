@@ -59,6 +59,31 @@ test('renders the pills outside the PR anchor, not nested within it', () => {
   expect(pills?.closest('a')).toBeNull()
 })
 
+// The point of the whole feature: the verdict is legible from the board without
+// opening the PR.
+test('renders a Ready to merge pill when the backend has judged the PR ready', () => {
+  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} />)
+  expect(screen.getByText('Ready to merge')).toBeInTheDocument()
+})
+
+// Tri-state, and only one of the three values earns the pill. false is "not ready";
+// null/undefined is "not yet determined" or an older backend that never sends the
+// field -- neither may be coerced into a green light, because acting on a wrong
+// pill means merging a PR that isn't ready.
+test.each([[false], [null], [undefined]])('renders no Ready to merge pill when readyToMerge is %s', ready => {
+  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} />)
+  expect(screen.queryByText('Ready to merge')).toBeNull()
+})
+
+// The pill carries no link of its own, but it sits in the same line as the PR
+// anchor -- inside it, it would be inert content inside a link target.
+test('renders the ready pill outside the PR anchor', () => {
+  const { container } = render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} />)
+  const pill = container.querySelector('.chip--ready')
+  expect(pill).not.toBeNull()
+  expect(pill?.closest('a')).toBeNull()
+})
+
 // The wrapper is not cosmetic: board.css hangs the right-alignment and the
 // responsive wrap off .repo-prs__line, so losing it silently un-styles the row.
 test('wraps the PR link and its pills in a shared line element', () => {
