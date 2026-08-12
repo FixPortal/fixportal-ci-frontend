@@ -39,6 +39,13 @@ export function LegendRow() {
               <b>CI</b> = workflow runs · <b>CD</b> = deploys &amp; packages
             </span>
           </div>
+          <div className="legend-row__scanning">
+            <span className="legend-row__label">Review pills</span>
+            <span className="legend-row__def-desc">
+              GitHub CodeQL, Code Quality and Secret Scanning are enabled on public repositories only,
+              so those pills do not appear on private ones and never hold back a Ready to merge verdict.
+            </span>
+          </div>
           <div className="legend-row__metrics">
             <a className="legend-row__label" href="https://github.com/terryyin/lizard" target="_blank" rel="noopener noreferrer">Lizard metrics</a>
             <span><b>NLOC</b> <span className="legend-row__def-desc">non-comment lines of code</span></span>
