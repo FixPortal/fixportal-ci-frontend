@@ -1148,6 +1148,7 @@
   }
 
   .legend-row__status,
+  .legend-row__scanning,
   .legend-row__metrics {
     display: flex;
     align-items: center;
@@ -1236,6 +1237,13 @@
     font-family: var(--font-sans);
     text-transform: none;
     letter-spacing: 0;
+  }
+
+  /* A sentence rather than a row of terms, so it wraps and its gap collapses to
+     the label -- without this the text is one long line on a narrow board. */
+  .legend-row__scanning {
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .legend-row__metrics a {
