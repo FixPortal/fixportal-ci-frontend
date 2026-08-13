@@ -23,6 +23,10 @@ license: Apache-2.0
 
 ![FixPortal CI dashboard](docs/dashboard.png)
 
+> New here? [**The idiot's guide to setting up the CI dashboard**](docs/setup-guide.md)
+> walks through every route from "just show me" to "point it at my own GitHub org",
+> assuming no prior knowledge.
+
 ## What's in the repo
 
 | Path | Contents |
@@ -53,15 +57,8 @@ The dashboard proxies all `/api/` requests to that origin.
 
 ## Quick start — clone and run (dev mode)
 
-> [!NOTE]
-> Building from source requires a GitHub personal access token with `read:packages`
-> on the FixPortal org, because the dashboard app takes its design tokens from the
-> private `@fixportal/design` package on GitHub Packages. npm reads the token from
-> the `//npm.pkg.github.com/:_authToken=` line in your user-level `~/.npmrc`;
-> without it, `npm install` fails with a 401 on that scope. External users don't
-> need to build from source: run the published image (above) or consume the
-> published `@fix-portal/ci-frontend` npm package, which has no private
-> dependencies.
+Every dependency resolves from public npm, so this needs nothing but Node 22+ —
+no tokens, no registry configuration, no FixPortal account.
 
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
@@ -83,13 +80,12 @@ not need this — nginx proxies `/api/` same-origin.
 ## Self-hosting with Docker
 
 The published image needs no build at all (see the quick start above). Building the
-image from source requires the `read:packages` token from the dev-mode note,
-exported as `FIXPORTAL_PACKAGES_TOKEN`:
+image from source needs no credentials either:
 
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
 cd fixportal-ci-frontend
-docker build --secret id=github_packages_token,env=FIXPORTAL_PACKAGES_TOKEN -t ci-frontend .
+docker build -t ci-frontend .
 docker run -p 8080:8080 -e BACKEND_URL=https://your-backend.example.com ci-frontend
 ```
 
@@ -157,6 +153,47 @@ The board reads ~15 CSS custom properties (`--text`, `--border`, `--brand`, `--c
 
 Toggle dark mode: `document.documentElement.dataset.theme = 'dark'`.
 
+### TypeScript: CSS imports
+
+If your bundler supplies ambient CSS module types (Vite does, via `vite/client`),
+the two stylesheet imports type-check as-is. Without them TypeScript reports
+`TS2882` on the side-effect imports; add a one-line declaration:
+
+```ts
+// css.d.ts
+declare module '*.css'
+```
+
+### Testing a page that contains the board
+
+`CiBoard` measures its own header and reads the user's colour-scheme preference,
+so under jsdom — which implements neither API — it needs two stubs in your test
+setup file. Without them the render throws `ResizeObserver is not defined`, then
+`window.matchMedia is not a function`:
+
+```ts
+// vitest.setup.ts
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
+
+window.matchMedia = ((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener() {},
+  removeListener() {},
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia
+```
+
+Neither is needed in a real browser.
+
 ## Backend contract
 
 The board fetches `GET {apiBase}/api/dashboard/snapshot` and expects a `DashboardSnapshot`
@@ -193,6 +230,8 @@ npm run build:app   # type-check and build the standalone app
 | `/api/` requests return wrong paths or 404 | Trailing slash on `BACKEND_URL` causes nginx to strip the `/api/` prefix before forwarding | Remove the trailing slash from `BACKEND_URL` |
 | Dev mode ignores your backend | `VITE_CI_API_BASE` not set in `apps/dashboard/.env` | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin |
 | Dev mode sits at "Dashboard unavailable. Retrying automatically." | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173` |
+| Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
+| `TS2882` on the `board.css` / `tokens.css` imports | Your TypeScript setup has no ambient declaration for CSS modules | Add `declare module '*.css'` — see [TypeScript: CSS imports](#typescript-css-imports) |
 
 ## Contributing
 
