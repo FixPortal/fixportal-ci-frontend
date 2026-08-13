@@ -73,6 +73,16 @@ GITHUB_TOKEN=github_pat_...your token...
 GITHUB_OWNER=your-org-or-username
 ```
 
+> **That file now holds a live credential.** Never commit it, and never paste it
+> into an issue, a screenshot or a chat message. The backend repo already ignores
+> `.env` in its `.gitignore`, so plain `git add .` will not pick it up — but if
+> you copy the file elsewhere, that protection does not travel with it.
+>
+> If the token is ever exposed, revoke it immediately at
+> <https://github.com/settings/personal-access-tokens> and generate a new one.
+> Revoking is instant and costs nothing; a leaked read token exposes every
+> repository it can see.
+
 Then:
 
 ```bash
