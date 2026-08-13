@@ -30,12 +30,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          package-manager-cache: false
-          registry-url: 'https://npm.pkg.github.com'
+          # Safe now that every dependency is public (same reasoning as ci.yml).
+          cache: npm
 
       - name: Install
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
+        # No registry credentials needed — every dependency is public.
         run: npm ci --ignore-scripts
 
       - name: Install Chromium
