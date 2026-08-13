@@ -3,12 +3,11 @@ WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 COPY packages/ci-frontend/package.json packages/ci-frontend/
 COPY apps/dashboard/package.json apps/dashboard/
-# npm ci resolves the private @fixportal/* scope from GitHub Packages. The token
-# arrives as a BuildKit secret and the auth-line ~/.npmrc is written and removed
-# inside this one instruction, so it never lands in a layer or the pushed image.
-# --ignore-scripts: no dependency lifecycle scripts run while the token is on disk.
-RUN --mount=type=secret,id=github_packages_token \
-    sh -c 'echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_packages_token)" > ~/.npmrc && npm ci --ignore-scripts && rm ~/.npmrc'
+# Every dependency resolves from public npm, so this build needs no registry
+# credentials — anyone can build this image from a clone.
+# --ignore-scripts: nothing in the tree needs a lifecycle script to build, so no
+# third-party install code runs.
+RUN npm ci --ignore-scripts
 COPY . .
 RUN npm run build:lib
 RUN npm run build:app

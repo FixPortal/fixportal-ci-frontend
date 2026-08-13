@@ -29,21 +29,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          # No npm caching, by either path — PUBLIC repo, the private-package
-          # tarball must not enter the shared cache. Explicit cache: omitted AND
-          # auto-detection disabled (same reasoning as ci.yml).
-          package-manager-cache: false
-          # GitHub Packages auth line for the private @fixportal/* scope — the
-          # workspace-wide npm ci resolves the dashboard's @fixportal/design too.
-          registry-url: 'https://npm.pkg.github.com'
+          # Safe now that every dependency is public (same reasoning as ci.yml).
+          cache: npm
 
       - name: Install
-        env:
-          # PAT rather than GITHUB_TOKEN, so no per-repo package read-grant is
-          # needed (same wiring as the CI workflow's Install step).
-          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
-        # --ignore-scripts: no lifecycle scripts run while the packages token is
-        # in the environment (same reasoning as ci.yml).
+        # No registry credentials needed — every dependency is public.
+        # --ignore-scripts: no lifecycle scripts run (same reasoning as ci.yml).
         run: npm ci --ignore-scripts
 
       - name: Run Stryker
