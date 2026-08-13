@@ -68,7 +68,7 @@ cp .env.example .env
 
 Open `.env` in any text editor and fill in two lines:
 
-```
+```dotenv
 GITHUB_TOKEN=github_pat_...your token...
 GITHUB_OWNER=your-org-or-username
 ```
