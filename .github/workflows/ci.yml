@@ -34,29 +34,20 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          # No npm caching, by either path: this repo is PUBLIC and a fork PR can
-          # restore caches from the default-branch scope, so the private
-          # @fixportal/design tarball must never enter the shared cache. The
-          # explicit cache: input is deliberately omitted — package-manager-cache
-          # only gates auto-detection, it does NOT override an explicit cache:
-          # (setup-node main.ts).
-          package-manager-cache: false
-          # Writes the GitHub Packages auth line into the runner's user .npmrc,
-          # resolved from NODE_AUTH_TOKEN at install time (the simulator-frontend
-          # pattern). The project .npmrc maps the @fixportal scope to that registry.
-          registry-url: 'https://npm.pkg.github.com'
+          # Caching is safe now that every dependency is public: there is no
+          # private tarball a fork PR could restore from the default-branch cache
+          # scope. (It was disabled while the dashboard depended on the private
+          # @fixportal/design package.)
+          cache: npm
 
       - name: Install
-        env:
-          # Authenticates npm ci against the private @fixportal/* scope. Uses the PAT
-          # rather than GITHUB_TOKEN so no per-repo package read-grant is needed (the
-          # grant is the operator step that bit every other consumer — see
-          # fixportal-assets/packages/design/ONBOARDING.md §1).
-          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
+        # No registry credentials: every dependency resolves from public npm, so
+        # this step works unchanged on a fork PR, where repository secrets are not
+        # available.
         # --ignore-scripts: nothing in the dependency tree needs a lifecycle script
         # to build (esbuild ships its binary via optionalDependencies; Playwright
         # browsers are installed explicitly below), so no third-party install code
-        # runs while the packages token is in the environment.
+        # runs.
         run: npm ci --ignore-scripts
 
       - name: Audit production dependencies
@@ -150,10 +141,6 @@ jobs:
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # The Dockerfile's npm ci needs the private @fixportal/* scope; the PAT
-          # travels as a BuildKit secret so it never lands in a layer or the image.
-          secrets: |
-            github_packages_token=${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
           tags: |
             ghcr.io/fixportal/fixportal-ci-frontend:latest
             ghcr.io/fixportal/fixportal-ci-frontend:sha-${{ github.sha }}

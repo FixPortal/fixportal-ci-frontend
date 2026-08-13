@@ -1,12 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// The dashboard is a first-party FixPortal frontend, so it takes its tokens from
-// the house design system rather than the library's vendored fallback set (which
-// exists for external consumers with no design system of their own — see the
-// header of packages/ci-frontend/src/styles/tokens.css). dashboard.css carries
-// the IBM Plex @font-face block (fonts preloaded from public/fonts/ via
-// index.html); board.css must come last (its token contract).
-import '@fixportal/design/tokens.css'
+// Tokens come from the library's own published set, not the private house design
+// system, so that a clone of this repo builds for anyone — the dashboard app is
+// the reference consumer of the same public package an external user installs.
+// dashboard.css carries the IBM Plex @font-face block (fonts preloaded from
+// public/fonts/ via index.html); board.css must come last (its token contract).
+import '@fix-portal/ci-frontend/tokens.css'
 import './dashboard.css'
 import '@fix-portal/ci-frontend/board.css'
 import { App } from './App'

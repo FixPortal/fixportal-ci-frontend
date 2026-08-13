@@ -2,9 +2,8 @@ name: Release
 
 # Publish @fix-portal/ci-frontend to public npm on a version tag (e.g. v0.1.0).
 #
-# The package scope (@fix-portal) is distinct from @fixportal/design's scope, so
-# consumers map just this scope to public npm and install it tokenlessly — no
-# GitHub Packages mirror needed.
+# Published to public npm and installable tokenlessly — no GitHub Packages
+# mirror, and no private scope anywhere in the dependency tree.
 
 on:
   push:
@@ -34,24 +33,18 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          # No npm caching, by either path — PUBLIC repo, the private-package
-          # tarball must not enter the shared cache. Explicit cache: omitted AND
-          # auto-detection disabled (same reasoning as ci.yml).
-          package-manager-cache: false
-          # GitHub Packages auth line for the private @fixportal/* scope — the
-          # workspace-wide npm ci resolves the dashboard's @fixportal/design too.
-          registry-url: 'https://npm.pkg.github.com'
+          # Safe now that every dependency is public (same reasoning as ci.yml).
+          cache: npm
+          # No registry-url: publishing authenticates via OIDC trusted publishing
+          # (permissions.id-token below), so setup-node must not write a token
+          # auth line into .npmrc. The scoped registry is set explicitly next.
 
       - name: Configure registry
         run: npm config set @fix-portal:registry https://registry.npmjs.org
 
       - name: Install
-        env:
-          # PAT rather than GITHUB_TOKEN, so no per-repo package read-grant is
-          # needed (same wiring as the CI workflow's Install step).
-          NODE_AUTH_TOKEN: ${{ secrets.FIXPORTAL_PACKAGES_TOKEN }}
-        # --ignore-scripts: no lifecycle scripts run while the packages token is
-        # in the environment (same reasoning as ci.yml).
+        # No registry credentials needed — every dependency is public.
+        # --ignore-scripts: no lifecycle scripts run (same reasoning as ci.yml).
         run: npm ci --ignore-scripts
 
       - name: Build library
