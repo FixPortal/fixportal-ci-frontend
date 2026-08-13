@@ -3,9 +3,16 @@
  * The ~15 "universal" custom properties that board.css consumes but does not
  * define. Import this BEFORE board.css if your application has no design system
  * of its own. Consumers that already define these property names — the FixPortal
- * simulator, and this repo's own dashboard app, both via @fixportal/design —
- * should NOT import this file and instead let their own tokens (and theming)
- * flow into the board.
+ * simulator, via @fixportal/design — should NOT import this file and instead let
+ * their own tokens (and theming) flow into the board.
+ *
+ * This repo's own dashboard app DOES import this file, deliberately: consuming
+ * the private @fixportal/design package made the repo unbuildable for anyone
+ * without a GitHub Packages token, and closed fork CI. The app is now the
+ * reference consumer of the same public package an external user installs. The
+ * trade-off is that upstream token changes no longer reach the dashboard
+ * automatically — they arrive through the re-sync below, like any other
+ * consumer's.
  *
  * Values are a vendored subset mirrored from @fixportal/design:
  *   light  -> fixportal-assets/packages/design/tokens.css (:root)
