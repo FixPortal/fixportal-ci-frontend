@@ -53,6 +53,15 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Package licence files match the repository root
+        # The published tarball carries its own LICENSE and NOTICE (npm packs only
+        # the package directory, so the root copies never reach consumers, and
+        # Apache-2.0 s4 requires recipients get both). They are copies, so this
+        # fails the build if either drifts from the canonical root file.
+        run: |
+          cmp LICENSE packages/ci-frontend/LICENSE
+          cmp NOTICE packages/ci-frontend/NOTICE
+
       - name: Lint
         run: npm run lint
 
