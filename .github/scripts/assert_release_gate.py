@@ -63,13 +63,19 @@ def _step_blocks(lines, start, end, steps_indent):
     if not item_indents:
         raise WorkflowShapeError("publish steps are empty")
     item_indent = min(item_indents)
-    starts = [
+    peers = [
         index
         for index in range(start, end)
-        if not _is_ignored(lines[index])
-        and _indent(lines[index]) == item_indent
-        and (_content(lines[index]) == "-" or _content(lines[index]).startswith("- "))
+        if not _is_ignored(lines[index]) and _indent(lines[index]) == item_indent
     ]
+    starts = [
+        index
+        for index in peers
+        if _content(lines[index]) == "-" or _content(lines[index]).startswith("- ")
+    ]
+    if len(starts) != len(peers):
+        invalid = next(index for index in peers if index not in starts)
+        raise WorkflowShapeError(f"publish steps contain a non-sequence entry at line {invalid + 1}")
     if not starts:
         raise WorkflowShapeError("publish steps are not a YAML sequence")
     blocks = []

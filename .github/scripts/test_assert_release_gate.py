@@ -37,14 +37,16 @@ class ReleaseGatePolicyTests(unittest.TestCase):
     def test_accepts_the_complete_ordered_release_gate(self):
         self.assertEqual(validate_release_gate(workflow(REQUIRED_COMMANDS)), [])
 
-    def test_reports_the_missing_command_rule_independently(self):
-        missing = workflow([command for command in REQUIRED_COMMANDS if command != "npm run test:package"])
-        self.assertNotIn("npm run test:package", missing)
+    def test_reports_each_missing_command_independently(self):
+        for removed in REQUIRED_COMMANDS:
+            with self.subTest(removed=removed):
+                missing = workflow([command for command in REQUIRED_COMMANDS if command != removed])
+                self.assertNotIn(f"run: {removed}", missing)
 
-        findings = validate_release_gate(missing)
+                findings = validate_release_gate(missing)
 
-        self.assertEqual(len(findings), 1)
-        self.assertTrue(findings[0].startswith("missing-command:"), findings)
+                self.assertEqual(findings, [f"missing-command: {removed}"])
+                self.assertFalse(any(finding.startswith("publish-before-verification:") for finding in findings))
 
     def test_reports_publish_before_verification_independently(self):
         reordered = [*REQUIRED_COMMANDS]
@@ -60,6 +62,15 @@ class ReleaseGatePolicyTests(unittest.TestCase):
 
     def test_fails_closed_when_the_workflow_shape_cannot_be_parsed(self):
         findings = validate_release_gate("name: Release\njobs: {}\n")
+
+        self.assertEqual(len(findings), 1)
+        self.assertTrue(findings[0].startswith("parse-error:"), findings)
+
+    def test_fails_closed_on_mixed_step_sequence_shape(self):
+        malformed = workflow(REQUIRED_COMMANDS).replace("    steps:\n", "    steps:\n      bogus: true\n")
+        self.assertIn("\n      bogus: true\n      - name:", malformed)
+
+        findings = validate_release_gate(malformed)
 
         self.assertEqual(len(findings), 1)
         self.assertTrue(findings[0].startswith("parse-error:"), findings)
