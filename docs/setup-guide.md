@@ -151,7 +151,7 @@ export function App() {
 }
 ```
 
-Two things people trip over, both covered in the
+Three things people trip over, all covered in the
 [main README](../README.md#styling):
 
 - If you already have your own design system, import **only** `board.css` and the
@@ -242,6 +242,7 @@ npm run build:app
 - **`BACKEND_URL`** — where the frontend's server forwards `/api/` calls. Must
   have no trailing slash.
 - **`adminSignal`** — a prop. `false` gives the public read-only view; `true`
-  reveals private repositories and action links. Derive it from your own app's
-  login state — it is a display switch, not a security control. The backend
-  decides what it is willing to serve.
+  enables private repositories and action links only when `adminSnapshotUrl` or
+  `adminSnapshotFetcher` is also configured. Derive it from your own app's login
+  state — it is a display switch, not a security control. The backend decides
+  what it is willing to serve.
