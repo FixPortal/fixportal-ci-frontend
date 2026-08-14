@@ -41,7 +41,7 @@ test('throws on a non-ok, non-204 response', async () => {
 
 test('normalizes malformed successful JSON without disclosing the response payload', async () => {
   const secret = 'dashboard-secret-marker-7b49'
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`{\"token\":\"${secret}`, { status: 200 })))
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`{"token":"${secret}`, { status: 200 })))
 
   const error = await getDashboardSnapshot(URL).then(
     () => undefined,

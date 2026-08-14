@@ -12,10 +12,11 @@ export async function getDashboardSnapshot(
   const response = await fetch(snapshotUrl, { signal })
   if (response.status === 204) return null
   if (!response.ok) throw new Error(`Dashboard snapshot failed: ${response.status}`)
+  let body: unknown
   try {
-    return parseDashboardSnapshot(await response.json())
-  } catch (error) {
-    if (error instanceof SyntaxError) throw new Error('Invalid dashboard snapshot response')
-    throw error
+    body = await response.json()
+  } catch {
+    throw new Error('Invalid dashboard snapshot response')
   }
+  return parseDashboardSnapshot(body)
 }
