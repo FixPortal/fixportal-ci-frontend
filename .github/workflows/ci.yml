@@ -26,6 +26,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check out backend contract
+        uses: actions/checkout@v7
+        with:
+          repository: FixPortal/fixportal-ci-backend
+          path: .contract/backend
+          persist-credentials: false
+
       - name: Lint workflows (actionlint)
         uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2
         with:
@@ -67,6 +74,9 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Test backend contract
+        run: npm run test:backend-contract -- .contract/backend/contracts/dashboard-snapshot.v1.json
 
       - name: Test repository scripts
         run: npm run test:scripts

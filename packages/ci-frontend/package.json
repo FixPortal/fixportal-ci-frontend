@@ -27,6 +27,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
+    "test:backend-contract": "vitest run --config vitest.backend-contract.config.ts",
     "typecheck": "tsc --noEmit",
     "coverage": "vitest run --coverage",
     "test:mutation": "stryker run"

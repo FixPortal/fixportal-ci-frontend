@@ -10,6 +10,7 @@
     "build:lib": "npm run build -w @fix-portal/ci-frontend",
     "build:app": "npm run build -w dashboard",
     "test": "npm run test --workspaces --if-present",
+    "test:backend-contract": "node scripts/backend-contract.mjs",
     "test:scripts": "node --test scripts/*.test.mjs",
     "test:container": "node scripts/container-smoke.mjs",
     "test:package": "node scripts/package-smoke.mjs",
