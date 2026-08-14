@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { readAdminSignal } from './readAdminSignal'
 
 function setSearch(search: string) {
@@ -36,5 +36,14 @@ describe('readAdminSignal', () => {
 
     setSearch('')
     expect(readAdminSignal()).toBe(false)
+  })
+
+  it.each(['getItem', 'setItem'] as const)('fails closed when localStorage.%s throws', method => {
+    const spy = vi.spyOn(Storage.prototype, method).mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError')
+    })
+    if (method === 'setItem') setSearch('?admin=true')
+    expect(readAdminSignal()).toBe(false)
+    spy.mockRestore()
   })
 })

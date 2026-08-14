@@ -2,9 +2,13 @@
 // key resolves to guest — never default to admin. This is a presentation toggle
 // only; private-repo confidentiality is enforced server-side, not by this flag.
 export function readAdminSignal(): boolean {
-  const adminParam = new URLSearchParams(window.location.search).get('admin')
-  if (adminParam !== null) {
-    localStorage.setItem('ci:admin', adminParam)
+  try {
+    const adminParam = new URLSearchParams(window.location.search).get('admin')
+    if (adminParam !== null) {
+      localStorage.setItem('ci:admin', adminParam)
+    }
+    return localStorage.getItem('ci:admin') === 'true'
+  } catch {
+    return false
   }
-  return localStorage.getItem('ci:admin') === 'true'
 }
