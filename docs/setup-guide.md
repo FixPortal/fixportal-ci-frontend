@@ -1,7 +1,10 @@
-# The idiot's guide to setting up the CI dashboard
+# The Neophyte's guide to setting up the CI dashboard
 
 No prior knowledge assumed. Pick the section that matches what you want; they are
 ordered by effort, and each one stands alone.
+
+The commands below are written for PowerShell in Windows Terminal. Run each
+command on its own line.
 
 **What this thing is.** A wall-mountable dashboard showing, for every repository
 in a GitHub organisation, whether the build is green, what pull requests are
@@ -17,10 +20,8 @@ file from the backend.
 You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) and
 nothing else. Paste this in a terminal:
 
-```bash
-docker run -p 8080:8080 \
-  -e BACKEND_URL=https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io \
-  ghcr.io/fixportal/fixportal-ci-frontend:latest
+```powershell
+docker run -p 8080:8080 -e BACKEND_URL=https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io ghcr.io/fixportal/fixportal-ci-frontend:latest
 ```
 
 Open <http://localhost:8080>.
@@ -55,15 +56,22 @@ A token is a password that only permits the specific things you tick.
    - **Actions**: Read-only — *required*, this is the build status
    - **Pull requests**: Read-only — for open-PR counts
    - **Contents**: Read-only — for the code metrics
+   - **Code scanning alerts**: Read-only — only if you configure a CodeQL review pill
    - **Metadata**: Read-only (GitHub ticks this for you)
 5. Generate it and copy the token. It is shown **once**.
 
 ### Step 2 — start both pieces
 
-```bash
+```powershell
 git clone https://github.com/FixPortal/fixportal-ci-backend.git
-cd fixportal-ci-backend
-cp .env.example .env
+```
+
+```powershell
+Set-Location fixportal-ci-backend
+```
+
+```powershell
+Copy-Item .env.example .env
 ```
 
 Open `.env` in any text editor and fill in two lines:
@@ -85,7 +93,7 @@ GITHUB_OWNER=your-org-or-username
 
 Then:
 
-```bash
+```powershell
 docker compose up
 ```
 
@@ -99,6 +107,13 @@ normal, not an error.
 > `.env.example` for a reason: it makes the *unauthenticated* endpoint hand out
 > your private repositories to anyone who can reach the port.
 
+Review pills and the Ready-to-merge verdict are optional backend enrichment.
+The backend ships with `ReviewSignals:Reviewers` empty, so neither appears until
+you configure reviewers in deployment settings. Follow the backend's
+[Review signals guide](https://github.com/FixPortal/fixportal-ci-backend#review-signals-reviewsignals);
+a CodeQL reviewer also needs the **Code scanning alerts: Read-only** token
+permission listed above. The rest of the dashboard works without this setup.
+
 ### If something goes wrong
 
 | What you see | What it means | Fix |
@@ -111,10 +126,11 @@ normal, not an error.
 
 ## 3. "I want the board inside my own React app"
 
-Install the package. No token, no registry setup — it is on public npm and has
-**zero runtime dependencies**.
+Install the package. No token or registry setup is needed: it is on public npm,
+has no bundled runtime dependencies, and uses the three peer dependencies your
+app supplies.
 
-```bash
+```powershell
 npm install @fix-portal/ci-frontend @tanstack/react-query react react-dom
 ```
 
@@ -140,6 +156,8 @@ Two things people trip over, both covered in the
 
 - If you already have your own design system, import **only** `board.css` and the
   board adopts your colours automatically.
+- The built-in Light / Dark / System selector changes only the board's `.ci-page`
+  container. It does not change the host document's theme.
 - If you write tests that render this component under jsdom, you need two small
   stubs. jsdom does not implement `ResizeObserver` or `window.matchMedia`.
 
@@ -149,10 +167,19 @@ Two things people trip over, both covered in the
 
 You need **Node 22 or newer** and nothing else — no tokens, no private packages.
 
-```bash
+```powershell
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
-cd fixportal-ci-frontend
+```
+
+```powershell
+Set-Location fixportal-ci-frontend
+```
+
+```powershell
 npm install
+```
+
+```powershell
 npm run dev
 ```
 
@@ -169,13 +196,30 @@ To point it at a backend, copy `apps/dashboard/.env.example` to
 > `200` responses. This does not affect the Docker setup, where both are served
 > from one address.
 
-Before opening a pull request, run the same four checks CI runs:
+Before opening a pull request, run the same checks CI runs:
 
-```bash
-npm test          # unit tests
-npm run lint      # ESLint
-npm run build:lib # build the component library
-npm run build:app # type-check and build the app
+```powershell
+npm test
+```
+
+```powershell
+npm run typecheck -w @fix-portal/ci-frontend
+```
+
+```powershell
+npm run coverage -w @fix-portal/ci-frontend
+```
+
+```powershell
+npm run lint
+```
+
+```powershell
+npm run build:lib
+```
+
+```powershell
+npm run build:app
 ```
 
 ---

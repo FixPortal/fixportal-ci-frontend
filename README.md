@@ -1,13 +1,3 @@
----
-title: fixportal-ci-frontend
-date: 2026-06-20
-status: living document
-last-updated: 2026-06-20
-repo: FixPortal/fixportal-ci-frontend
-stack: React 19 · TypeScript · Vite · npm
-license: Apache-2.0
----
-
 ![npm](https://img.shields.io/npm/v/@fix-portal/ci-frontend)
 ![CI](https://github.com/FixPortal/fixportal-ci-frontend/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/github/license/FixPortal/fixportal-ci-frontend)
@@ -23,7 +13,7 @@ license: Apache-2.0
 
 ![FixPortal CI dashboard](docs/dashboard.png)
 
-> New here? [**The idiot's guide to setting up the CI dashboard**](docs/setup-guide.md)
+> New here? [**The Neophyte's guide to setting up the CI dashboard**](docs/setup-guide.md)
 > walks through every route from "just show me" to "point it at my own GitHub org",
 > assuming no prior knowledge.
 
@@ -110,8 +100,9 @@ accordingly: `-p 80:8080` or `-p 443:8080` behind a TLS terminator.
 npm install @fix-portal/ci-frontend @tanstack/react-query react react-dom
 ```
 
-`react`, `react-dom`, and `@tanstack/react-query` are peer dependencies — the library uses your
-copies, so wrap the board in your existing `QueryClientProvider`.
+`react`, `react-dom`, and `@tanstack/react-query` are required peer dependencies: your app
+provides them, and the library does not bundle its own copies. If your app already has a
+`QueryClientProvider`, the board reuses it; otherwise the board creates an internal client.
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -136,10 +127,18 @@ export function App() {
 
 | Prop | Type | Default | Purpose |
 |---|---|---|---|
-| `adminSignal` | `boolean` | required | `true` shows private repos and actionable PR links; `false` is the public read-only view. Derive from your app's auth state. |
+| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and actionable PR links appear only when this is `true` and an admin snapshot URL or fetcher is configured. |
 | `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct when running behind a proxy. |
+| `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
+| `snapshotCacheKey` | `string` | unset | Stable key that prevents custom guest fetchers from sharing a cache entry when several boards use one `QueryClient`. |
+| `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. The host must add `X-Admin-Key` server-side; never expose that secret to the browser. |
+| `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
+| `adminSnapshotCacheKey` | `string` | unset | Stable cache key for a custom admin fetcher. |
 | `logo` | `ReactNode` | text wordmark | Brand mark rendered in the dashboard header. |
 | `footerSlot` | `ReactNode` | generic footer | Footer content; pass your own to replace the default. |
+| `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
+| `repositoryScope` | `string` | unset | Canonical `owner/repository` identity that limits the board to one already-authorised repository. |
+| `showThemeSwitcher` | `boolean` | `true` | Shows the board's Light / Dark / System selector. |
 
 ### Styling
 
@@ -151,7 +150,9 @@ The board reads ~15 CSS custom properties (`--text`, `--border`, `--brand`, `--c
 | No existing design system | `tokens.css` before `board.css` — vendored light/dark token set included |
 | You already define those token names | `board.css` only — your tokens flow in automatically |
 
-Toggle dark mode: `document.documentElement.dataset.theme = 'dark'`.
+The built-in Light / Dark / System selector applies `data-theme` to the board's own
+`.ci-page` container, so it does not alter the host page. Hide it with
+`showThemeSwitcher={false}` when the host supplies its own board-local theme control.
 
 ### TypeScript: CSS imports
 

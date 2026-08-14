@@ -9,7 +9,7 @@
   "scripts": {
     "build:lib": "npm run build -w @fix-portal/ci-frontend",
     "build:app": "npm run build -w dashboard",
-    "test": "npm run test -w @fix-portal/ci-frontend",
+    "test": "npm run test --workspaces --if-present",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "dev": "npm run build:lib && npm run dev -w dashboard"
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.62.1",
+    "@vitest/coverage-v8": "4.1.9",
     "eslint": "^10.8.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",

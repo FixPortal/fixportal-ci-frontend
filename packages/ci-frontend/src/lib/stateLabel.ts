@@ -16,7 +16,11 @@ const STATE_LABELS: Record<string, string> = {
   unknown: 'status unknown',
 }
 
+export function stateModifier(state: SignalState): SignalState {
+  return Object.hasOwn(STATE_LABELS, state) ? state : 'unknown'
+}
+
 export function stateLabel(state: SignalState): string {
   // Fallback keeps the chip's accessible name non-empty for an unrecognised state.
-  return STATE_LABELS[state] ?? 'status unknown'
+  return STATE_LABELS[stateModifier(state)]
 }

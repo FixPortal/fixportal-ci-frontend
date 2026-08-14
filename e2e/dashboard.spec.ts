@@ -26,7 +26,29 @@ const snapshot = {
           },
         },
       ],
-      pullRequests: [],
+      pullRequests: [
+        {
+          number: 314,
+          title: 'Close release-readiness gaps',
+          author: 'fixportal-maintainer',
+          htmlUrl: 'https://github.com/FixPortal/fixportal-ci-frontend/pull/314',
+          isDraft: false,
+          createdAt: '2026-07-15T10:00:00Z',
+          reviewSignals: [
+            {
+              name: 'CodeRabbit',
+              state: 'clean',
+              htmlUrl: 'https://github.com/FixPortal/fixportal-ci-frontend/pull/314',
+            },
+            {
+              name: 'Gitar',
+              state: 'clean',
+              htmlUrl: 'https://github.com/FixPortal/fixportal-ci-frontend/pull/314',
+            },
+          ],
+          readyToMerge: true,
+        },
+      ],
       metrics: {
         nloc: 4200,
         avgComplexity: 2.4,
@@ -68,7 +90,7 @@ async function openDashboard(page: Page, responseDelay = 0, refreshedAt = new Da
   })
   await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
   await page.goto('/')
-  await expect(page.getByText('fixportal-ci-frontend')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true })).toBeVisible()
 }
 
 async function installClsObserver(page: Page) {
@@ -123,5 +145,8 @@ test('preserves the desktop dashboard', async ({ page }) => {
   const now = new Date('2026-07-16T10:00:00Z')
   await page.clock.install({ time: now })
   await openDashboard(page, 0, now.toISOString())
+  await expect(page.getByTitle('CodeRabbit: clean')).toBeVisible()
+  await expect(page.getByTitle('Gitar: clean')).toBeVisible()
+  await expect(page.getByTitle('Ready to merge')).toBeVisible()
   await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled', maxDiffPixelRatio: 0.017 })
 })

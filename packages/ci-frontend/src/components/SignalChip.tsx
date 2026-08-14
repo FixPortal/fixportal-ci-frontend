@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { WorkflowSnapshot } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
-import { stateLabel } from '../lib/stateLabel'
+import { stateLabel, stateModifier } from '../lib/stateLabel'
 import { isAllowedHref } from '../lib/isAllowedHref'
 
 function meta(wf: WorkflowSnapshot): string {
@@ -20,7 +20,7 @@ export const SignalChip = memo(function SignalChip({ workflow }: { workflow: Wor
   // degrade to a static span like every sibling chip, not a dead <a href="#">.
   const href = isAllowedHref(url)
   const linkable = href !== '#'
-  const className = `chip chip--${workflow.state}${linkable ? '' : ' chip--static'}`
+  const className = `chip chip--${stateModifier(workflow.state)}${linkable ? '' : ' chip--static'}`
   const body = (
     <>
       <span className="chip__dot" aria-hidden="true" />
