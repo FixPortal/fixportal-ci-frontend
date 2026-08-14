@@ -39,6 +39,19 @@ test('throws on a non-ok, non-204 response', async () => {
   await expect(getDashboardSnapshot('https://ci.test/api/dashboard/snapshot')).rejects.toThrow(/502/)
 })
 
+test('normalizes malformed successful JSON without disclosing the response payload', async () => {
+  const secret = 'dashboard-secret-marker-7b49'
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`{\"token\":\"${secret}`, { status: 200 })))
+
+  const error = await getDashboardSnapshot(URL).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  )
+
+  expect(error).toEqual(new Error('Invalid dashboard snapshot response'))
+  expect(String(error)).not.toContain(secret)
+})
+
 test.each([
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', summary: [], lastMergedPr: null }, '$.repositories'],
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [{ name: 'repo' }], summary: [], lastMergedPr: null }, '$.repositories[0].htmlUrl'],
