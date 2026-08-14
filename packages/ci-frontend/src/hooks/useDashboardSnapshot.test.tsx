@@ -52,6 +52,24 @@ describe('useDashboardSnapshot cache-key isolation', () => {
 })
 
 describe('useDashboardSnapshot URL branches', () => {
+  it('prefers the admin snapshot fetcher when both admin sources are configured', async () => {
+    const fetcher = vi.fn().mockResolvedValue(snapshotFor('fetcher'))
+    const fetchSpy = vi.fn().mockResolvedValue(jsonResponse(snapshotFor('url')))
+    vi.stubGlobal('fetch', fetchSpy)
+    const client = new QueryClient()
+    const { result } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(
+        client,
+        { apiBase: '', adminSnapshotFetcher: fetcher, adminSnapshotUrl: 'https://admin.example/snapshot' },
+        true,
+      ),
+    })
+
+    await waitFor(() => expect(result.current.data).not.toBeUndefined())
+    expect(result.current.data?.org).toBe('fetcher')
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
   it('fetches adminSnapshotUrl directly when the viewer is admin and no adminSnapshotFetcher is set', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(jsonResponse(snapshotFor('admin-org')))
     vi.stubGlobal('fetch', fetchSpy)
@@ -78,6 +96,24 @@ describe('useDashboardSnapshot URL branches', () => {
     await waitFor(() => expect(result.current.data).not.toBeUndefined())
     expect(result.current.data?.org).toBe('default-org')
     expect(fetchSpy).toHaveBeenCalledWith('https://ci.example/api/dashboard/snapshot', expect.objectContaining({ signal: expect.anything() }))
+  })
+})
+
+describe('useDashboardSnapshot admin cache-key isolation', () => {
+  it('keeps two admin boards with distinct fetchers on separate cache rows under one shared QueryClient', async () => {
+    const client = new QueryClient()
+    const { result: boardA } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', adminSnapshotFetcher: async () => snapshotFor('org-a'), adminSnapshotCacheKey: 'board-a' }, true),
+    })
+    const { result: boardB } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', adminSnapshotFetcher: async () => snapshotFor('org-b'), adminSnapshotCacheKey: 'board-b' }, true),
+    })
+
+    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
+    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+
+    expect(boardA.current.data?.org).toBe('org-a')
+    expect(boardB.current.data?.org).toBe('org-b')
   })
 })
 
