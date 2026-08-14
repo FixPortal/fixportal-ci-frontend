@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { createServer } from 'node:http'
+import { readFile } from 'node:fs/promises'
+import { createServer } from 'node:https'
 
 const root = process.cwd()
 const suffix = `${process.pid}-${Date.now()}`
@@ -80,8 +81,16 @@ async function waitFor(url, deadline) {
 }
 
 let upstreamRequest
-const upstream = createServer((request, response) => {
-  upstreamRequest = { url: request.url, headers: request.headers }
+const upstream = createServer({
+  cert: await readFile(new URL('../test/fixtures/host.docker.internal-cert.pem', import.meta.url)),
+  key: await readFile(new URL('../test/fixtures/host.docker.internal-key.pem', import.meta.url)),
+}, (request, response) => {
+  upstreamRequest = {
+    url: request.url,
+    headers: request.headers,
+    httpVersion: request.httpVersion,
+    servername: request.socket.servername,
+  }
   response.writeHead(200, { 'content-type': 'application/json' })
   response.end('{"ok":true}')
 })
@@ -106,7 +115,7 @@ try {
     'run', '--detach', '--name', name,
     '--add-host', 'host.docker.internal:host-gateway',
     '--publish', '127.0.0.1::8080',
-    '--env', `BACKEND_URL=http://host.docker.internal:${upstreamPort}`,
+    '--env', `BACKEND_URL=https://host.docker.internal:${upstreamPort}`,
     image,
   ], { timeout: 10_000 })
 
@@ -127,6 +136,9 @@ try {
   assert.equal(apiResponse.status, 200)
   assert.deepEqual(await apiResponse.json(), { ok: true })
   assert.equal(upstreamRequest?.url, '/api/probe?value=1')
+  assert.equal(upstreamRequest?.servername, 'host.docker.internal', 'TLS SNI is missing or incorrect')
+  assert.equal(upstreamRequest?.httpVersion, '1.1', 'upstream request is not HTTP/1.1')
+  assert.equal(upstreamRequest?.headers.connection, undefined, 'Connection header was forwarded upstream')
   assert.equal(upstreamRequest?.headers.host, `host.docker.internal:${upstreamPort}`)
   assert.ok(upstreamRequest?.headers['x-forwarded-for'], 'X-Forwarded-For is missing')
 

@@ -60,6 +60,37 @@ class ReleaseGatePolicyTests(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertTrue(findings[0].startswith("publish-before-verification:"), findings)
 
+    def test_rejects_an_always_condition_on_publish(self):
+        guarded_publish = workflow(REQUIRED_COMMANDS).replace(
+            "        run: npm publish --provenance -w @fix-portal/ci-frontend",
+            "        if: always()\n        run: npm publish --provenance -w @fix-portal/ci-frontend",
+        )
+
+        findings = validate_release_gate(guarded_publish)
+
+        self.assertEqual(findings, ["conditional-command: npm publish --provenance -w @fix-portal/ci-frontend"])
+
+    def test_rejects_continue_on_error_on_verification(self):
+        tolerated_verification = workflow(REQUIRED_COMMANDS).replace(
+            "        run: npm run verify",
+            "        continue-on-error: true\n        run: npm run verify",
+        )
+
+        findings = validate_release_gate(tolerated_verification)
+
+        self.assertEqual(findings, ["conditional-command: npm run verify"])
+
+    def test_rejects_publish_when_a_non_command_step_follows_it(self):
+        publish_not_last = workflow(REQUIRED_COMMANDS).replace(
+            "        run: npm publish --provenance -w @fix-portal/ci-frontend",
+            "        run: npm publish --provenance -w @fix-portal/ci-frontend\n      - uses: actions/cache@v4",
+        )
+
+        findings = validate_release_gate(publish_not_last)
+
+        self.assertEqual(len(findings), 1)
+        self.assertTrue(findings[0].startswith("publish-before-verification:"), findings)
+
     def test_fails_closed_when_the_workflow_shape_cannot_be_parsed(self):
         findings = validate_release_gate("name: Release\njobs: {}\n")
 
