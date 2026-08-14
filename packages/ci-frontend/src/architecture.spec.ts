@@ -38,6 +38,9 @@ import { projectFiles } from './architecture.archunit'
 // Vitest runs with cwd = packages/ci-frontend, so this resolves to the lib's own
 // tsconfig (include: ["src"]).
 const TS_CONFIG = 'tsconfig.json'
+// ArchUnitTS builds the TypeScript graph on the first check; V8 coverage can make
+// that cold operation exceed Vitest's default 5 seconds.
+const ARCHITECTURE_TEST_TIMEOUT_MS = 15_000
 
 // Test files legitimately reach across layers (a component test imports the
 // component under test, a provider, etc.), so layering rules exclude them.
@@ -73,7 +76,7 @@ describe('architecture / layer isolation', () => {
         .inFolder(edge.toGlob)
         .check()
       expect(violations).toEqual([])
-    })
+    }, ARCHITECTURE_TEST_TIMEOUT_MS)
   }
 
   // components are context-free: only pages/hooks may touch the React contexts.
@@ -87,7 +90,7 @@ describe('architecture / layer isolation', () => {
       .withName('*Context.tsx')
       .check()
     expect(violations).toEqual([])
-  })
+  }, ARCHITECTURE_TEST_TIMEOUT_MS)
 })
 
 describe('architecture / cycles', () => {
@@ -98,5 +101,5 @@ describe('architecture / cycles', () => {
       .haveNoCycles()
       .check()
     expect(violations).toEqual([])
-  })
+  }, ARCHITECTURE_TEST_TIMEOUT_MS)
 })
