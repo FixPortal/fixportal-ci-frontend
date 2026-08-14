@@ -270,7 +270,12 @@ the rollout over time.
   every merge in the repository, with nothing connecting the two changes.
   This repository was deferred during the rollout because it carried substantial
   uncommitted work; it has since been gated and its ruleset now carries the rule.
-  Deleting the dead filter remains outstanding. Five other path-filtered workflows exist across the
+  The dead filter has since been deleted, and `ci.yml` now carries a comment recording why
+  the workflow deliberately has no workflow-level `paths:` filter. Its `push` trigger is
+  narrowed to `main` and tags for a separate reason — a `branches: ['**']` wildcard fires
+  both a push run and a pull_request run for every commit on a branch with an open PR, and
+  the two land in different concurrency groups by construction, so no expression can dedupe
+  them. Five other path-filtered workflows exist across the
   estate (`infra.yml`, `mutation-web.yml`, `publish-demo-host.yml`, `deploy-content.yml`,
   `dotnet-tests.yml`) but none hosts a gate, so none needs changing.
 - **C2 — `fixportal-diagnostic-explorer`.** Its CI is split across `ci.yml` (`backend`),
@@ -283,11 +288,12 @@ the rollout over time.
   wraps the `docs` job.
 - **C4 — `personal-resumes`.** Reports only `[code]smith` and `Gitar`; it has no CI to
   gate. Per D8 it receives no `CI Gate` requirement and no new workflow.
-- **C5 — `fixportal-initiator`.** Has `ci.yml` but no `review-policy-guard.yml`, so
-  `Review policy intact` never reports there and requiring it would block every merge.
-  Required set is `["CI Gate"]` alone. That it lacks the guard the rest of the estate
-  carries is a real gap, but adding the workflow is a separate change and not folded in
-  here.
+- **C5 — `fixportal-initiator`.** Had `ci.yml` but no `review-policy-guard.yml`, so
+  `Review policy intact` could not report there and requiring it would have blocked every
+  merge. Its required set was `["CI Gate"]` alone. The guard workflow has since been added
+  in that repository and its `require-pr-to-default` ruleset now requires the estate pair,
+  `["CI Gate", "Review policy intact"]` — read back from the API on 2026-08-14. The
+  carve-out is therefore closed and no longer an exception.
 - **C6 — `fixportal-engineering-system`.** Has only `review-policy-guard.yml` and no
   `ci.yml` — no build, no tests, nothing for a gate to aggregate. Required set is
   `["Review policy intact"]` alone.
@@ -306,8 +312,8 @@ the rollout over time.
   the runner checks out — the worst shape of this bug, because it looks like a script
   error rather than a packaging one.
 
-Per-repository required sets are therefore not universally the same pair. C5 and C6 each
-take one context, and C4 takes none. The apply script's precondition — refusing any
+Per-repository required sets are therefore not universally the same pair. C6 takes one
+context and C4 takes none; C5 took one at rollout and has since moved to the full pair. The apply script's precondition — refusing any
 repository where a required context has not been observed reporting — is what makes this
 safe: a mis-set context is refused rather than applied.
 
