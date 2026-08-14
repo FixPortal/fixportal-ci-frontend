@@ -61,7 +61,7 @@ creates an internal client.
 
 | Prop | Type | Default | Purpose |
 |---|---|---|---|
-| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and actionable PR links appear only when this is `true` and an admin snapshot URL or fetcher is configured; it is not a security control. |
+| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable, and this prop is not a security control. |
 | `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct behind a proxy. |
 | `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
 | `snapshotCacheKey` | `string` | unset | Stable key that keeps custom guest fetchers from sharing a cache entry in one `QueryClient`. |
