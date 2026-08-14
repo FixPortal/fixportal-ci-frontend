@@ -10,8 +10,10 @@
 
 An open-source CI dashboard UI for a GitHub organisation: workflow status, open
 pull requests, reviewer signals, ready-to-merge verdicts, deploy/package lanes,
-per-repo metrics, and a 24-hour CI trend — all rendered from a **single backend
-snapshot endpoint**. It is the presentation
+per-repo metrics, and a 24-hour CI trend — all rendered from a backend snapshot
+contract with separate guest and privileged admin retrieval paths. The guest
+path uses the default endpoint or `snapshotFetcher`; the privileged path uses
+`adminSnapshotUrl` or `adminSnapshotFetcher`. It is the presentation
 layer for the FixPortal CI backend, extracted so it can be reused independently.
 The board has no hard dependency on any FixPortal package: the brand is
 injectable and the design tokens are vendored.

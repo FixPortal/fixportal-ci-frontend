@@ -48,7 +48,7 @@ test('renders a static chip, not a dead link, when the htmlUrl is rejected by th
 })
 
 test('uses the unknown modifier for an unfamiliar runtime state', () => {
-  const unfamiliar = { ...wfWithRun, state: 'cancelled' as WorkflowSnapshot['state'] }
+  const unfamiliar = { ...wfWithRun, state: 'cancelled' as unknown as WorkflowSnapshot['state'] }
   render(<SignalChip workflow={unfamiliar} />)
   expect(screen.getByText('CI').closest('.chip')).toHaveClass('chip--unknown')
 })

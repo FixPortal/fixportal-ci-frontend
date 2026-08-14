@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Work only on `reviewer-findings-batch1` in the dedicated review worktree.
+- Work only on `reviewer-findings-batch12` in the dedicated review worktree.
 - Do not rewrite dated files under `docs/superpowers/specs` or older plans.
 - Do not replace diagrams merely to change format. Correct factual text and diagram labels only.
 - Do not add dependencies, a documentation framework, or a screenshot-generation framework.
@@ -32,7 +32,7 @@
 - Modify: `packages/ci-frontend/README.md`
 - Modify: `docs/setup-guide.md`
 - Modify: `docs/architecture/overview.md`
-- Modify: `CHANGELOG.md`
+- Modify: `packages/ci-frontend/CHANGELOG.md`
 - Modify: `e2e/dashboard.spec.ts`
 - Update: platform Playwright snapshots and `docs/dashboard.png`
 

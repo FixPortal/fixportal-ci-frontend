@@ -27,7 +27,7 @@ test('renders a static chip, not a dead link, when htmlUrl is rejected by the sa
 })
 
 test('uses the unknown modifier for an unfamiliar runtime state', () => {
-  const unfamiliar = { ...signal, state: 'cancelled' as JobSignal['state'] }
+  const unfamiliar = { ...signal, state: 'cancelled' as unknown as JobSignal['state'] }
   render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[unfamiliar]} />)
   expect(screen.getByText('Deploy (prod)').closest('.chip')).toHaveClass('chip--unknown')
 })
