@@ -17,6 +17,7 @@ jobs:
   publish:
     name: Publish Package (npm)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       id-token: write
@@ -47,11 +48,23 @@ jobs:
         # --ignore-scripts: no lifecycle scripts run (same reasoning as ci.yml).
         run: npm ci --ignore-scripts
 
-      - name: Test
-        run: npm test
+      - name: Assert release tag matches package version
+        run: node scripts/release-tag.mjs
 
-      - name: Build library
-        run: npm run build:lib
+      - name: Verify
+        run: npm run verify
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser regression tests
+        run: npm run test:e2e
+
+      - name: Package consumer smoke
+        run: npm run test:package
+
+      - name: Production container smoke
+        run: npm run test:container
 
       - name: Publish to public npm
         run: npm publish --provenance -w @fix-portal/ci-frontend

@@ -68,6 +68,14 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Test repository scripts
+        run: npm run test:scripts
+
+      - name: Test release workflow policy
+        run: |
+          python3 .github/scripts/test_assert_release_gate.py
+          python3 .github/scripts/assert_release_gate.py .github/workflows/release.yml
+
       - name: Typecheck library
         run: npm run typecheck -w @fix-portal/ci-frontend
 
@@ -79,6 +87,15 @@ jobs:
 
       - name: Build standalone app
         run: npm run build:app
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser regression tests
+        run: npm run test:e2e
+
+      - name: Package consumer smoke
+        run: npm run test:package
 
   container-smoke:
     name: Production container smoke
