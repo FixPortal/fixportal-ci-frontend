@@ -79,8 +79,9 @@ GET {apiBase}/api/dashboard/snapshot
 - **The auth/visibility seam lives in `useDashboardSnapshot`**, which selects one
   of three fetcher strategies (admin fetcher, guest fetcher, plain URL) at
   runtime from context. `adminSignal` becomes effective only when an admin URL
-  or fetcher is also configured; only then are private repos and actionable
-  GitHub PR links shown.
+  or fetcher is also configured; only then are private repos and admin-only
+  controls shown. Safe GitHub links present in the guest snapshot remain
+  actionable.
 - **"Library, not app" tension is encoded in `QueryClientSafeProvider`** — it
   avoids creating a second TanStack `QueryClient` when the host application
   already provides one. This is the seam that makes the board droppable into a

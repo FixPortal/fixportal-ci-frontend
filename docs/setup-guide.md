@@ -242,7 +242,8 @@ npm run build:app
 - **`BACKEND_URL`** — where the frontend's server forwards `/api/` calls. Must
   have no trailing slash.
 - **`adminSignal`** — a prop. `false` gives the public read-only view; `true`
-  enables private repositories and action links only when `adminSnapshotUrl` or
-  `adminSnapshotFetcher` is also configured. Derive it from your own app's login
-  state — it is a display switch, not a security control. The backend decides
-  what it is willing to serve.
+  enables private repositories and admin-only controls only when
+  `adminSnapshotUrl` or `adminSnapshotFetcher` is also configured. Safe links
+  supplied by the guest snapshot remain clickable. Derive the signal from your
+  own app's login state — it is a display switch, not a security control. The
+  backend decides what it is willing to serve.
