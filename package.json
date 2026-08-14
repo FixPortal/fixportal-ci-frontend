@@ -10,10 +10,12 @@
     "build:lib": "npm run build -w @fix-portal/ci-frontend",
     "build:app": "npm run build -w dashboard",
     "test": "npm run test --workspaces --if-present",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "test:container": "node scripts/container-smoke.mjs",
     "test:package": "node scripts/package-smoke.mjs",
     "test:e2e": "playwright test",
     "lint": "eslint .",
+    "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
     "dev": "npm run build:lib && npm run dev -w dashboard"
   },
   "overrides": {
