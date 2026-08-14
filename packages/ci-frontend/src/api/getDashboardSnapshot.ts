@@ -15,8 +15,13 @@ export async function getDashboardSnapshot(
   let body: unknown
   try {
     body = await response.json()
-  } catch {
-    throw new Error('Invalid dashboard snapshot response')
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      // The response payload can be exposed through error.cause.
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error('Invalid dashboard snapshot response')
+    }
+    throw error
   }
   return parseDashboardSnapshot(body)
 }

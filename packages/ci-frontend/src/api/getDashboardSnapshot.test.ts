@@ -52,6 +52,28 @@ test('normalizes malformed successful JSON without disclosing the response paylo
   expect(String(error)).not.toContain(secret)
 })
 
+test('preserves an AbortError from reading a successful response body', async () => {
+  const abortError = new DOMException('request aborted', 'AbortError')
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    status: 200,
+    ok: true,
+    json: () => Promise.reject(abortError),
+  }))
+
+  await expect(getDashboardSnapshot(URL)).rejects.toBe(abortError)
+})
+
+test('preserves a generic error from reading a successful response body', async () => {
+  const bodyError = new Error('response body unavailable')
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    status: 200,
+    ok: true,
+    json: () => Promise.reject(bodyError),
+  }))
+
+  await expect(getDashboardSnapshot(URL)).rejects.toBe(bodyError)
+})
+
 test.each([
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', summary: [], lastMergedPr: null }, '$.repositories'],
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [{ name: 'repo' }], summary: [], lastMergedPr: null }, '$.repositories[0].htmlUrl'],
