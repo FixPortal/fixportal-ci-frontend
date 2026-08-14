@@ -20,6 +20,9 @@ packages/ci-frontend/.stryker-tmp/
 graphify-out/
 .understand-anything/
 
+# Semgrep Guardian local config / scan cache — per-machine, regenerated on demand
+.semgrep/
+
 .claude/*
 !.claude/review-policy.json
 
