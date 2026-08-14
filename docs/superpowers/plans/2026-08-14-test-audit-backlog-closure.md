@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Work only in each repository's literal `.claude/worktrees/reviewer-passes` review worktree.
-- Frontend branch is `reviewer-findings-batch13`; backend branch is `reviewer-findings-batch22` after the existing backend worktree is resolved.
+- Frontend branch is `reviewer-findings-batch13`; backend branch is `reviewer-findings-batch23` after the existing backend worktree is resolved.
 - Never modify the primary checkout.
 - One audit slice per commit; never push until that repository's branch is complete and its full local gate is green.
 - Frontend adds no runtime dependency and does not export the parser publicly.
@@ -29,7 +29,7 @@
 
 **Interfaces:**
 - Consumes: backend worktree `D:\fix-portal\fixportal-ci-backend\.claude\worktrees\reviewer-passes`.
-- Produces: an absent review worktree and no live review branch, ready for batch 22.
+- Produces: an absent review worktree and no live review branch, ready for batch 23.
 
 Current evidence: the worktree is clean on `reviewer-findings-batch1`, four commits ahead of `origin/main`, with no remote branch. Those commits are unrelated unpublished work and must not be overwritten or folded into this audit pass.
 
@@ -49,10 +49,10 @@ git branch --all --format='%(refname:short)'
 
 Expected: no active backend review pass. If the old worktree/branch was merged, apply the repository's rebase-merge fingerprint before cleanup; if it was abandoned, require the user's explicit authorization recorded in the conversation.
 
-- [ ] **Step 3: Create backend batch 22**
+- [ ] **Step 3: Create backend batch 23**
 
 ```powershell
-git worktree add -b reviewer-findings-batch22 'D:\fix-portal\fixportal-ci-backend\.claude\worktrees\reviewer-passes' origin/main
+git worktree add -b reviewer-findings-batch23 'D:\fix-portal\fixportal-ci-backend\.claude\worktrees\reviewer-passes' origin/main
 ```
 
 - [ ] **Step 4: Establish the backend baseline**
