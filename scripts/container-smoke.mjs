@@ -98,6 +98,7 @@ try {
   await assertInvalidStartup('trailing-slash', 'https://backend/')
   await assertInvalidStartup('path', 'https://backend/path')
   await assertInvalidStartup('scheme', 'ftp://backend')
+  await assertInvalidStartup('injection', 'http://backend; proxy_set_header X-Injected yes')
 
   const name = `ci-frontend-smoke-${suffix}`
   containers.add(name)
