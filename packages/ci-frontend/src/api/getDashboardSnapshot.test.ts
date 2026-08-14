@@ -3,6 +3,15 @@ import { getDashboardSnapshot } from './getDashboardSnapshot'
 
 afterEach(() => vi.unstubAllGlobals())
 
+const URL = 'https://ci.test/api/dashboard/snapshot'
+
+function jsonResponse(body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
 test('fetches the snapshot from the supplied CI API base and returns it', async () => {
   const fetchMock = vi.fn().mockResolvedValue(
     new Response(JSON.stringify({ refreshedAt: '2026-05-31T00:00:00Z', org: 'FixPortal', repositories: [], summary: [], lastMergedPr: null }), {
@@ -28,4 +37,13 @@ test('returns null on 204 (no snapshot yet)', async () => {
 test('throws on a non-ok, non-204 response', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('boom', { status: 502 })))
   await expect(getDashboardSnapshot('https://ci.test/api/dashboard/snapshot')).rejects.toThrow(/502/)
+})
+
+test.each([
+  [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', summary: [], lastMergedPr: null }, '$.repositories'],
+  [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [{ name: 'repo' }], summary: [], lastMergedPr: null }, '$.repositories[0].htmlUrl'],
+  [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [], summary: [{ key: 'passing', count: '1' }], lastMergedPr: null }, '$.summary[0].count'],
+])('rejects incompatible successful JSON at %s', async (body, path) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(body)))
+  await expect(getDashboardSnapshot(URL)).rejects.toThrow(`Invalid dashboard snapshot at ${path}`)
 })
