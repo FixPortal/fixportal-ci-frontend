@@ -91,9 +91,11 @@ own `.ci-page` container, leaving the host page untouched. Hide it with
 ## Backend contract
 
 The board fetches `GET {apiBase}/api/dashboard/snapshot` and expects a
-`DashboardSnapshot` JSON object (type exported from this package). The endpoint
-must be anonymous and CORS-accessible. `204 No Content` is the documented
-"no snapshot yet" state, and the board renders a waiting message.
+`DashboardSnapshot` JSON object (type exported from this package). When the
+default fetch path calls a cross-origin endpoint, it must be anonymous and
+CORS-accessible. A custom `snapshotFetcher` may authenticate according to its
+own backend contract. `204 No Content` is the documented "no snapshot yet"
+state, and the board renders a waiting message.
 
 The companion backend that produces it is
 [`fixportal-ci-backend`](https://github.com/FixPortal/fixportal-ci-backend).

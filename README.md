@@ -198,7 +198,9 @@ Neither is needed in a real browser.
 ## Backend contract
 
 The board fetches `GET {apiBase}/api/dashboard/snapshot` and expects a `DashboardSnapshot`
-JSON object (type exported from the package). The endpoint must be anonymous and CORS-accessible.
+JSON object (type exported from the package). When the default fetch path calls a cross-origin
+endpoint, it must be anonymous and CORS-accessible. A custom `snapshotFetcher` may authenticate
+according to its own backend contract.
 `204 No Content` is the documented "no snapshot yet" state — the board renders a waiting message.
 See `src/api/types.ts` for the full shape.
 
@@ -215,7 +217,7 @@ The standalone Docker app and Vite dev server target Node 22 (see `Dockerfile`).
 ## Development
 
 ```bash
-npm test            # Vitest unit suite (library)
+npm test            # every workspace test script
 npm run lint        # ESLint across the workspace
 npm run build:lib   # tsup → ESM + .d.ts + CSS
 npm run build:app   # type-check and build the standalone app
