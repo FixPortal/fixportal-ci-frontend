@@ -1,3 +1,4 @@
+import { parseDashboardSnapshot } from './parseDashboardSnapshot'
 import type { DashboardSnapshot } from './types'
 
 // 204 No Content is the documented "no snapshot yet" state. Return null rather
@@ -11,5 +12,5 @@ export async function getDashboardSnapshot(
   const response = await fetch(snapshotUrl, { signal })
   if (response.status === 204) return null
   if (!response.ok) throw new Error(`Dashboard snapshot failed: ${response.status}`)
-  return response.json()
+  return parseDashboardSnapshot(await response.json())
 }
