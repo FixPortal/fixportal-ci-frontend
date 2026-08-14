@@ -56,7 +56,7 @@ GET {apiBase}/api/dashboard/snapshot
                             RepoActivityIndicator
         │
         ▼ (consume RepositorySnapshot + pure helpers)
-  lib/* ................... pure derivation helpers: computeSummary, flattenOpenPrs,
+  lib/* ................... representative pure helpers: computeSummary, flattenOpenPrs,
                             isNoCi, prAgeTone, worstState, dedupeJobLabel, stateLabel,
                             formatCompactNumber, relativeTime, isAllowedHref
 ```
