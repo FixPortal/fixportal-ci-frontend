@@ -13,7 +13,8 @@
   ],
   "files": [
     "dist",
-    "NOTICE"
+    "NOTICE",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {

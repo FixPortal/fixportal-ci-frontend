@@ -111,6 +111,8 @@ Without them TypeScript reports `TS2882`; add `declare module '*.css'`.
 ## Links
 
 - [Repository and full documentation](https://github.com/FixPortal/fixportal-ci-frontend)
+- [Changelog](https://github.com/FixPortal/fixportal-ci-frontend/blob/main/packages/ci-frontend/CHANGELOG.md)
+  — also shipped inside the package
 - [Setup guide for newcomers](https://github.com/FixPortal/fixportal-ci-frontend/blob/main/docs/setup-guide.md)
 - [Contributing](https://github.com/FixPortal/fixportal-ci-frontend/blob/main/CONTRIBUTING.md)
   — building from source needs only Node 22+, no tokens or accounts
