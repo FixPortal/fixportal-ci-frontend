@@ -324,7 +324,7 @@ git commit -m "test(snapshot): cover admin source isolation"
 
 - [ ] **Step 1: Add the minimal consumer**
 
-The consumer imports `CiBoard`, a representative exported type, `@fix-portal/ci-frontend/board.css`, and `@fix-portal/ci-frontend/tokens.css`, then renders through React. Its package uses exact current peer/build majors and contains `typecheck` and `build` scripts.
+The consumer resolves every public root runtime/type export, `@fix-portal/ci-frontend/board.css`, and `@fix-portal/ci-frontend/tokens.css`, then renders through React. Its package uses exact current peer/build majors and contains `typecheck` and `build` scripts.
 
 - [ ] **Step 2: Add the Node orchestration**
 

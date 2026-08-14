@@ -15,12 +15,10 @@ import type { DashboardSnapshot } from './api/types'
 // adminSnapshotFetcher: alternative to adminSnapshotUrl for hosts that need to
 // attach auth headers (e.g. MSAL Bearer token) to the admin snapshot request.
 // Takes precedence over adminSnapshotUrl when both are supplied.
-// snapshotCacheKey / adminSnapshotCacheKey: stable identifiers folded into the
-// React Query cache key when a custom (guest / admin) fetcher is used. The
-// QueryClient is shared with the host app, so two boards (or a swapped fetcher)
-// backed by distinct fetchers would otherwise alias the same cache entry — set a
-// distinct key per board/source to keep them separate. Optional; without one,
-// custom-fetcher branches fall back to a role sentinel.
+// snapshotCacheKey / adminSnapshotCacheKey: optional stable cache-key overrides
+// for custom (guest / admin) fetchers. Distinct function identities get distinct
+// cache rows by default; supply a key to deliberately retain a cache row across
+// recreated function identities.
 // repositoryScope: optional canonical owner/repository identity that limits the
 // rendered board to one already-authorised repository.
 export interface CiConfig {

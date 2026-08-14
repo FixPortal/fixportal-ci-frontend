@@ -101,6 +101,7 @@ try {
     upstream.listen(0, '0.0.0.0', resolve)
   })
   const upstreamPort = upstream.address().port
+  const paddedUpstreamPort = String(upstreamPort).padStart(6, '0')
   await mustRun('docker', ['build', '--tag', image, '.'])
 
   await assertInvalidStartup('missing')
@@ -108,6 +109,10 @@ try {
   await assertInvalidStartup('path', 'https://backend/path')
   await assertInvalidStartup('scheme', 'ftp://backend')
   await assertInvalidStartup('injection', 'http://backend; proxy_set_header X-Injected yes')
+  await assertInvalidStartup('port-empty', 'http://backend:')
+  await assertInvalidStartup('port-alpha', 'http://backend:not-a-port')
+  await assertInvalidStartup('port-zero', 'http://backend:0')
+  await assertInvalidStartup('port-too-high', 'http://backend:65536')
 
   const name = `ci-frontend-smoke-${suffix}`
   containers.add(name)
@@ -115,7 +120,7 @@ try {
     'run', '--detach', '--name', name,
     '--add-host', 'host.docker.internal:host-gateway',
     '--publish', '127.0.0.1::8080',
-    '--env', `BACKEND_URL=https://host.docker.internal:${upstreamPort}`,
+    '--env', `BACKEND_URL=https://host.docker.internal:${paddedUpstreamPort}`,
     image,
   ], { timeout: 10_000 })
 
@@ -139,7 +144,7 @@ try {
   assert.equal(upstreamRequest?.servername, 'host.docker.internal', 'TLS SNI is missing or incorrect')
   assert.equal(upstreamRequest?.httpVersion, '1.1', 'upstream request is not HTTP/1.1')
   assert.equal(upstreamRequest?.headers.connection, undefined, 'Connection header was forwarded upstream')
-  assert.equal(upstreamRequest?.headers.host, `host.docker.internal:${upstreamPort}`)
+  assert.equal(upstreamRequest?.headers.host, `host.docker.internal:${paddedUpstreamPort}`)
   assert.ok(upstreamRequest?.headers['x-forwarded-for'], 'X-Forwarded-For is missing')
 
   console.log('Production nginx container smoke passed')

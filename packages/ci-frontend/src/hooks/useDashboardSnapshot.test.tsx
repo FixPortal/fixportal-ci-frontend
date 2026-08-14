@@ -30,6 +30,22 @@ function wrapperFor(client: QueryClient, config: CiConfig, isAdmin = false) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useDashboardSnapshot cache-key isolation', () => {
+  it('keeps two guest boards with distinct fetchers on separate cache rows when neither supplies a cache key', async () => {
+    const client = new QueryClient()
+    const { result: boardA } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => snapshotFor('org-a') }),
+    })
+    const { result: boardB } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => snapshotFor('org-b') }),
+    })
+
+    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
+    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+
+    expect(boardA.current.data?.org).toBe('org-a')
+    expect(boardB.current.data?.org).toBe('org-b')
+  })
+
   it('keeps two co-hosted boards with distinct fetchers on separate cache rows under one shared QueryClient', async () => {
     // Both hooks share a single QueryClient (simulating two boards mounted under
     // the same host app), each with its own snapshotFetcher and a distinct
@@ -100,6 +116,22 @@ describe('useDashboardSnapshot URL branches', () => {
 })
 
 describe('useDashboardSnapshot admin cache-key isolation', () => {
+  it('keeps two admin boards with distinct fetchers on separate cache rows when neither supplies a cache key', async () => {
+    const client = new QueryClient()
+    const { result: boardA } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', adminSnapshotFetcher: async () => snapshotFor('org-a') }, true),
+    })
+    const { result: boardB } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', adminSnapshotFetcher: async () => snapshotFor('org-b') }, true),
+    })
+
+    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
+    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+
+    expect(boardA.current.data?.org).toBe('org-a')
+    expect(boardB.current.data?.org).toBe('org-b')
+  })
+
   it('keeps two admin boards with distinct fetchers on separate cache rows under one shared QueryClient', async () => {
     const client = new QueryClient()
     const { result: boardA } = renderHook(() => useDashboardSnapshot(), {

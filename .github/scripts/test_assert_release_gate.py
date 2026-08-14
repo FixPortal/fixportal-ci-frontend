@@ -1,18 +1,47 @@
 #!/usr/bin/env python3
 import unittest
 
-from assert_release_gate import validate_release_gate
+from assert_release_gate import validate_release_gate, validate_verify_gate
 
 
 REQUIRED_COMMANDS = (
     "node scripts/release-tag.mjs",
     "npm run verify",
+    "npm run test:backend-contract -- .contract/backend/contracts/dashboard-snapshot.v1.json",
     "npx playwright install --with-deps chromium",
     "npm run test:e2e",
     "npm run test:package",
     "npm run test:container",
     "npm publish --provenance -w @fix-portal/ci-frontend",
 )
+
+
+PACKAGE_MANIFESTS = {
+    "root": {
+        "name": "root",
+        "scripts": {
+            "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
+            "lint": "eslint .",
+            "test": "npm run test --workspaces --if-present",
+            "test:scripts": "node --test scripts/*.test.mjs",
+            "build:lib": "npm run build -w @fix-portal/ci-frontend",
+            "build:app": "npm run build -w dashboard",
+        },
+    },
+    "@fix-portal/ci-frontend": {
+        "name": "@fix-portal/ci-frontend",
+        "scripts": {
+            "test": "vitest run",
+            "typecheck": "tsc --noEmit",
+            "coverage": "vitest run --coverage",
+            "build": "tsup",
+        },
+    },
+    "dashboard": {
+        "name": "dashboard",
+        "scripts": {"test": "vitest run", "build": "tsc --noEmit && vite build"},
+    },
+}
 
 
 def workflow(commands):
@@ -34,6 +63,74 @@ jobs:
 
 
 class ReleaseGatePolicyTests(unittest.TestCase):
+    def test_verify_reaches_each_substantive_nested_gate(self):
+        self.assertEqual(validate_verify_gate(PACKAGE_MANIFESTS), [])
+
+    def test_verify_rejects_a_missing_nested_gate(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "@fix-portal/ci-frontend": {
+                **PACKAGE_MANIFESTS["@fix-portal/ci-frontend"],
+                "scripts": {
+                    **PACKAGE_MANIFESTS["@fix-portal/ci-frontend"]["scripts"],
+                },
+            },
+        }
+        del manifests["@fix-portal/ci-frontend"]["scripts"]["build"]
+
+        findings = validate_verify_gate(manifests)
+
+        self.assertEqual(findings, ["missing-verify-gate: @fix-portal/ci-frontend:build"])
+
+    def test_verify_rejects_a_present_but_gutted_nested_gate(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "root": {
+                **PACKAGE_MANIFESTS["root"],
+                "scripts": {**PACKAGE_MANIFESTS["root"]["scripts"], "lint": "echo ok"},
+            },
+        }
+
+        findings = validate_verify_gate(manifests)
+
+        self.assertEqual(findings, ["invalid-verify-gate: root:lint"])
+
+    def test_verify_rejects_a_nested_gate_whose_failure_is_ignored(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "root": {
+                **PACKAGE_MANIFESTS["root"],
+                "scripts": {
+                    **PACKAGE_MANIFESTS["root"]["scripts"],
+                    "verify": PACKAGE_MANIFESTS["root"]["scripts"]["verify"].replace(
+                        "npm run lint", "npm run lint || true"
+                    ),
+                },
+            },
+        }
+
+        findings = validate_verify_gate(manifests)
+
+        self.assertEqual(findings, ["parse-error: unsupported npm run options: npm run lint || true"])
+
+    def test_verify_rejects_a_missing_audit_segment(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "root": {
+                **PACKAGE_MANIFESTS["root"],
+                "scripts": {
+                    **PACKAGE_MANIFESTS["root"]["scripts"],
+                    "verify": PACKAGE_MANIFESTS["root"]["scripts"]["verify"].replace(
+                        "npm audit --omit=dev --audit-level=high && ", ""
+                    ),
+                },
+            },
+        }
+
+        findings = validate_verify_gate(manifests)
+
+        self.assertEqual(findings, ["missing-verify-audit: npm audit --omit=dev --audit-level=high"])
+
     def test_accepts_the_complete_ordered_release_gate(self):
         self.assertEqual(validate_release_gate(workflow(REQUIRED_COMMANDS)), [])
 

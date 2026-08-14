@@ -5,6 +5,23 @@ import { useCiConfig } from '../CiConfigContext'
 import { useCiAdmin } from '../CiAdminContext'
 import type { DashboardSnapshot } from '../api/types'
 
+type SnapshotFetcher = () => Promise<DashboardSnapshot | null>
+
+const fetcherIds = new WeakMap<SnapshotFetcher, number>()
+let nextFetcherId = 0
+
+function cacheKeyFor(fetcher: SnapshotFetcher, cacheKey?: string) {
+  if (cacheKey !== undefined) return cacheKey
+
+  let id = fetcherIds.get(fetcher)
+  if (id === undefined) {
+    id = nextFetcherId
+    nextFetcherId += 1
+    fetcherIds.set(fetcher, id)
+  }
+  return id
+}
+
 export function useDashboardSnapshot() {
   const { apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey } = useCiConfig()
   const isAdmin = useCiAdmin()
@@ -17,17 +34,16 @@ export function useDashboardSnapshot() {
   let queryFn: QueryFunction<DashboardSnapshot | null>
 
   // The QueryClient is shared with the host app, so custom-fetcher branches must
-  // not alias on a fixed sentinel — fold in the caller's cache key to keep
-  // distinct boards/sources (or a swapped fetcher) on separate cache rows.
-  // .filter(Boolean) drops the trailing segment when no cache key was supplied.
+  // not alias on a fixed sentinel — explicit cache keys win; otherwise each
+  // fetcher function receives a stable module-local identity.
   if (isAdmin && adminSnapshotFetcher) {
-    queryKey = [queryKeyPrefix, '__admin_fetcher__', adminSnapshotCacheKey].filter(Boolean)
+    queryKey = [queryKeyPrefix, '__admin_fetcher__', cacheKeyFor(adminSnapshotFetcher, adminSnapshotCacheKey)]
     queryFn = adminSnapshotFetcher
   } else if (isAdmin && adminSnapshotUrl) {
     queryKey = [queryKeyPrefix, adminSnapshotUrl]
     queryFn = ({ signal }) => getDashboardSnapshot(adminSnapshotUrl, signal)
   } else if (!isAdmin && snapshotFetcher) {
-    queryKey = [queryKeyPrefix, '__guest_fetcher__', snapshotCacheKey].filter(Boolean)
+    queryKey = [queryKeyPrefix, '__guest_fetcher__', cacheKeyFor(snapshotFetcher, snapshotCacheKey)]
     queryFn = snapshotFetcher
   } else {
     const snapshotUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
