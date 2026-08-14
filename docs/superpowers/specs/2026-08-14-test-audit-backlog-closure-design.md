@@ -35,7 +35,7 @@ Add a persistent minimal consumer fixture and a Node orchestration script using 
 
 1. runs `npm pack` for `@fix-portal/ci-frontend`;
 2. installs the tarball and its peer/build dependencies into a fresh temporary directory;
-3. imports representative runtime and type exports plus `board.css` and `tokens.css`;
+3. resolves every public root runtime/type export plus `board.css` and `tokens.css`;
 4. typechecks and builds the isolated consumer; and
 5. removes the temporary directory and tarball in a `finally` path.
 

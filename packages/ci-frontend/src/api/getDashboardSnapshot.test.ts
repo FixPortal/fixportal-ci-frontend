@@ -75,6 +75,22 @@ test('preserves a generic error from reading a successful response body', async 
 })
 
 test.each([
+  null,
+  [],
+  'dashboard-secret-marker-7b49',
+])('rejects a successful top-level %s JSON value at $ without leaking it', async (body) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(body)))
+
+  const error = await getDashboardSnapshot(URL).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  )
+
+  expect(error).toEqual(new Error('Invalid dashboard snapshot at $: expected object'))
+  expect(String(error)).not.toContain('dashboard-secret-marker-7b49')
+})
+
+test.each([
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', summary: [], lastMergedPr: null }, '$.repositories'],
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [{ name: 'repo' }], summary: [], lastMergedPr: null }, '$.repositories[0].htmlUrl'],
   [{ org: 'FixPortal', refreshedAt: '2026-08-14T00:00:00Z', repositories: [], summary: [{ key: 'passing', count: '1' }], lastMergedPr: null }, '$.summary[0].count'],

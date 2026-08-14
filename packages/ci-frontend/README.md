@@ -64,10 +64,10 @@ creates an internal client.
 | `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable, and this prop is not a security control. |
 | `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct behind a proxy. |
 | `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
-| `snapshotCacheKey` | `string` | unset | Stable key that keeps custom guest fetchers from sharing a cache entry in one `QueryClient`. |
+| `snapshotCacheKey` | `string` | unset | Stable cache-key override for a custom guest fetcher. Distinct fetcher functions are isolated by default; set this to retain a row across recreated function identities. |
 | `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. Add `X-Admin-Key` server-side; never expose it to the browser. |
 | `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
-| `adminSnapshotCacheKey` | `string` | unset | Stable cache key for a custom admin fetcher. |
+| `adminSnapshotCacheKey` | `string` | unset | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`. |
 | `logo` | `ReactNode` | text wordmark | Brand mark in the dashboard header. |
 | `footerSlot` | `ReactNode` | generic footer | Footer content. |
 | `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
