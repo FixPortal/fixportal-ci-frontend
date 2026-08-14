@@ -80,6 +80,29 @@ jobs:
       - name: Build standalone app
         run: npm run build:app
 
+  container-smoke:
+    name: Production container smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Lint workflows (actionlint)
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2
+        with:
+          shellcheck: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Exercise production nginx container
+        run: npm run test:container
+
   gate-coverage:
     name: Gate coverage
     runs-on: ubuntu-latest
@@ -110,7 +133,7 @@ jobs:
   ci-gate:
     name: CI Gate
     if: always()
-    needs: [build, gate-coverage]
+    needs: [build, container-smoke, gate-coverage]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # No token at all: this job only reads GitHub-controlled needs.*.result values, and

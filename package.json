@@ -10,6 +10,7 @@
     "build:lib": "npm run build -w @fix-portal/ci-frontend",
     "build:app": "npm run build -w dashboard",
     "test": "npm run test --workspaces --if-present",
+    "test:container": "node scripts/container-smoke.mjs",
     "test:package": "node scripts/package-smoke.mjs",
     "test:e2e": "playwright test",
     "lint": "eslint .",

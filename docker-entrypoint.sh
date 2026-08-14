@@ -1,8 +1,12 @@
 #!/bin/sh
 set -e
-if [ -z "$BACKEND_URL" ]; then
-  echo "Error: BACKEND_URL must be set (e.g. -e BACKEND_URL=http://backend:3000)" >&2
-  exit 1
-fi
+case "$BACKEND_URL" in
+  http://*|https://*) ;;
+  *) echo "Error: BACKEND_URL must be a bare http(s) origin" >&2; exit 1 ;;
+esac
+backend_authority=${BACKEND_URL#*://}
+case "$backend_authority" in
+  ''|*/*|*\?*|*\#*|*@*) echo "Error: BACKEND_URL must be a bare http(s) origin" >&2; exit 1 ;;
+esac
 envsubst '$BACKEND_URL' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 exec nginx -g 'daemon off;'
