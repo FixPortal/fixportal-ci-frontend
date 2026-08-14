@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const fixture = process.argv[2]
-if (!fixture) throw new Error('usage: npm run test:backend-contract -- <fixture-path>')
+if (process.argv.length !== 3) throw new Error('usage: npm run test:backend-contract -- <fixture-path>')
 const result = spawnSync(
   'npm',
   ['run', 'test:backend-contract', '-w', '@fix-portal/ci-frontend'],
