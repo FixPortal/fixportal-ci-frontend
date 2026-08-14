@@ -4,9 +4,9 @@ React components that render a GitHub organisation's CI overview — workflow
 status, open pull requests, deploy lanes, per-repo metrics, a 24-hour trend and
 per-PR review signals — from a single backend snapshot endpoint.
 
-No FixPortal-specific dependency, and **zero runtime dependencies**: `react`,
-`react-dom` and `@tanstack/react-query` are peer dependencies, so the library
-uses your copies.
+No FixPortal-specific dependency and no bundled runtime dependencies. `react`,
+`react-dom` and `@tanstack/react-query` are required peer dependencies supplied
+by the consuming app.
 
 ![FixPortal CI dashboard](https://raw.githubusercontent.com/FixPortal/fixportal-ci-frontend/main/docs/dashboard.png)
 
@@ -54,16 +54,25 @@ export function App() {
 }
 ```
 
-Wrap the board in your existing `QueryClientProvider` if you already have one.
+The board reuses an existing `QueryClientProvider`; when there is none, it
+creates an internal client.
 
 ### `CiBoard` props
 
 | Prop | Type | Default | Purpose |
 |---|---|---|---|
-| `adminSignal` | `boolean` | required | `true` shows private repos and actionable PR links; `false` is the public read-only view. Derive from your app's auth state — it is a display switch, not a security control; the backend decides what it will serve. |
+| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and actionable PR links appear only when this is `true` and an admin snapshot URL or fetcher is configured; it is not a security control. |
 | `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct behind a proxy. |
+| `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
+| `snapshotCacheKey` | `string` | unset | Stable key that keeps custom guest fetchers from sharing a cache entry in one `QueryClient`. |
+| `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. Add `X-Admin-Key` server-side; never expose it to the browser. |
+| `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
+| `adminSnapshotCacheKey` | `string` | unset | Stable cache key for a custom admin fetcher. |
 | `logo` | `ReactNode` | text wordmark | Brand mark in the dashboard header. |
 | `footerSlot` | `ReactNode` | generic footer | Footer content. |
+| `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
+| `repositoryScope` | `string` | unset | Canonical `owner/repository` identity that limits the board to one already-authorised repository. |
+| `showThemeSwitcher` | `boolean` | `true` | Shows the board's Light / Dark / System selector. |
 
 ### Styling
 
@@ -75,7 +84,9 @@ The board reads ~15 CSS custom properties (`--text`, `--border`, `--brand`,
 | No existing design system | `tokens.css` before `board.css` — a vendored light/dark token set is included |
 | You already define those property names | `board.css` only — your tokens flow in automatically |
 
-Dark mode: `document.documentElement.dataset.theme = 'dark'`.
+The built-in Light / Dark / System selector applies `data-theme` to the board's
+own `.ci-page` container, leaving the host page untouched. Hide it with
+`showThemeSwitcher={false}` when the host provides its own board-local control.
 
 ## Backend contract
 

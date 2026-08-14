@@ -9,8 +9,9 @@
 ## What this is
 
 An open-source CI dashboard UI for a GitHub organisation: workflow status, open
-pull requests, deploy/package lanes, per-repo metrics, and a 24-hour CI trend —
-all rendered from a **single backend snapshot endpoint**. It is the presentation
+pull requests, reviewer signals, ready-to-merge verdicts, deploy/package lanes,
+per-repo metrics, and a 24-hour CI trend — all rendered from a **single backend
+snapshot endpoint**. It is the presentation
 layer for the FixPortal CI backend, extracted so it can be reused independently.
 The board has no hard dependency on any FixPortal package: the brand is
 injectable and the design tokens are vendored.
@@ -28,9 +29,11 @@ Two-tier npm-workspaces monorepo:
 GET {apiBase}/api/dashboard/snapshot
         │
         ▼
-  api/types.ts ............... the API contract — centre of gravity (fan-in ~14-18)
+  api/types.ts ............... the API contract — centre of gravity
         │                       DashboardSnapshot (whole payload)  ─┐
         │                       RepositorySnapshot[] (per-repo)      │ two tiers
+        │                       PullRequest reviewSignals +          │
+        │                         readyToMerge (optional)             │
         ▼                                                            │
   api/getDashboardSnapshot.ts  HTTP fetch (204 = "no snapshot yet")  │
   hooks/useDashboardSnapshot.ts  TanStack Query polling;             │
@@ -40,15 +43,17 @@ GET {apiBase}/api/dashboard/snapshot
   CiBoard.tsx .............. public library entry component          │
         │                     • QueryClientSafeProvider guards against a duplicate
         │                       QueryClient when the host app already has one
-        │                     • CiConfigContext + CiAdminContext = DI for apiBase / adminSignal
+        │                     • CiConfigContext + CiAdminContext = DI for data sources,
+        │                       storage/scope settings and effective admin state
         ▼                                                            │
-  pages/CiBoardContent.tsx . page orchestrator — widest fan-out (~17)│
+  pages/CiBoardContent.tsx . page orchestrator — widest fan-out     │
         │                     public/private repo grouping (buildRepoList)
         ▼                                                            ▼
   components/* ............. board widgets: RepoBoard, SignalChip, CiWeatherBar,
-                            PullRequestStepper, RepoMetricsLine, SummaryStrip,
-                            RepoSection, JobLaneRow, StatusLegend, MetricsLegend,
-                            PullRequestList, RepoActivityIndicator
+                            PullRequestStepper, PullRequestList, ReviewPills,
+                            ReadyToMergePill, RepoFilterBar, RepoMetricsLine,
+                            SummaryStrip, RepoSection, JobLaneRow, LegendRow,
+                            RepoActivityIndicator
         │
         ▼ (consume RepositorySnapshot + pure helpers)
   lib/* ................... pure derivation helpers: computeSummary, flattenOpenPrs,
@@ -58,10 +63,11 @@ GET {apiBase}/api/dashboard/snapshot
 
 ## Load-bearing seams (what the graph gets right)
 
-- **`api/types.ts` is the real centre of gravity**, not any component. It is the
-  most-imported file (fan-in ~14 in-repo, ~18 across the graph). Everything else
-  is a consumer of the contract it defines. Change a shape here and the blast
-  radius is the whole board.
+- **`api/types.ts` is the real centre of gravity**, not any component. Everything
+  else is a consumer of the contract it defines. Change a shape here and the
+  blast radius is the whole board. `PullRequest.reviewSignals` and
+  `PullRequest.readyToMerge` remain optional so newer frontends render older or
+  unenriched snapshots without inventing a verdict.
 - **The snapshot type is two-tiered, and both tiers are load-bearing:**
   `DashboardSnapshot` is the whole payload consumed at the app-shell tier
   (`CiBoard` → `getDashboardSnapshot` → `useDashboardSnapshot`);
@@ -70,8 +76,9 @@ GET {apiBase}/api/dashboard/snapshot
   `RepoActivityIndicator`). Treat them as the two stable interfaces of the lib.
 - **The auth/visibility seam lives in `useDashboardSnapshot`**, which selects one
   of three fetcher strategies (admin fetcher, guest fetcher, plain URL) at
-  runtime from context. `adminSignal` flows in through `CiAdminContext`; when
-  `true`, private repos and actionable GitHub PR links are shown.
+  runtime from context. `adminSignal` becomes effective only when an admin URL
+  or fetcher is also configured; only then are private repos and actionable
+  GitHub PR links shown.
 - **"Library, not app" tension is encoded in `QueryClientSafeProvider`** — it
   avoids creating a second TanStack `QueryClient` when the host application
   already provides one. This is the seam that makes the board droppable into a
@@ -83,27 +90,27 @@ GET {apiBase}/api/dashboard/snapshot
 
 ## Structural findings worth recording (what raw ranking gets wrong)
 
-- **`relativeTime()` is a false god node.** It ranks high on degree (fan-in ~7,
-  imported by `CiWeatherBar`, `SummaryStrip`, `PullRequestStepper`, ...), but it
+- **`relativeTime()` is a false god node.** It ranks high on degree because it is
+  imported by `CiWeatherBar`, `SummaryStrip`, `PullRequestStepper`, and others, but it
   is a pure leaf formatter with zero outbound edges and no architectural weight.
   High degree ≠ load-bearing. Do not mistake it for a hub.
 - **`isAllowedHref()` is a small but cross-cutting security guard** — an XSS guard
-  (blocks `javascript:`/`data:` link injection) called from ~4 component sites.
+  (blocks `javascript:`/`data:` link injection) shared by external-link components.
   Worth tracking precisely *because* it is small and easy to forget when adding a
   new external link.
-- **`CiBoardContent.tsx` is the genuine orchestration hub** (widest fan-out ~17):
+- **`CiBoardContent.tsx` is the genuine orchestration hub** (widest fan-out):
   it wires every hook and widget together and owns the public/private grouping
   logic. This is the file to read first to understand how the board assembles.
 - **No import cycles** detected across the library.
-- The 12 board widgets and several leaf components use explicit `React.memo` to
+- Board widgets and several leaf components use explicit `React.memo` to
   skip re-renders on no-change TanStack Query poll ticks — a deliberate
   performance pattern, not incidental.
 
 ## Layers (from the understand-anything graph)
 
-1. **Library Core** — `api/types.ts`, `api/getDashboardSnapshot.ts`, all 10 `lib/` pure helpers
-2. **Library Hooks** — `useDashboardSnapshot`, `useCollapseState`, `useHideNoCi`
-3. **Library Components** — 12 board widgets, `pages/CiBoardContent`, the root entry files (`CiBoard`, `CiAdminContext`, `CiConfigContext`, `DefaultFooter`, `index.ts` barrel)
+1. **Library Core** — `api/types.ts`, `api/getDashboardSnapshot.ts`, and the `lib/` pure helpers
+2. **Library Hooks** — `useDashboardSnapshot`, `useCollapseState`, `useHideNoCi`, `useRepoFilters`
+3. **Library Components** — board widgets, `pages/CiBoardContent`, the root entry files (`CiBoard`, `CiAdminContext`, `CiConfigContext`, `DefaultFooter`, `index.ts` barrel)
 4. **Library Styles** — `board.css`, `tokens.css`
 5. **Dashboard App** — `apps/dashboard` source, HTML shell, app configs
 6. **Infrastructure** — `Dockerfile` (multi-stage Node build → nginx serve), `docker-entrypoint.sh` (envsubst nginx template), `nginx.conf.template`, `ci.yml`, `release.yml`
@@ -117,7 +124,8 @@ GET {apiBase}/api/dashboard/snapshot
   serve, port 8080, non-root). `docker-entrypoint.sh` runs `envsubst` over
   `nginx.conf.template` so `BACKEND_URL` / `VITE_CI_API_BASE` are injected at
   container start.
-- **CI/CD:** `ci.yml` lints, tests (Vitest), builds lib + app, and pushes the
+- **CI/CD:** `ci.yml` lints, runs workspace tests, typechecks and coverage-gates
+  the library, builds lib + app, and pushes the
   image to GHCR on `main`. `release.yml` publishes the npm package (OIDC
   provenance) and the Docker image on `v*` tags.
 

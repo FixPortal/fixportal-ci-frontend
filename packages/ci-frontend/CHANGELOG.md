@@ -9,6 +9,13 @@ Entries are reconstructed from the repository's tag history. Releases before 1.3
 listed for completeness only: they were published from a private history that was not
 carried into the public repository, so there are no commits to describe them from.
 
+## [Unreleased]
+
+### Changed
+
+- Renamed the visible “Idiot's guide” wording to “Neophyte's guide”. The old joke was at
+  the maintainers' own expense, but on reflection we were uncomfortable with the wording.
+
 ## [2.6.1] - 2026-08-13
 
 ### Added

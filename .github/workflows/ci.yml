@@ -68,6 +68,12 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Typecheck library
+        run: npm run typecheck -w @fix-portal/ci-frontend
+
+      - name: Gate library coverage
+        run: npm run coverage -w @fix-portal/ci-frontend
+
       - name: Build library
         run: npm run build:lib
 
