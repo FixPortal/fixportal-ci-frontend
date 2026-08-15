@@ -14,8 +14,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  quality:
+    name: Full CI
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   publish:
     name: Publish Package (npm)
+    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

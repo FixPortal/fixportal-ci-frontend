@@ -20,6 +20,7 @@ REQUIRED_COMMANDS = (
 )
 
 REQUIRED_VERIFY_AUDIT = "npm audit --omit=dev --audit-level=high"
+REQUIRED_CI_WORKFLOW = "./.github/workflows/ci.yml"
 REQUIRED_VERIFY_GATES = {
     "root:lint": "eslint .",
     "@fix-portal/ci-frontend:test": "vitest run",
@@ -84,6 +85,29 @@ def validate_release_gate(workflow):
     conditional = next((command for command, has_metadata in steps if command in REQUIRED_COMMANDS and has_metadata), None)
     if conditional:
         return [f"conditional-command: {conditional}"]
+    return []
+
+
+def validate_release_dependency(workflow):
+    try:
+        document = yaml.safe_load(workflow)
+        jobs = _mapping(document, "jobs")
+        quality = _mapping(jobs, "quality")
+        publish = _mapping(jobs, "publish")
+    except (WorkflowShapeError, yaml.YAMLError) as error:
+        return [f"parse-error: {error}"]
+
+    if quality.get("uses") != REQUIRED_CI_WORKFLOW:
+        return [f"invalid-quality-workflow: expected {REQUIRED_CI_WORKFLOW}"]
+    if "continue-on-error" in quality:
+        return ["tolerated-quality-job: quality must not tolerate CI failures"]
+
+    needs = publish.get("needs")
+    dependencies = [needs] if isinstance(needs, str) else needs
+    if not isinstance(dependencies, list) or "quality" not in dependencies:
+        return ["missing-quality-dependency: publish must need quality"]
+    if "if" in publish or "continue-on-error" in publish:
+        return ["conditional-publish-job: publish must not bypass a failed quality job"]
     return []
 
 
@@ -195,7 +219,11 @@ def main(argv):
         print(f"package.json: parse-error: {error}", file=sys.stderr)
         return 1
 
-    findings = [*validate_release_gate(workflow), *validate_verify_gate(manifests)]
+    findings = [
+        *validate_release_gate(workflow),
+        *validate_release_dependency(workflow),
+        *validate_verify_gate(manifests),
+    ]
     if findings:
         for finding in findings:
             print(f"{argv[1]}: {finding}", file=sys.stderr)
