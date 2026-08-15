@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 
-from assert_release_gate import validate_release_gate, validate_verify_gate
+from assert_release_gate import validate_release_dependency, validate_release_gate, validate_verify_gate
 
 
 REQUIRED_COMMANDS = (
@@ -54,8 +54,12 @@ on:
   push:
     tags: ['v*']
 jobs:
+  quality:
+    name: Full CI
+    uses: ./.github/workflows/ci.yml
   publish:
     name: Publish Package (npm)
+    needs: quality
     runs-on: ubuntu-latest
     steps:
 {steps}
@@ -133,6 +137,46 @@ class ReleaseGatePolicyTests(unittest.TestCase):
 
     def test_accepts_the_complete_ordered_release_gate(self):
         self.assertEqual(validate_release_gate(workflow(REQUIRED_COMMANDS)), [])
+        self.assertEqual(validate_release_dependency(workflow(REQUIRED_COMMANDS)), [])
+
+    def test_rejects_publish_without_the_full_ci_dependency(self):
+        detached = workflow(REQUIRED_COMMANDS).replace("    needs: quality\n", "")
+
+        self.assertEqual(
+            validate_release_dependency(detached),
+            ["missing-quality-dependency: publish must need quality"],
+        )
+
+    def test_rejects_replacing_the_full_ci_workflow(self):
+        replaced = workflow(REQUIRED_COMMANDS).replace(
+            "uses: ./.github/workflows/ci.yml", "uses: ./.github/workflows/release-smoke.yml"
+        )
+
+        self.assertEqual(
+            validate_release_dependency(replaced),
+            ["invalid-quality-workflow: expected ./.github/workflows/ci.yml"],
+        )
+
+    def test_rejects_tolerated_full_ci_failures(self):
+        tolerated = workflow(REQUIRED_COMMANDS).replace(
+            "    uses: ./.github/workflows/ci.yml\n",
+            "    uses: ./.github/workflows/ci.yml\n    continue-on-error: true\n",
+        )
+
+        self.assertEqual(
+            validate_release_dependency(tolerated),
+            ["tolerated-quality-job: quality must not tolerate CI failures"],
+        )
+
+    def test_rejects_publish_bypassing_a_failed_full_ci_job(self):
+        bypassed = workflow(REQUIRED_COMMANDS).replace(
+            "    needs: quality\n", "    needs: quality\n    if: always()\n"
+        )
+
+        self.assertEqual(
+            validate_release_dependency(bypassed),
+            ["conditional-publish-job: publish must not bypass a failed quality job"],
+        )
 
     def test_reports_each_missing_command_independently(self):
         for removed in REQUIRED_COMMANDS:
