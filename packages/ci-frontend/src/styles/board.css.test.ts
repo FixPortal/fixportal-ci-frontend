@@ -50,3 +50,31 @@ describe('board.css PR-row layout', () => {
     expect(body).toContain('margin: 0')
   })
 })
+
+// The "—" unknown-metric count carries meaning (a failed scan must not render
+// as a measured 0), so it must clear WCAG AA as text. --unknown is a chip
+// fill grey that measures 2.645:1 on light --card-bg; --text-muted is the
+// measured-clean ink. Guard the source so the count cannot drift back.
+describe('board.css unknown summary count', () => {
+  it('inks the unknown count with --text-muted, not --unknown', () => {
+    const match = css.match(/\.summary__item\[data-tone="unknown"\] \.summary__count\s*\{([^}]*)\}/)
+    expect(match).not.toBeNull()
+    const body = match![1].replace(/\s+/g, ' ')
+    expect(body).toContain('color: var(--text-muted)')
+    expect(body).not.toContain('var(--unknown)')
+  })
+})
+
+// The skip link must hide with the clipped sr-only idiom: .ci-page sets no
+// `position`, so an off-screen translate resolves against the host page's
+// nearest positioned ancestor and the "hidden" link can paint over host UI
+// when the board is embedded. Guard against the translate regressing.
+describe('board.css skip link', () => {
+  it('hides via clip, not an off-screen transform', () => {
+    const match = css.match(/\.ci-skip-link\s*\{([^}]*)\}/)
+    expect(match).not.toBeNull()
+    const body = match![1].replace(/\s+/g, ' ')
+    expect(body).toContain('clip: rect(0, 0, 0, 0)')
+    expect(body).not.toContain('transform')
+  })
+})

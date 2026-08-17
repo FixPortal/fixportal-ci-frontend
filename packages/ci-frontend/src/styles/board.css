@@ -96,21 +96,36 @@
   flex: 1;
 }
 
-/* Skip link (WCAG 2.4.1): first tab stop, visually hidden until focused. */
+/* Skip link (WCAG 2.4.1): first tab stop, visually hidden until focused.
+   Hidden with the clipped sr-only idiom (as .sr-only below), not an off-screen
+   translate: .ci-page establishes no positioned containing block, so a
+   translate-based hide resolved `top` against the host page's nearest
+   positioned ancestor and the "hidden" link could paint over host UI when the
+   board is embedded inside a position: relative wrapper. */
 .ci-skip-link {
   position: absolute;
   top: var(--space-2);
   left: var(--space-2);
   z-index: 100;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  /* stylelint-disable-next-line declaration-property-value-disallowed-list -- the -1px clip is the canonical visually-hidden idiom, not chrome spacing. */
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.ci-skip-link:focus-visible {
+  width: auto;
+  height: auto;
   padding: var(--space-2) var(--space-4);
+  margin: 0;
+  clip: none;
   background: var(--card-bg);
   color: var(--text);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-control);
-  transform: translateY(-300%);
-}
-.ci-skip-link:focus-visible {
-  transform: none;
 }
 
 .ci-embed {
@@ -381,9 +396,11 @@
   .summary__item[data-tone="run"] .summary__count { color: var(--run); }
   .summary__item[data-tone="review"] .summary__count { color: var(--brand); }
   .summary__item[data-tone="no-ci"] .summary__count { color: var(--no-ci); }
-  /* A metric whose scan failed is unknown, not zero (CIF-002) — same grey the
-     unknown chip state uses. */
-  .summary__item[data-tone="unknown"] .summary__count { color: var(--unknown); }
+  /* A metric whose scan failed is unknown, not zero (CIF-002). Reads in
+     --text-muted, not the --unknown chip grey: as small text ink --unknown
+     fails WCAG AA (2.645:1 light, 3.19:1 dark — the same figure the
+     review-pending chip note cites for refusing it at .chip--review-pending). */
+  .summary__item[data-tone="unknown"] .summary__count { color: var(--text-muted); }
 
   /* CI status uses a fixed 3-col grid so Running/Deploys-Running and
      Failing/Deploys-Failing align in columns regardless of which items are present. */
