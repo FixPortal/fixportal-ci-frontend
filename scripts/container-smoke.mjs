@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { createServer } from 'node:https'
 
 const root = process.cwd()
 const suffix = `${process.pid}-${Date.now()}`
 const image = `fixportal-ci-frontend-smoke:${suffix}`
 const containers = new Set()
-const startupError = 'Error: BACKEND_URL must be a bare http(s) origin'
+const startupError = 'Error: BACKEND_URL'
 
 function run(command, args, { timeout = 480_000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -45,7 +47,7 @@ async function removeContainer(name) {
   containers.delete(name)
 }
 
-async function assertInvalidStartup(label, value) {
+async function assertInvalidStartup(label, value, expectedMessage = startupError) {
   const name = `ci-frontend-invalid-${label}-${suffix}`
   containers.add(name)
   const args = ['run', '--detach', '--name', name]
@@ -59,7 +61,29 @@ async function assertInvalidStartup(label, value) {
     assert.equal(logResult.code, 0, `${label}: could not read container logs`)
     const logs = logResult.stdout + logResult.stderr
     assert.notEqual(Number(exit), 0, `${label}: container unexpectedly exited successfully`)
-    assert.ok(logs.includes(startupError), `${label}: stable startup error missing`)
+    assert.ok(logs.includes(expectedMessage), `${label}: startup error missing ${JSON.stringify(expectedMessage)}`)
+  } finally {
+    await removeContainer(name)
+  }
+}
+
+// A BACKEND_URL the entrypoint accepts must let nginx come up and serve the
+// SPA. The underscore host is resolved via --add-host because proxy_pass takes
+// BACKEND_URL literally, so nginx resolves it at startup.
+async function assertValidStartup(label, value, extraHosts) {
+  const name = `ci-frontend-valid-${label}-${suffix}`
+  containers.add(name)
+  const args = ['run', '--detach', '--name', name, '--publish', '127.0.0.1::8080']
+  for (const host of extraHosts) args.push('--add-host', `${host}:127.0.0.1`)
+  args.push('--env', `BACKEND_URL=${value}`, image)
+
+  try {
+    await mustRun('docker', args, { timeout: 10_000 })
+    const binding = await mustRun('docker', ['port', name, '8080/tcp'], { timeout: 10_000 })
+    const port = Number(binding.match(/:(\d+)$/)?.[1])
+    assert.ok(port, `${label}: could not parse published port from ${binding}`)
+    const response = await waitFor(`http://127.0.0.1:${port}/`, Date.now() + 20_000)
+    assert.match(await response.text(), /<div id="root"><\/div>/, `${label}: accepted BACKEND_URL did not serve the SPA`)
   } finally {
     await removeContainer(name)
   }
@@ -80,10 +104,24 @@ async function waitFor(url, deadline) {
   throw new Error(`container did not become ready: ${lastError?.message ?? 'unknown error'}`)
 }
 
+// The upstream's TLS keypair is generated per run into a temp dir rather than
+// committed: a checked-in private key, even a self-signed test-only one that
+// guards nothing, is a permanent scanner dismissal. Requires openssl on PATH
+// (present on the GitHub ubuntu images and any dev box with Git for Windows).
+const fixturesDir = await mkdtemp(join(tmpdir(), 'ci-frontend-smoke-'))
+await mustRun('openssl', [
+  'req', '-x509', '-newkey', 'rsa:2048',
+  '-keyout', join(fixturesDir, 'key.pem'),
+  '-out', join(fixturesDir, 'cert.pem'),
+  '-days', '1', '-nodes',
+  '-subj', '/CN=host.docker.internal',
+  '-addext', 'subjectAltName=DNS:host.docker.internal',
+])
+
 let upstreamRequest
 const upstream = createServer({
-  cert: await readFile(new URL('../test/fixtures/host.docker.internal-cert.pem', import.meta.url)),
-  key: await readFile(new URL('../test/fixtures/host.docker.internal-key.pem', import.meta.url)),
+  cert: await readFile(join(fixturesDir, 'cert.pem')),
+  key: await readFile(join(fixturesDir, 'key.pem')),
 }, (request, response) => {
   upstreamRequest = {
     url: request.url,
@@ -113,6 +151,13 @@ try {
   await assertInvalidStartup('port-alpha', 'http://backend:not-a-port')
   await assertInvalidStartup('port-zero', 'http://backend:0')
   await assertInvalidStartup('port-too-high', 'http://backend:65536')
+  // IPv6 is deliberately unsupported; the error must say so, not recite "bare origin".
+  await assertInvalidStartup('ipv6-bracketed', 'http://[fd00::1]:8080', 'bracketed IPv6 literals are not supported')
+  await assertInvalidStartup('ipv6-bare', 'http://fd00::1', 'must be host or host:port')
+
+  // Underscores are legal Docker network aliases (compose-derived names) and
+  // must be accepted — this was the MED-4 regression.
+  await assertValidStartup('underscore-host', 'http://ci_backend:3000', ['ci_backend'])
 
   const name = `ci-frontend-smoke-${suffix}`
   containers.add(name)
@@ -152,4 +197,5 @@ try {
   for (const name of containers) await removeContainer(name)
   if (upstream.listening) await new Promise((resolve) => upstream.close(resolve))
   await run('docker', ['image', 'rm', '--force', image], { timeout: 30_000 }).catch(() => {})
+  await rm(fixturesDir, { recursive: true, force: true }).catch(() => {})
 }
