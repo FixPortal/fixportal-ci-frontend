@@ -39,9 +39,8 @@ jobs:
   react-doctor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with:
-          # Full history, not the default shallow clone. React Doctor's PR mode
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:          # Full history, not the default shallow clone. React Doctor's PR mode
           # is baseline-relative: it diffs against `main` to report only what
           # the PR introduces. With no merge base in the clone that comparison
           # cannot run, and it silently degrades to listing EVERY issue in the
@@ -57,11 +56,24 @@ jobs:
       # 0 without writing a report, which is what it does when a PR changes no
       # React files. Same symptom as
       # https://github.com/millionco/react-doctor/issues/1183.
-      - uses: millionco/react-doctor@01820bb4fd4d0a4aebcd8df2b2a143a098649cb2 # v2.2.8
+      #
+      # Skipped on fork PRs: GitHub downgrades pull-requests/issues/statuses
+      # to read-only there, so the action's sticky-comment and commit-status
+      # steps would fail the run for a permissions reason, not a finding.
+      # (Moving fork reporting to a workflow_run follower is the fix if fork
+      # coverage is ever wanted.)
+      - if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.fork == false }}
+        uses: millionco/react-doctor@01820bb4fd4d0a4aebcd8df2b2a143a098649cb2 # v2.2.8
         with:
           # Fail a PR on newly-introduced ERRORS. `blocking` defaults to `none`
           # (advisory - findings reported, always exits 0), so leaving it unset
           # means the check reports but never gates.
+          #
+          # This workflow is deliberately NOT a required status check (required
+          # contexts are exactly "CI Gate" and "Review policy intact"), so a
+          # blocking failure reds the PR as reviewer-visible signal but cannot
+          # stop the merge on its own. That is the intended strength: making it
+          # binding is a branch-protection change, not a change here.
           #
           # No event guard needed: the action already refuses to fail on
           # anything other than a pull_request, so the push-to-main health

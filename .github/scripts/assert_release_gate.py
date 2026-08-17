@@ -5,7 +5,16 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    # Same policy as assert_gate_coverage.py: fail legibly rather than installing
+    # PyYAML at CI time. This script gates the release publish, so an
+    # arbitrary-at-install-time dependency must not enter the gating path.
+    sys.exit(
+        "python3 cannot import yaml. Provide PyYAML in the runner image rather than "
+        "installing it at CI time -- this script gates releases."
+    )
 
 
 REQUIRED_COMMANDS = (
