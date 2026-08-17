@@ -11,6 +11,7 @@
     "!src/**/*.test.tsx",
     "!src/**/*.spec.ts",
     "!src/**/*.archunit.ts",
+    "!src/**/*.contract.ts",
     "!src/**/*.d.ts"
   ],
   "concurrency": 4,
