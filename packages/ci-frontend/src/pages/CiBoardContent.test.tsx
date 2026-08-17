@@ -191,6 +191,53 @@ describe('CiBoardContent controlled repository scope', () => {
     expect(document.querySelector('[data-key="repos"]')).toHaveTextContent('99Repositories')
     expect(screen.getByText(/all repositories/)).toBeInTheDocument()
   })
+
+  // An empty/whitespace scope matches nothing, which used to blank the board
+  // with "No repositories found." It means "no scope" and must behave as such.
+  it.each(['', '   '])('treats empty scope %j as no scope', async repositoryScope => {
+    renderScopedBoard(repositoryScope)
+
+    expect(await screen.findByText('controlled-extra')).toBeInTheDocument()
+    expect(screen.getByText(/all repositories/)).toBeInTheDocument()
+  })
+
+  // ciTrend is organisation-wide; a scoped board must not chart out-of-scope
+  // activity, so the weather bar is hidden while the scope is set (MED-6).
+  it('hides the org-wide CI trend on a scoped board', async () => {
+    const trendSnapshot: DashboardSnapshot = {
+      ...scopedSnapshot,
+      ciTrend: [{ bucketStart: '2026-06-22T09:00:00Z', state: 'passing' }],
+    }
+    render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => trendSnapshot}
+        adminSnapshotFetcher={async () => trendSnapshot}
+        repositoryScope="FixPortal/controlled"
+        storageNamespace="controlled-scope-trend"
+      />,
+    )
+
+    expect(await screen.findByText('controlled')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /CI health/i })).not.toBeInTheDocument()
+  })
+
+  it('renders the CI trend on an unscoped board', async () => {
+    const trendSnapshot: DashboardSnapshot = {
+      ...scopedSnapshot,
+      ciTrend: [{ bucketStart: '2026-06-22T09:00:00Z', state: 'passing' }],
+    }
+    render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => trendSnapshot}
+        adminSnapshotFetcher={async () => trendSnapshot}
+        storageNamespace="unscoped-trend"
+      />,
+    )
+
+    expect(await screen.findByRole('img', { name: /CI health/i })).toBeInTheDocument()
+  })
 })
 
 describe('CiBoardContent public snapshot fallbacks', () => {

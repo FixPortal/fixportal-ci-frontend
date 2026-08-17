@@ -122,7 +122,10 @@ export function CiBoardContent() {
   // boards on one page don't duplicate the anchor id.
   const mainId = storageNamespace ? `ci-main-${storageNamespace}` : 'ci-main'
   const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
-  const hasRepositoryScope = repositoryScope !== undefined
+  // Empty/whitespace scope is absent, not a scope that matches nothing (which
+  // would blank the board with "No repositories found.").
+  const scope = repositoryScope?.trim().toLowerCase()
+  const hasRepositoryScope = scope !== undefined && scope !== ''
   const [stepperOpen, setStepperOpen] = useState(false)
 
   // Memos must precede early returns (Rules of Hooks). snapshot.data is the stable
@@ -131,10 +134,9 @@ export function CiBoardContent() {
   const repositories = useMemo(() => {
     const repos = snapshot.data?.repositories ?? []
     const authorised = isAdmin ? repos : repos.filter(r => !r.private)
-    if (!hasRepositoryScope) return authorised
-    const scope = repositoryScope.toLowerCase()
+    if (!hasRepositoryScope || scope === undefined) return authorised
     return authorised.filter(repository => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope)
-  }, [hasRepositoryScope, isAdmin, repositoryScope, snapshot.data])
+  }, [hasRepositoryScope, isAdmin, scope, snapshot.data])
   const noCiFiltered = useMemo(
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
     [repositories, hideNoCi.hidden],
@@ -166,7 +168,9 @@ export function CiBoardContent() {
     let latest: MergedPr | null = null
     for (const repository of visibleRepos) {
       const merged = repository.lastMergedPr
-      if (merged && (!latest || merged.mergedAt > latest.mergedAt)) latest = merged
+      // Parse, don't compare ISO strings lexicographically: GitHub emits uniform
+      // …Z, but a third-party backend can mix offsets, where string order lies.
+      if (merged && (!latest || Date.parse(merged.mergedAt) > Date.parse(latest.mergedAt))) latest = merged
     }
     return latest
   }, [snapshot.data, visibleRepos])
@@ -317,7 +321,12 @@ export function CiBoardContent() {
         onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
         lastMerged={lastMergedPr}
         nextPr={nextPr}
-        ciTrend={snapshot.data.ciTrend ?? snapshot.data.publicCiTrend ?? []}
+        ciTrend={hasRepositoryScope
+          // The trend is organisation-wide; a scoped board would chart activity
+          // from repos outside its scope. The backend supplies no per-repo
+          // trend, so hide it (empty array) rather than mislead.
+          ? []
+          : (snapshot.data.ciTrend ?? snapshot.data.publicCiTrend ?? [])}
       />
       <LegendRow />
       </div>
