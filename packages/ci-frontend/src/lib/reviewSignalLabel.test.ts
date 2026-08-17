@@ -22,3 +22,12 @@ test('falls back rather than rendering an empty accessible name for an out-of-un
   const rogue = signal({ state: 'exploded' as ReviewSignal['state'] })
   expect(reviewSignalLabel(rogue)).toBe('CodeRabbit: status unknown')
 })
+
+test('falls back for an Object.prototype member name rather than stringifying a native function', () => {
+  const rogue = signal({ state: 'toString' as ReviewSignal['state'] })
+  expect(reviewSignalLabel(rogue)).toBe('CodeRabbit: status unknown')
+})
+
+test('treats a NaN count as absent instead of rendering "NaN outstanding"', () => {
+  expect(reviewSignalLabel(signal({ state: 'outstanding', count: NaN }))).toBe('CodeRabbit: outstanding')
+})
