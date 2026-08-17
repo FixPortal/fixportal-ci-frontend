@@ -23,6 +23,9 @@
     "esbuild": "^0.28.1",
     "qs": "^6.15.2"
   },
+  "engines": {
+    "npm": ">=11.10"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.62.1",
