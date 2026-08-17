@@ -29,14 +29,18 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Check out backend contract
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: FixPortal/fixportal-ci-backend
+          # Pinned: a release must validate against a fixed contract. Tracking the
+          # backend's default-branch HEAD would let a later re-run of the same tag
+          # flip the result. Bump deliberately when the contract moves.
+          ref: f85a878dd8790144332063ba642cb97c1b1e94d1
           path: .contract/backend
           persist-credentials: false
 
@@ -45,7 +49,7 @@ jobs:
         with:
           shellcheck: true
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           # Safe now that every dependency is public (same reasoning as ci.yml).
