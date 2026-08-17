@@ -51,7 +51,7 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
             <span className="chip__label">{signal.name}</span>
             {/* State in words for SR / colour-blind users — the dot is colour+shape only. */}
             <span className="sr-only">{label}</span>
-            {signal.state === 'outstanding' && typeof signal.count === 'number' ? (
+            {signal.state === 'outstanding' && Number.isFinite(signal.count) ? (
               <span className="chip__meta">{signal.count}</span>
             ) : null}
           </>
