@@ -15,10 +15,11 @@ function isSafeRelativeHref(url: string): boolean {
 }
 
 export function isAllowedHref(url: unknown): string {
-  // Untrusted-shape hardening: the snapshot boundary does no runtime validation
-  // (this is a published library -- consumers point it at their own backends),
-  // so a non-string (number, object, etc.) can reach here despite every call
-  // site's string-typed signature. Guard here, not per-call-site, so every
+  // Untrusted-shape hardening: snapshot payloads are validated at the fetch
+  // boundary (parseDashboardSnapshot), but this is a published library --
+  // consumers on older versions, or with render paths of their own, can still
+  // feed a non-string (number, object, etc.) here despite every call site's
+  // string-typed signature. Guard here, not per-call-site, so every
   // caller -- present and future -- inherits the same root-cause fix.
   if (typeof url !== 'string' || url.length === 0) return '#'
 

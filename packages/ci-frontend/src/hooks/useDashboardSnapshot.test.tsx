@@ -149,6 +149,46 @@ describe('useDashboardSnapshot admin cache-key isolation', () => {
   })
 })
 
+describe('useDashboardSnapshot custom-fetcher validation', () => {
+  // Custom fetchers resolve straight from the host's backend and used to bypass
+  // parseDashboardSnapshot entirely. A malformed payload must fail the query
+  // here rather than reaching the render seam (CiBoardContent would throw on
+  // e.g. repositories: [null]).
+  const malformed = { repositories: [null] } as unknown as DashboardSnapshot
+
+  it('rejects a malformed payload from a guest snapshotFetcher instead of resolving it', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => malformed }, false),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBeInstanceOf(Error)
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('rejects a malformed payload from an adminSnapshotFetcher instead of resolving it', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', adminSnapshotFetcher: async () => malformed }, true),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBeInstanceOf(Error)
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('passes a null custom-fetcher result through as the "no snapshot yet" state', async () => {
+    const client = new QueryClient()
+    const { result } = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => null }, false),
+    })
+
+    await waitFor(() => expect(result.current.status).toBe('success'))
+    expect(result.current.data).toBeNull()
+  })
+})
+
 describe('useDashboardSnapshot polling', () => {
   afterEach(() => vi.useRealTimers())
 

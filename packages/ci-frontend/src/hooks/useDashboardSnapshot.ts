@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { QueryFunction } from '@tanstack/react-query'
 import { getDashboardSnapshot } from '../api/getDashboardSnapshot'
+import { parseDashboardSnapshot } from '../api/parseDashboardSnapshot'
 import { useCiConfig } from '../CiConfigContext'
 import { useCiAdmin } from '../CiAdminContext'
 import type { DashboardSnapshot } from '../api/types'
@@ -22,6 +23,15 @@ function cacheKeyFor(fetcher: SnapshotFetcher, cacheKey?: string) {
   return id
 }
 
+// Host-supplied fetchers resolve straight from the host's own backend, so they
+// get the same runtime validation as the URL branches (which validate inside
+// getDashboardSnapshot). null stays null: it is the documented "no snapshot
+// yet" state, not a payload to validate.
+async function validateCustom(fetcher: SnapshotFetcher): Promise<DashboardSnapshot | null> {
+  const snapshot = await fetcher()
+  return snapshot === null ? null : parseDashboardSnapshot(snapshot)
+}
+
 export function useDashboardSnapshot() {
   const { apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey } = useCiConfig()
   const isAdmin = useCiAdmin()
@@ -38,13 +48,13 @@ export function useDashboardSnapshot() {
   // fetcher function receives a stable module-local identity.
   if (isAdmin && adminSnapshotFetcher) {
     queryKey = [queryKeyPrefix, '__admin_fetcher__', cacheKeyFor(adminSnapshotFetcher, adminSnapshotCacheKey)]
-    queryFn = adminSnapshotFetcher
+    queryFn = () => validateCustom(adminSnapshotFetcher)
   } else if (isAdmin && adminSnapshotUrl) {
     queryKey = [queryKeyPrefix, adminSnapshotUrl]
     queryFn = ({ signal }) => getDashboardSnapshot(adminSnapshotUrl, signal)
   } else if (!isAdmin && snapshotFetcher) {
     queryKey = [queryKeyPrefix, '__guest_fetcher__', cacheKeyFor(snapshotFetcher, snapshotCacheKey)]
-    queryFn = snapshotFetcher
+    queryFn = () => validateCustom(snapshotFetcher)
   } else {
     const snapshotUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/snapshot`
     queryKey = [queryKeyPrefix, snapshotUrl]
