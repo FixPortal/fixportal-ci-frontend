@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { ReviewSignal } from '../api/types'
 import { isAllowedHref } from '../lib/isAllowedHref'
-import { reviewSignalLabel } from '../lib/reviewSignalLabel'
+import { reviewSignalLabel, isValidSignalCount } from '../lib/reviewSignalLabel'
 
 // Only a settled state earns a link. A pending pill has nothing to point at yet,
 // and a disabled one is not applicable here — linking either would invite a click
@@ -51,7 +51,7 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
             <span className="chip__label">{signal.name}</span>
             {/* State in words for SR / colour-blind users — the dot is colour+shape only. */}
             <span className="sr-only">{label}</span>
-            {signal.state === 'outstanding' && Number.isFinite(signal.count) ? (
+            {signal.state === 'outstanding' && isValidSignalCount(signal.count) ? (
               <span className="chip__meta">{signal.count}</span>
             ) : null}
           </>

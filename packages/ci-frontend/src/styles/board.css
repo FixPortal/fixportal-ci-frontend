@@ -113,7 +113,7 @@
   /* stylelint-disable-next-line declaration-property-value-disallowed-list -- the -1px clip is the canonical visually-hidden idiom, not chrome spacing. */
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 .ci-skip-link:focus-visible {
@@ -121,7 +121,7 @@
   height: auto;
   padding: var(--space-2) var(--space-4);
   margin: 0;
-  clip: none;
+  clip-path: none;
   background: var(--card-bg);
   color: var(--text);
   border: 1px solid var(--border-strong);
