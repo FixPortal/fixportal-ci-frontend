@@ -170,7 +170,10 @@ export function CiBoardContent() {
       const merged = repository.lastMergedPr
       // Parse, don't compare ISO strings lexicographically: GitHub emits uniform
       // …Z, but a third-party backend can mix offsets, where string order lies.
-      if (merged && (!latest || Date.parse(merged.mergedAt) > Date.parse(latest.mergedAt))) latest = merged
+      // Skip entries whose mergedAt does not parse at all — an unparseable
+      // timestamp compares false against everything and would wedge `latest`.
+      const mergedTime = merged ? Date.parse(merged.mergedAt) : NaN
+      if (merged && Number.isFinite(mergedTime) && (!latest || mergedTime > Date.parse(latest.mergedAt))) latest = merged
     }
     return latest
   }, [snapshot.data, visibleRepos])

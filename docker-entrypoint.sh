@@ -20,7 +20,7 @@ case "$backend_authority" in
     exit 1
     ;;
   :*|*:*:*)
-    echo "Error: BACKEND_URL must be host or host:port" >&2
+    echo "Error: BACKEND_URL must be host or host:port (multiple colons mean an IPv6 literal, which is not supported)" >&2
     exit 1
     ;;
   *:*)

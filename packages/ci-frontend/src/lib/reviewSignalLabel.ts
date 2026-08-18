@@ -15,10 +15,16 @@ const STATE_LABELS: Record<string, string> = {
   disabled: 'not required',
 }
 
+// One predicate for "the count is a real, displayable quantity" — NaN is a
+// number (typeof admits it), and a fractional or negative count is backend
+// garbage, not a number of outstanding comments. Shared with ReviewPills.tsx
+// so the label and the rendered meta count never disagree.
+export function isValidSignalCount(count: unknown): count is number {
+  return Number.isInteger(count) && (count as number) >= 0
+}
+
 export function reviewSignalLabel(signal: ReviewSignal): string {
-  // Number.isFinite, not typeof: NaN is a number and must not render as
-  // "CodeRabbit: NaN outstanding".
-  if (signal.state === 'outstanding' && Number.isFinite(signal.count)) {
+  if (signal.state === 'outstanding' && isValidSignalCount(signal.count)) {
     return `${signal.name}: ${signal.count} outstanding`
   }
   const state = Object.hasOwn(STATE_LABELS, signal.state) ? STATE_LABELS[signal.state] : 'status unknown'

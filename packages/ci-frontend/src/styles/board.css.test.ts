@@ -70,11 +70,11 @@ describe('board.css unknown summary count', () => {
 // nearest positioned ancestor and the "hidden" link can paint over host UI
 // when the board is embedded. Guard against the translate regressing.
 describe('board.css skip link', () => {
-  it('hides via clip, not an off-screen transform', () => {
+  it('hides via clip-path, not an off-screen transform', () => {
     const match = css.match(/\.ci-skip-link\s*\{([^}]*)\}/)
     expect(match).not.toBeNull()
     const body = match![1].replace(/\s+/g, ' ')
-    expect(body).toContain('clip: rect(0, 0, 0, 0)')
+    expect(body).toContain('clip-path: inset(50%)')
     expect(body).not.toContain('transform')
   })
 })

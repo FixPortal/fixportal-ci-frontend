@@ -153,7 +153,7 @@ try {
   await assertInvalidStartup('port-too-high', 'http://backend:65536')
   // IPv6 is deliberately unsupported; the error must say so, not recite "bare origin".
   await assertInvalidStartup('ipv6-bracketed', 'http://[fd00::1]:8080', 'bracketed IPv6 literals are not supported')
-  await assertInvalidStartup('ipv6-bare', 'http://fd00::1', 'must be host or host:port')
+  await assertInvalidStartup('ipv6-bare', 'http://fd00::1', 'an IPv6 literal, which is not supported')
 
   // Underscores are legal Docker network aliases (compose-derived names) and
   // must be accepted — this was the MED-4 regression.
