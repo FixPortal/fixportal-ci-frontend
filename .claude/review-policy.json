@@ -44,7 +44,7 @@
 
   "high": [
     ".claude/review-policy.json",
-    ".coderabbit.yaml",
+    ".coderabbit.yaml"
   ],
 
   "low": [
