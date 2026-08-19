@@ -9,11 +9,9 @@ function setup(over: Partial<Parameters<typeof RepoFilterBar>[0]> = {}) {
   const props = {
     filters: emptyFilters(),
     isAdmin: true,
-    onSearch: vi.fn(),
     onToggleVisibility: vi.fn(),
     onToggleCiStatus: vi.fn(),
     onToggleHasOpenPrs: vi.fn(),
-    onToggleReadyToMerge: vi.fn(),
     ...over,
   }
   render(<RepoFilterBar {...props} />)
@@ -21,17 +19,12 @@ function setup(over: Partial<Parameters<typeof RepoFilterBar>[0]> = {}) {
 }
 
 describe('RepoFilterBar', () => {
-  it('renders the ready-to-merge chip and toggles it', async () => {
-    const props = setup()
-    const chip = screen.getByRole('button', { name: /ready to merge/i })
-    expect(chip).toHaveAttribute('aria-pressed', 'false')
-    await userEvent.click(chip)
-    expect(props.onToggleReadyToMerge).toHaveBeenCalledTimes(1)
-  })
-
-  it('shows the ready-to-merge chip as pressed when the filter is on', () => {
-    setup({ filters: { ...emptyFilters(), readyToMerge: true } })
-    expect(screen.getByRole('button', { name: /ready to merge/i })).toHaveAttribute('aria-pressed', 'true')
+  // The search box and the Ready to merge chip live in the toolbar row above, not
+  // here — this asserts they have not crept back in and re-crowded the row.
+  it('renders neither the search box nor the ready-to-merge chip', () => {
+    setup()
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ready to merge/i })).not.toBeInTheDocument()
   })
 
   it('renders the visibility group for admins', () => {
@@ -45,13 +38,6 @@ describe('RepoFilterBar', () => {
     expect(screen.queryByRole('button', { name: /^public$/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /failing/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /has prs/i })).toBeInTheDocument()
-    expect(screen.getByRole('searchbox')).toBeInTheDocument()
-  })
-
-  it('fires onSearch as the user types', async () => {
-    const { onSearch } = setup()
-    await userEvent.type(screen.getByRole('searchbox'), 'a')
-    expect(onSearch).toHaveBeenCalledWith('a')
   })
 
   it('fires the matching toggle handler when a chip is clicked', async () => {

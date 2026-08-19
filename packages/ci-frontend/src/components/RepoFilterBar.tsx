@@ -1,5 +1,6 @@
 // src/components/RepoFilterBar.tsx
 import React, { memo } from 'react'
+import { FilterChip } from './FilterChip'
 import type { CiStatus, RepoFilters, Visibility } from '../lib/applyRepoFilters'
 
 const fieldsetStyle: React.CSSProperties = {
@@ -15,94 +16,50 @@ const fieldsetStyle: React.CSSProperties = {
 interface RepoFilterBarProps {
   filters: RepoFilters
   isAdmin: boolean
-  hideSearch?: boolean
-  onSearch: (value: string) => void
   onToggleVisibility: (v: Visibility) => void
   onToggleCiStatus: (s: CiStatus) => void
   onToggleHasOpenPrs: () => void
-  onToggleReadyToMerge: () => void
-}
-
-// `tone` maps a chip to a status colour class so Failing reads red and Passing
-// green, matching the board's status palette; others use the neutral accent.
-function Chip(props: {
-  label: string
-  pressed: boolean
-  tone?: 'failing' | 'passing'
-  onClick: () => void
-}) {
-  const tone = props.tone ? ` repo-filter__chip--${props.tone}` : ''
-  return (
-    <button
-      type="button"
-      className={`repo-filter__chip${tone}${props.pressed ? ' repo-filter__chip--on' : ''}`}
-      aria-pressed={props.pressed}
-      onClick={props.onClick}
-    >
-      {props.label}
-    </button>
-  )
 }
 
 // Presentational filter bar. All state and persistence live in useRepoFilters;
 // this component is pure props in, callbacks out (architecture: components never
 // touch hooks or contexts).
+//
+// The search box and the Ready to merge chip are NOT here — they sit together in
+// the toolbar row above, which has the spare width this row does not: with both
+// rows competing, this one overflowed and dropped its longest chip onto a line of
+// its own.
 function RepoFilterBarImpl({
   filters,
   isAdmin,
-  hideSearch,
-  onSearch,
   onToggleVisibility,
   onToggleCiStatus,
   onToggleHasOpenPrs,
-  onToggleReadyToMerge,
 }: RepoFilterBarProps) {
-  const hasLeadingContent = !hideSearch || isAdmin
   return (
     <search role="search" className="dashboard__filter-bar" aria-label="Filter repositories">
-      {!hideSearch && (
-        <input
-          type="search"
-          className="repo-filter__search"
-          placeholder="Filter repos or PRs..."
-          aria-label="Filter repos by name, or by PR number or title"
-          value={filters.search}
-          onChange={e => onSearch(e.target.value)}
-        />
-      )}
-
       {isAdmin && (
         <>
-          <span className="repo-filter__divider" aria-hidden="true" />
           <fieldset className="repo-filter__group" style={fieldsetStyle} aria-label="Visibility">
             <span className="repo-filter__label">Visibility</span>
-            <Chip label="Public" pressed={filters.visibility.has('public')} onClick={() => onToggleVisibility('public')} />
-            <Chip label="Private" pressed={filters.visibility.has('private')} onClick={() => onToggleVisibility('private')} />
+            <FilterChip label="Public" pressed={filters.visibility.has('public')} onClick={() => onToggleVisibility('public')} />
+            <FilterChip label="Private" pressed={filters.visibility.has('private')} onClick={() => onToggleVisibility('private')} />
           </fieldset>
+          <span className="repo-filter__divider" aria-hidden="true" />
         </>
       )}
 
-      {hasLeadingContent && <span className="repo-filter__divider" aria-hidden="true" />}
       <fieldset className="repo-filter__group" style={fieldsetStyle} aria-label="CI Status">
         <span className="repo-filter__label">CI Status</span>
-        <Chip label="Failing" tone="failing" pressed={filters.ciStatus.has('failing')} onClick={() => onToggleCiStatus('failing')} />
-        <Chip label="Passing" tone="passing" pressed={filters.ciStatus.has('passing')} onClick={() => onToggleCiStatus('passing')} />
-        <Chip label="No-CI" pressed={filters.ciStatus.has('no-ci')} onClick={() => onToggleCiStatus('no-ci')} />
+        <FilterChip label="Failing" tone="failing" pressed={filters.ciStatus.has('failing')} onClick={() => onToggleCiStatus('failing')} />
+        <FilterChip label="Passing" tone="passing" pressed={filters.ciStatus.has('passing')} onClick={() => onToggleCiStatus('passing')} />
+        <FilterChip label="No-CI" pressed={filters.ciStatus.has('no-ci')} onClick={() => onToggleCiStatus('no-ci')} />
       </fieldset>
 
       <span className="repo-filter__divider" aria-hidden="true" />
-      <Chip label="Has PRs" pressed={filters.hasOpenPrs} onClick={onToggleHasOpenPrs} />
-      {/* Green like Passing: this is the "nothing is outstanding" chip, and it reads as
-          an affirmative state rather than a neutral narrowing. */}
-      <Chip
-        label="Ready to merge"
-        tone="passing"
-        pressed={filters.readyToMerge}
-        onClick={onToggleReadyToMerge}
-      />
+      <FilterChip label="Has PRs" pressed={filters.hasOpenPrs} onClick={onToggleHasOpenPrs} />
     </search>
   )
 }
 
 export const RepoFilterBar = memo(RepoFilterBarImpl)
-

@@ -16,6 +16,20 @@ const snapshot: DashboardSnapshot = {
   lastMergedPr: null,
 }
 
+// Same two repos, but only `portal` carries a PR the backend has judged ready.
+const readySnapshot: DashboardSnapshot = {
+  ...snapshot,
+  repositories: [
+    snapshot.repositories[0],
+    {
+      ...snapshot.repositories[1],
+      pullRequests: [
+        { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: '', isDraft: false, createdAt: '2026-06-20T00:00:00Z', readyToMerge: true },
+      ],
+    },
+  ],
+}
+
 function renderBoard() {
   render(
     <CiBoard
@@ -37,6 +51,25 @@ describe('CiBoardContent filtering', () => {
     expect(await screen.findByText(/no repositories match the active filters/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /clear filters/i }))
     expect(await screen.findByText('engine')).toBeInTheDocument()
+  })
+
+  // The chip sits in the toolbar beside the search box, deliberately outside the
+  // filter bar's search landmark — the filter row overflowed with it in.
+  it('narrows the board from the Ready to merge chip in the toolbar', async () => {
+    render(
+      <CiBoard
+        adminSignal={true}
+        snapshotFetcher={async () => readySnapshot}
+        adminSnapshotFetcher={async () => readySnapshot}
+        storageNamespace="test"
+      />,
+    )
+    expect(await screen.findByText('engine')).toBeInTheDocument()
+    const chip = screen.getByRole('button', { name: /^ready to merge$/i })
+    expect(within(screen.getByRole('search')).queryByRole('button', { name: /ready to merge/i })).toBeNull()
+    await userEvent.click(chip)
+    expect(await screen.findByText('portal')).toBeInTheDocument()
+    expect(screen.queryByText('engine')).not.toBeInTheDocument()
   })
 
   it('narrows the board when a CI-status chip is selected', async () => {

@@ -18,6 +18,7 @@ import { useRepoFilters } from '../hooks/useRepoFilters'
 import { applyRepoFilters } from '../lib/applyRepoFilters'
 import type { Visibility } from '../lib/applyRepoFilters'
 import { RepoFilterBar } from '../components/RepoFilterBar'
+import { FilterChip } from '../components/FilterChip'
 
 // Apply the Hide No-CI toggle to a repo list. Shared by the pre-early-return
 // openPrs computation and the post-guard visibleRepos so the filter shape lives
@@ -268,14 +269,26 @@ export function CiBoardContent() {
     <main id={mainId} className="dashboard-page" key="dashboard" tabIndex={-1}>
       <div className="dashboard__sticky">
       <div className="dashboard__toolbar">
-        <input
-          type="search"
-          className="repo-filter__search"
-          placeholder="Filter repos or PRs..."
-          aria-label="Filter repos by name, or by PR number or title"
-          value={filters.filters.search}
-          onChange={e => filters.setSearch(e.target.value)}
-        />
+        <div className="dashboard__toolbar-left">
+          <input
+            type="search"
+            className="repo-filter__search"
+            placeholder="Filter repos or PRs..."
+            aria-label="Filter repos by name, or by PR number or title"
+            value={filters.filters.search}
+            onChange={e => filters.setSearch(e.target.value)}
+          />
+          {/* Beside the search box rather than in the filter row below: that row
+              already overflows on a standard screen, and this is a scope switch on
+              what you are searching, not one more status narrowing. Green like
+              Passing — it reads as an affirmative state. */}
+          <FilterChip
+            label="Ready to merge"
+            tone="passing"
+            pressed={filters.filters.readyToMerge}
+            onClick={filters.toggleReadyToMerge}
+          />
+        </div>
         <span className="dashboard__refresh-state">
           <span className="dashboard__refreshed">
             <span className="live-dot" aria-hidden="true" />
@@ -292,12 +305,9 @@ export function CiBoardContent() {
         <RepoFilterBar
           filters={filters.filters}
           isAdmin={isAdmin}
-          hideSearch={true}
-          onSearch={filters.setSearch}
           onToggleVisibility={filters.toggleVisibility}
           onToggleCiStatus={filters.toggleCiStatus}
           onToggleHasOpenPrs={filters.toggleHasOpenPrs}
-          onToggleReadyToMerge={filters.toggleReadyToMerge}
         />
         <div className="dashboard__board-controls">
           {noCiCount > 0 && (
