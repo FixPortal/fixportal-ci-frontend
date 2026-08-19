@@ -17,8 +17,13 @@ jobs:
   quality:
     name: Full CI
     uses: ./.github/workflows/ci.yml
+    # packages: write is for ci.yml's own docker job, which never runs from here —
+    # it is gated on refs/heads/main. GitHub validates a called workflow's declared
+    # permissions against the caller at parse time regardless of any job's `if:`, so
+    # omitting it fails the whole run with startup_failure and no job log (v2.7.0).
     permissions:
       contents: read
+      packages: write
 
   publish:
     name: Publish Package (npm)
