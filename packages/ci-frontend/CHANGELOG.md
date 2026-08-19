@@ -11,8 +11,14 @@ carried into the public repository, so there are no commits to describe them fro
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-08-19
+
 ### Changed
 
+- The “Ready to merge” filter chip now sits beside the search box rather than at the end
+  of the filter row. On a standard-width screen that row overflowed and wrapped its
+  longest chip onto a line of its own, leaving the most-used filter orphaned below
+  everything else.
 - Renamed the visible “Idiot's guide” wording to “Neophyte's guide”. The old joke was at
   the maintainers' own expense, but on reflection we were uncomfortable with the wording.
 
@@ -215,6 +221,7 @@ Initial public release.
 published between 2026-06-05 and 2026-06-18, before this repository was made public. Their
 commits are not in this history, so they are recorded here by version and nothing more.
 
+[2.7.0]: https://github.com/FixPortal/fixportal-ci-frontend/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/FixPortal/fixportal-ci-frontend/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/FixPortal/fixportal-ci-frontend/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/FixPortal/fixportal-ci-frontend/compare/v2.4.0...v2.5.0
