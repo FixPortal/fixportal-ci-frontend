@@ -21,6 +21,43 @@ carried into the public repository, so there are no commits to describe them fro
   everything else.
 - Renamed the visible “Idiot's guide” wording to “Neophyte's guide”. The old joke was at
   the maintainers' own expense, but on reflection we were uncomfortable with the wording.
+- A board that supplies `snapshotFetcher` or `adminSnapshotFetcher` without a matching
+  `snapshotCacheKey` / `adminSnapshotCacheKey` now gets a stable generated identity
+  appended to its React Query key, so two embeds sharing one host `QueryClient` no
+  longer alias onto the same cache entry. Hosts asserting on the query key directly
+  will see one more element than in 2.6.x; explicit cache keys are unaffected.
+- A board mounted with `repositoryScope` hides the weather bar instead of charting the
+  organisation-wide CI trend beside scope-filtered repositories and summary. The backend
+  supplies no per-repo trend, so the bar is hidden rather than synthesised client-side.
+- An empty or whitespace `repositoryScope` is treated as no scope at all. It previously
+  matched nothing and blanked the board with “No repositories found.”
+
+### Added
+
+- Snapshot payloads are validated at the query boundary, on the URL branches and on
+  host-supplied fetchers alike, so a malformed or unexpected response surfaces as an
+  error instead of rendering as an empty board.
+
+### Fixed
+
+- Reading a dashboard response body only reports “Invalid dashboard snapshot response” for
+  an actual `SyntaxError`. Any other failure — an abort, a network drop mid-read —
+  propagates as itself instead of being masked as malformed JSON.
+- The most recently merged PR is chosen by parsed timestamp rather than by lexicographic
+  ISO-string comparison, so mixed UTC offsets from a third-party backend cannot misorder it.
+- A review signal whose state collides with a native `Object.prototype` member (`toString`
+  and friends) no longer stringifies that member into the pill's accessible name; the
+  lookup goes through `Object.hasOwn` and falls back to “status unknown”.
+- A non-finite review count no longer renders as “CodeRabbit: NaN outstanding”. The pill's
+  visible count and its accessible name now apply the same `Number.isFinite` test, so the
+  two cannot disagree.
+- The summary's “unknown” count (the `—` no-value marker, which carries meaning) is inked
+  with `--text-muted`. It previously read 2.645:1 in light and 3.19:1 in dark, both under
+  WCAG AA's 4.5:1 for text.
+- The skip link hides with the clipped visually-hidden idiom rather than an off-screen
+  translate. The board establishes no positioned containing block, so the translate
+  resolved against the host page's nearest positioned ancestor and the “hidden” link could
+  paint over host UI when the board was embedded in a `position: relative` wrapper.
 
 ## [2.6.1] - 2026-08-13
 
