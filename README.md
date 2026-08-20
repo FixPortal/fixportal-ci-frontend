@@ -1,6 +1,12 @@
-![npm](https://img.shields.io/npm/v/@fix-portal/ci-frontend)
-![CI](https://github.com/FixPortal/fixportal-ci-frontend/actions/workflows/ci.yml/badge.svg)
-![License](https://img.shields.io/github/license/FixPortal/fixportal-ci-frontend)
+<p align="center">
+  <img src="docs/ci-dashboard-hero.png" alt="CI Dashboard by FixPortal" width="1200">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/npm/v/@fix-portal/ci-frontend" alt="npm version">
+  <img src="https://github.com/FixPortal/fixportal-ci-frontend/actions/workflows/ci.yml/badge.svg" alt="CI status">
+  <img src="https://img.shields.io/github/license/FixPortal/fixportal-ci-frontend" alt="License">
+</p>
 
 # fixportal-ci-frontend
 
