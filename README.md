@@ -30,12 +30,17 @@
 | `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library |
 | `apps/dashboard` | Thin Vite app that wires the library to a snapshot endpoint and serves it |
 
+## See it running
+
+The FixPortal organisation's own board is public at <https://ci.fixportal.org>.
+That is this dashboard, serving live data, with no install.
+
 ## Quick start — Docker (no install required)
 
 The fastest path to a running dashboard. Only [Docker Desktop](https://www.docker.com/products/docker-desktop/) is needed.
 
 ```bash
-docker run -p 8080:8080 -e BACKEND_URL=https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io ghcr.io/fixportal/fixportal-ci-frontend:latest
+docker run -p 8080:8080 -e BACKEND_URL=https://ci.fixportal.org ghcr.io/fixportal/fixportal-ci-frontend:latest
 ```
 
 Open `http://localhost:8080`. The `BACKEND_URL` above is the FixPortal public backend; it serves
@@ -288,8 +293,10 @@ Registry: [GitHub Container Registry — fixportal-ci-frontend](https://github.c
 
 ### Public backend (guest / read-only)
 
+The same host serves both the board and its API.
+
 ```
-https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io
+https://ci.fixportal.org
 ```
 
 Endpoint: `GET /api/dashboard/snapshot` — anonymous, returns a read-only CI snapshot.
