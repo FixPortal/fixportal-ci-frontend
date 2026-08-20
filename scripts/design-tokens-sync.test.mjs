@@ -18,3 +18,21 @@ test('reports an unexpected token drift', () => {
     'light --app-bg: expected white, found pink',
   ])
 })
+
+test('reports a token missing from the vendored sheet', () => {
+  // --brand has no dark override, so removing it from the light block also blanks the
+  // dark-theme fallback (`vendored[theme][token] ?? vendored.light[token]`) — both lines
+  // are the correct output, not a light-only diff.
+  const withoutToken = vendored.replace('--brand: teal; ', '')
+  assert.deepEqual(compare(source, withoutToken), [
+    'light --brand: expected teal, found <missing>',
+    'dark --brand: expected teal, found <missing>',
+  ])
+})
+
+test('reports drift in a deliberate override itself', () => {
+  const wrongOverride = vendored.replace('--text-muted: #5f6472', '--text-muted: #000000')
+  assert.deepEqual(compare(source, wrongOverride), [
+    'light --text-muted: expected #5f6472, found #000000',
+  ])
+})
