@@ -1,0 +1,55 @@
+{
+  "$comment": [
+    "PR review risk tiering. Read by ~/.claude/hooks/pr-review-policy.sh.",
+    "Any file matching 'high' => HIGH (Gitar + CodeRabbit). All files matching 'low' => LOW.",
+    "Everything else => NORMAL (Gitar only). No match anywhere => NORMAL, deliberately.",
+    "",
+    "Monorepo: apps/dashboard consumes packages/ci-frontend, which is PUBLISHED to a",
+    "registry (release.yml). package.json and package-lock.json are nonetheless NORMAL,",
+    "not HIGH - dependency manifests are out of AI review by the 2026-07-29 estate rule",
+    "(see the final paragraph). nuget.config, global.json, .npmrc and",
+    "Directory.Build.props stay HIGH: registry/feed and analyzer-enforcement config,",
+    "not bot-edited files.",
+    "",
+    "LOW justification for THIS repo: only ROOT *.md and docs/ are low. Markdown inside",
+    "packages/** is NOT low - a readme can be shipped inside the published npm tarball.",
+    "The '*' in '*.md' does not cross a directory separator, so packages/**/*.md is",
+    "correctly excluded; do not 'tidy' this into '**/*.md'.",
+    "",
+    "Dependency manifests are deliberately NOT in 'high' and must not be added (estate rule,",
+    "2026-07-29) - package.json, package-lock.json, Directory.Packages.props, **/*.csproj. They are",
+    "what Dependabot edits, and dependency PRs are out of AI code review on both vendors:",
+    "CodeRabbit refuses bot authors outright and Gitar's bot review is switched off, because",
+    "reviewing every bump exhausts the allowance and starves the changes that need it. Listing",
+    "them HIGH would demand a reviewer that can never run - coverage on paper, none in fact. CI",
+    "plus Dependabot's own advisory data is what gates a bump. nuget.config, global.json, .npmrc",
+    "and Directory.Build.props stay HIGH: registry/feed and analyzer config, not bot-edited.",
+    "",
+    "'.github/workflows/**' LEFT the high list on 2026-08-19 and is asserted in",
+    "review-policy-guard.yml instead, on the same reasoning that removed .gitignore on",
+    "2026-08-02: the hook tiers by path glob, so it cannot tell a permissions one-liner from",
+    "a rewrite of the deploy job, and bills a metered CodeRabbit review either way. Measured",
+    "over 100 HIGH PRs in the preceding 30 days: config-only diffs were 27 of them and",
+    "produced FOUR actionable comments between them, against 174 from code-bearing diffs,",
+    "while 45 of the 100 got no CodeRabbit verdict at all - throttled out at 73 reviews per",
+    "7 days against a 30/7d threshold. The glob was not buying review of workflow changes;",
+    "it was crowding out review of code.",
+    "",
+    "Do NOT re-add it without first removing the corresponding assertions from the guard.",
+    "Deleting the guard itself needs no reviewer: \"Review policy intact\" is a REQUIRED",
+    "status check, so removing the workflow means the check never reports and no PR merges."
+  ],
+
+  "version": 1,
+
+  "high": [
+    ".claude/review-policy.json",
+    ".coderabbit.yaml"
+  ],
+
+  "low": [
+    "docs/**",
+    "*.md",
+    ".vscode/**"
+  ]
+}

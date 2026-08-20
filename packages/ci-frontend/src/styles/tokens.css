@@ -1,0 +1,84 @@
+/* @fixportal/ci-frontend — vendored universal design tokens (Apache-2.0).
+ *
+ * The ~15 "universal" custom properties that board.css consumes but does not
+ * define. Import this BEFORE board.css if your application has no design system
+ * of its own. Consumers that already define these property names — the FixPortal
+ * simulator, via @fixportal/design — should NOT import this file and instead let
+ * their own tokens (and theming) flow into the board.
+ *
+ * This repo's own dashboard app DOES import this file, deliberately: consuming
+ * the private @fixportal/design package made the repo unbuildable for anyone
+ * without a GitHub Packages token, and closed fork CI. The app is now the
+ * reference consumer of the same public package an external user installs. The
+ * trade-off is that upstream token changes no longer reach the dashboard
+ * automatically — they arrive through the re-sync below, like any other
+ * consumer's.
+ *
+ * Values are a vendored subset mirrored from @fixportal/design:
+ *   light  -> fixportal-assets/packages/design/tokens.css (:root)
+ *   dark   -> the same file's :root[data-theme="dark"] block
+ * Only the properties whose values actually change in dark are overridden;
+ * --brand, --ok-border, --bad-solid, --warn-fill-deep and the fonts are
+ * theme-invariant. Re-sync from that source if the upstream tokens change.
+ *
+ * Fonts fall back to system-ui / ui-monospace when IBM Plex is not installed;
+ * a consumer wanting the exact FixPortal type can add the @fontsource packages. */
+
+:root {
+  --app-bg: #f7f8fa;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --border-strong: #7c8ca2;
+  --text: #1f2937;
+  --text-muted: #5f6472;
+  /* #94a3b8 on #f7f8fa is ~2.41:1 — fails WCAG AA (4.5:1) for the 10px
+     uppercase footer tagline, its only consumer. Darkened to #5b6b85
+     (~5.08:1) in light mode only; dark-mode value is unchanged (already
+     ~7.4:1 there — see the .ci-page[data-theme="dark"] block below). */
+  --text-faint: #5b6b85;
+
+  --brand: #0d9488;
+
+  --ok-border: #16a34a;
+
+  --bad-solid: #dc2626;
+  --bad-text: #991b1b;
+
+  --warn-text: #92400e;
+  --warn-fill-deep: #f59e0b;
+
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ci-page[data-theme="dark"] {
+  --app-bg: #020617;
+  --card-bg: #0f172a;
+  --border: #1e293b;
+  --border-strong: #5b6b85;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  /* #64748b on #020617 is ~4.23:1 — below the 4.5:1 AA threshold for small text.
+     Lightened to #94a3b8 (~7.4:1) in dark mode only; light-mode value is unchanged. */
+  --text-faint: #94a3b8;
+
+  --bad-text: #fecaca;
+
+  --warn-text: #f0abfc;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ci-page:not([data-theme="light"]) {
+    --app-bg: #020617;
+    --card-bg: #0f172a;
+    --border: #1e293b;
+    --border-strong: #5b6b85;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-faint: #94a3b8;
+
+    --bad-text: #fecaca;
+
+    --warn-text: #f0abfc;
+  }
+}

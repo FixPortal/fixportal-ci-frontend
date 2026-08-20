@@ -1,0 +1,74 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+    # Match the min-release-age=7 floor in .npmrc. Dependabot resolves versions
+    # with its own machinery and never reads .npmrc, so without this it would
+    # apply its built-in 3-day default and could raise a bump the local floor
+    # would have refused. Cooldown does not apply to security updates, so this
+    # delays routine version bumps only.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      vite-toolchain:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "vitest"
+          - "@vitest/*"
+        update-types:
+          - major
+          - minor
+          - patch
+      npm:
+        patterns:
+          - "*"
+    ignore:
+      # typescript-eslint 8.x peers on typescript <6.1.0; drop once it supports TS 7
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      # vitest 4.1.10 regressed `.rejects.toThrow(<message>)`: the matcher cannot
+      # read the rejected Error's message, so the regex form reports `got ''` and
+      # the string form crashes on `undefined.indexOf`. 4.1.9 is verified unaffected
+      # (it reads the message correctly), and the exact pins in
+      # packages/ci-frontend/package.json currently sit there. ONLY 4.1.10 is blocked,
+      # so a fixed 4.1.11+ flows in normally; drop these two entries and relax the
+      # pins to a caret range once a release carrying the fix is in.
+      - dependency-name: vitest
+        versions:
+          - 4.1.10
+      - dependency-name: "@vitest/coverage-v8"
+        versions:
+          - 4.1.10
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    # Same 7-day floor as the npm ecosystem above: a compromised action tag is
+    # the same class of supply-chain risk as a compromised package. Security
+    # updates are exempt from cooldown.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"

@@ -1,0 +1,33 @@
+import { render, screen } from '@testing-library/react'
+import { expect, test } from 'vitest'
+import { JobLaneRow } from './JobLaneRow'
+import type { JobSignal } from '../api/types'
+
+const signal: JobSignal = {
+  workflow: 'CI', name: 'Deploy (prod)', state: 'success',
+  htmlUrl: 'https://github.com/FixPortal/repo/actions/runs/1/job/2',
+  updatedAt: '2026-05-30T12:00:00Z',
+}
+
+test('always links job chips to their run page', () => {
+  render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[signal]} />)
+  expect(screen.getByRole('link')).toHaveAttribute('href', signal.htmlUrl)
+})
+
+test('renders nothing when there are no signals', () => {
+  const { container } = render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[]} />)
+  expect(container.firstChild).toBeNull()
+})
+
+test('renders a static chip, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
+  const rejected: JobSignal = { ...signal, htmlUrl: 'javascript:alert(1)' }
+  render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[rejected]} />)
+  expect(screen.queryByRole('link')).toBeNull()
+  expect(screen.getByText('Deploy (prod)').closest('.chip')).toHaveClass('chip--static')
+})
+
+test('uses the unknown modifier for an unfamiliar runtime state', () => {
+  const unfamiliar = { ...signal, state: 'cancelled' as unknown as JobSignal['state'] }
+  render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[unfamiliar]} />)
+  expect(screen.getByText('Deploy (prod)').closest('.chip')).toHaveClass('chip--unknown')
+})

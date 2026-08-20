@@ -1,0 +1,37 @@
+node_modules/
+dist/
+*.local
+.env
+.env.*
+!.env.example
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# StrykerJS mutation testing output
+packages/ci-frontend/reports/
+packages/ci-frontend/.stryker-tmp/
+
+# Superpowers runtime/scratch
+.superpowers/
+
+# This is a public repo: internal planning/spec docs and the AI findings ledger
+# stay out of the OSS tree. Deliberate deviation from the personal default of
+# committing docs/superpowers/; the AI findings ledger lives in the vault
+# instead (OSS/fixportal-ci-frontend/AI Findings Ledger.md).
+docs/superpowers/
+docs/ai-findings.md
+
+# Knowledge-graph artifacts (generated — graphify agent graph, understand-anything human graph)
+graphify-out/
+.understand-anything/
+
+# Semgrep Guardian local config / scan cache — per-machine, regenerated on demand
+.semgrep/
+
+.claude/*
+!.claude/review-policy.json
+
+# Local runs of the gate assertion; never an artefact of CI.
+.github/scripts/__pycache__/

@@ -1,0 +1,117 @@
+export type SignalState = 'success' | 'failure' | 'running' | 'unknown'
+
+export interface WorkflowRun {
+  status: string | null
+  conclusion: string | null
+  htmlUrl: string
+  title: string
+  runNumber: number
+  branch: string | null
+  event: string | null
+  updatedAt: string
+  repository?: string | null
+  workflowFile?: string | null
+  providerRunId?: number | null
+  runAttempt?: number | null
+  headSha?: string | null
+}
+
+export interface WorkflowSnapshot {
+  name: string
+  file: string
+  state: SignalState
+  lastRun: WorkflowRun | null
+  recentRuns?: WorkflowRun[] | null
+}
+
+export type ReviewSignalState = 'clean' | 'outstanding' | 'pending' | 'disabled'
+
+export interface ReviewSignal {
+  name: string
+  state: ReviewSignalState
+  count?: number | null
+  htmlUrl?: string | null
+}
+
+export interface PullRequest {
+  number: number
+  title: string
+  author: string
+  htmlUrl: string
+  isDraft: boolean
+  createdAt: string
+  // Optional so a new frontend renders against an older backend, and so a bot PR
+  // (excluded from review enrichment) and a deployment with the feature off both
+  // arrive as "nothing to show" rather than as an empty-but-present row.
+  reviewSignals?: ReviewSignal[] | null
+  // Tri-state, computed by the backend: true ready, false not ready, null/absent not
+  // yet determined. Deliberately not derived here — the three reasons reviewSignals may
+  // be null (feature off, excluded bot author, enrichment not yet run) are
+  // indistinguishable on the wire, and they do not all mean the same thing.
+  readyToMerge?: boolean | null
+  headSha?: string | null
+}
+
+export interface RepoMetrics {
+  nloc: number
+  avgComplexity: number
+  functionCount: number
+  highComplexityCount: number
+  computedAt: string
+}
+
+export interface JobSignal {
+  workflow: string
+  name: string
+  state: SignalState
+  htmlUrl: string
+  updatedAt: string
+}
+
+export interface RepositorySnapshot {
+  name: string
+  htmlUrl: string
+  private: boolean
+  workflows: WorkflowSnapshot[]
+  pullRequests: PullRequest[]
+  metrics: RepoMetrics | null
+  deploys: JobSignal[] | null
+  packages: JobSignal[] | null
+  lastMergedPr?: MergedPr | null
+}
+
+export interface SummaryCount {
+  key: string
+  count: number
+  // Explicit "no value" state for enrichment-derived metrics: when the backing
+  // scan produced nothing, count is meaningless and the tile must render as
+  // unknown, never as a measured zero (CIF-002). Absent/false = count is real.
+  unavailable?: boolean
+}
+
+export interface MergedPr {
+  number: number
+  title: string
+  author: string
+  repo: string
+  htmlUrl: string
+  mergedAt: string
+}
+
+export type CiTrendState = 'noData' | 'passing' | 'failing'
+
+export interface CiTrendBucket {
+  bucketStart: string
+  state: CiTrendState
+  isBackfilled?: boolean
+}
+
+export interface DashboardSnapshot {
+  refreshedAt: string
+  org: string
+  repositories: RepositorySnapshot[]
+  summary: SummaryCount[]
+  lastMergedPr: MergedPr | null
+  ciTrend?: CiTrendBucket[] | null
+  publicCiTrend?: CiTrendBucket[] | null
+}

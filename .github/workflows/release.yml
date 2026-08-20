@@ -1,0 +1,96 @@
+name: Release
+
+# Publish @fix-portal/ci-frontend to public npm on a version tag (e.g. v0.1.0).
+#
+# Published to public npm and installable tokenlessly — no GitHub Packages
+# mirror, and no private scope anywhere in the dependency tree.
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Full CI
+    uses: ./.github/workflows/ci.yml
+    # packages: write is for ci.yml's own docker job, which never runs from here —
+    # it is gated on refs/heads/main. GitHub validates a called workflow's declared
+    # permissions against the caller at parse time regardless of any job's `if:`, so
+    # omitting it fails the whole run with startup_failure and no job log (v2.7.0).
+    permissions:
+      contents: read
+      packages: write
+
+  publish:
+    name: Publish Package (npm)
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Check out backend contract
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FixPortal/fixportal-ci-backend
+          # Pinned: a release must validate against a fixed contract. Tracking the
+          # backend's default-branch HEAD would let a later re-run of the same tag
+          # flip the result. Bump deliberately when the contract moves.
+          ref: f85a878dd8790144332063ba642cb97c1b1e94d1
+          path: .contract/backend
+          persist-credentials: false
+
+      - name: Lint workflows (actionlint)
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2
+        with:
+          shellcheck: true
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          # Safe now that every dependency is public (same reasoning as ci.yml).
+          cache: npm
+          # No registry-url: publishing authenticates via OIDC trusted publishing
+          # (permissions.id-token below), so setup-node must not write a token
+          # auth line into .npmrc. The scoped registry is set explicitly next.
+
+      - name: Configure registry
+        run: npm config set @fix-portal:registry https://registry.npmjs.org
+
+      - name: Install
+        # No registry credentials needed — every dependency is public.
+        # --ignore-scripts: no lifecycle scripts run (same reasoning as ci.yml).
+        run: npm ci --ignore-scripts
+
+      - name: Assert release tag matches package version
+        run: node scripts/release-tag.mjs
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Test backend contract
+        run: npm run test:backend-contract -- .contract/backend/contracts/dashboard-snapshot.v1.json
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser regression tests
+        run: npm run test:e2e
+
+      - name: Package consumer smoke
+        run: npm run test:package
+
+      - name: Production container smoke
+        run: npm run test:container
+
+      - name: Publish to public npm
+        run: npm publish --provenance -w @fix-portal/ci-frontend

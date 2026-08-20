@@ -1,0 +1,32 @@
+import type { ReviewSignal } from '../api/types'
+
+// The spoken form of a reviewer's state, rendered into each pill's accessible
+// name (an .sr-only span) so the signal is never colour-only. Mirrors
+// stateLabel.ts, including its deliberate Record<string, string> keying: an
+// out-of-union value from a newer backend must hit the fallback rather than
+// have TS assume the lookup is total and elide the guard. The lookup goes
+// through Object.hasOwn (as stateModifier does) so a state like "toString"
+// cannot resolve to a native Object.prototype member and stringify into the
+// label.
+const STATE_LABELS: Record<string, string> = {
+  clean: 'clean',
+  outstanding: 'outstanding',
+  pending: 'not yet reviewed',
+  disabled: 'not required',
+}
+
+// One predicate for "the count is a real, displayable quantity" — NaN is a
+// number (typeof admits it), and a fractional or negative count is backend
+// garbage, not a number of outstanding comments. Shared with ReviewPills.tsx
+// so the label and the rendered meta count never disagree.
+export function isValidSignalCount(count: unknown): count is number {
+  return Number.isInteger(count) && (count as number) >= 0
+}
+
+export function reviewSignalLabel(signal: ReviewSignal): string {
+  if (signal.state === 'outstanding' && isValidSignalCount(signal.count)) {
+    return `${signal.name}: ${signal.count} outstanding`
+  }
+  const state = Object.hasOwn(STATE_LABELS, signal.state) ? STATE_LABELS[signal.state] : 'status unknown'
+  return `${signal.name}: ${state}`
+}

@@ -1,0 +1,42 @@
+{
+  "name": "fixportal-ci-frontend-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:lib": "npm run build -w @fix-portal/ci-frontend",
+    "build:app": "npm run build -w dashboard",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend-contract": "node scripts/backend-contract.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs",
+    "test:container": "node scripts/container-smoke.mjs",
+    "test:package": "node scripts/package-smoke.mjs",
+    "design:tokens:check": "node scripts/design-tokens-sync.mjs",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
+    "dev": "npm run build:lib && npm run dev -w dashboard"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1",
+    "qs": "^6.15.2"
+  },
+  "engines": {
+    "npm": ">=11.10"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.62.1",
+    "@vitest/coverage-v8": "4.1.9",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "eslint-plugin-sonarjs": "^4.2.0",
+    "globals": "^17.9.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.66.0"
+  }
+}
