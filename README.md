@@ -223,6 +223,22 @@ npm run build:lib   # tsup → ESM + .d.ts + CSS
 npm run build:app   # type-check and build the standalone app
 ```
 
+### Design token sync
+
+The standalone token sheet is intentionally vendored so public clones do not
+depend on the private `@fixportal/design` package. When the canonical design
+tokens change, run the projection check from a checkout that also contains the
+`fixportal-assets` repository:
+
+```bash
+npm run design:tokens:check -- --source=../fixportal-assets/packages/design/tokens.css
+```
+
+The check compares the universal tokens used by this board and allows only the
+two documented frontend accessibility overrides. Update
+`packages/ci-frontend/src/styles/tokens.css` deliberately, then rerun the check
+and the normal verification suite.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
