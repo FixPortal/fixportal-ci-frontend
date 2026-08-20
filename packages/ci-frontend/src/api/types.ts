@@ -11,6 +11,9 @@ export interface WorkflowRun {
   updatedAt: string
   repository?: string | null
   workflowFile?: string | null
+  providerRunId?: number | null
+  runAttempt?: number | null
+  headSha?: string | null
 }
 
 export interface WorkflowSnapshot {
@@ -18,6 +21,7 @@ export interface WorkflowSnapshot {
   file: string
   state: SignalState
   lastRun: WorkflowRun | null
+  recentRuns?: WorkflowRun[] | null
 }
 
 export type ReviewSignalState = 'clean' | 'outstanding' | 'pending' | 'disabled'
@@ -45,6 +49,7 @@ export interface PullRequest {
   // be null (feature off, excluded bot author, enrichment not yet run) are
   // indistinguishable on the wire, and they do not all mean the same thing.
   readyToMerge?: boolean | null
+  headSha?: string | null
 }
 
 export interface RepoMetrics {
