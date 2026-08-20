@@ -56,6 +56,9 @@ function validateWorkflowRun(value: unknown, path: string): void {
   stringAt(object.updatedAt, `${path}.updatedAt`)
   optional(object.repository, `${path}.repository`, (nested, nestedPath) => nullable(nested, nestedPath, stringAt))
   optional(object.workflowFile, `${path}.workflowFile`, (nested, nestedPath) => nullable(nested, nestedPath, stringAt))
+  optional(object.providerRunId, `${path}.providerRunId`, (nested, nestedPath) => nullable(nested, nestedPath, numberAt))
+  optional(object.runAttempt, `${path}.runAttempt`, (nested, nestedPath) => nullable(nested, nestedPath, numberAt))
+  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) => nullable(nested, nestedPath, stringAt))
 }
 
 function validateWorkflowSnapshot(value: unknown, path: string): void {
@@ -64,6 +67,9 @@ function validateWorkflowSnapshot(value: unknown, path: string): void {
   stringAt(object.file, `${path}.file`)
   enumAt(object.state, `${path}.state`, signalStates, 'signal state')
   nullable(object.lastRun, `${path}.lastRun`, validateWorkflowRun)
+  optional(object.recentRuns, `${path}.recentRuns`, (nested, nestedPath) => nullable(nested, nestedPath, (items, itemsPath) => {
+    arrayAt(items, itemsPath).forEach((item, index) => validateWorkflowRun(item, `${itemsPath}[${index}]`))
+  }))
 }
 
 function validateReviewSignal(value: unknown, path: string): void {
@@ -86,6 +92,7 @@ function validatePullRequest(value: unknown, path: string): void {
     arrayAt(items, itemsPath).forEach((item, index) => validateReviewSignal(item, `${itemsPath}[${index}]`))
   }))
   optional(object.readyToMerge, `${path}.readyToMerge`, (nested, nestedPath) => nullable(nested, nestedPath, booleanAt))
+  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) => nullable(nested, nestedPath, stringAt))
 }
 
 function validateRepoMetrics(value: unknown, path: string): void {
