@@ -21,7 +21,7 @@ You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) and
 nothing else. Paste this in a terminal:
 
 ```powershell
-docker run -p 8080:8080 -e BACKEND_URL=https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io ghcr.io/fixportal/fixportal-ci-frontend:latest
+docker run -p 8080:8080 -e BACKEND_URL=https://ci.fixportal.org ghcr.io/fixportal/fixportal-ci-frontend:latest
 ```
 
 Open <http://localhost:8080>.

@@ -17,7 +17,7 @@ see it working with live data before deciding:
 
 ```bash
 docker run -p 8080:8080 \
-  -e BACKEND_URL=https://fixportal-ci-backend.happycoast-d46c800d.uksouth.azurecontainerapps.io \
+  -e BACKEND_URL=https://ci.fixportal.org \
   ghcr.io/fixportal/fixportal-ci-frontend:latest
 ```
 
