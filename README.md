@@ -260,6 +260,8 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Core conventions:
 - Run `npm test` and `npm run lint` before pushing
 - One logical change per PR
 
+Notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+
 ## Appendix
 
 ### npm package
