@@ -47,11 +47,24 @@ export function values(css, selector) {
   return result
 }
 
-// Absent-tolerant read: `values` throws on a missing selector, which is right for the
-// blocks that must exist and wrong for the media-dark block, which a minimal fixture
-// legitimately omits. Returns null so the caller can distinguish "absent" from "empty".
+// Absent-tolerant read, SCOPED to a containing block. `values` throws on a missing
+// selector, which is right for the blocks that must exist and wrong for the media-dark
+// block, which a minimal fixture legitimately omits.
+//
+// The scoping is the load-bearing half. Searching the whole sheet meant a stylesheet
+// carrying `.ci-page:not([data-theme="light"])` OUTSIDE the media query, while the media
+// query itself lacked it, read as present and reported nothing - leaving the
+// OS-preference tokens unchecked, which is the exact defect this check exists to catch.
+// Returns null so the caller can distinguish "absent" from "empty".
 function optionalValues(css, selector) {
   return css.includes(`${selector} {`) ? values(css, selector) : null
+}
+
+// The body of `@media (prefers-color-scheme: dark) { ... }`, or null when the sheet has
+// no such query. `block` matches brace depth, so a nested rule inside the query is kept.
+function prefersDarkBlock(css) {
+  const marker = '@media (prefers-color-scheme: dark)'
+  return css.includes(`${marker} {`) ? block(css, marker) : null
 }
 
 export function compare(sourceCss, vendoredCss) {
@@ -70,15 +83,17 @@ export function compare(sourceCss, vendoredCss) {
     light: values(vendoredCss, ':root'),
     dark: values(vendoredCss, '.ci-page[data-theme="dark"]'),
   }
-  const vendoredMediaDark = optionalValues(vendoredCss, '.ci-page:not([data-theme="light"])')
+  const mediaBlock = prefersDarkBlock(vendoredCss)
+  const vendoredMediaDark =
+    mediaBlock === null ? null : optionalValues(mediaBlock, '.ci-page:not([data-theme="light"])')
   const differences = []
 
   if (vendoredMediaDark === null) {
-    // A sheet that declares the media query but not the selector this reads has been
+    // A sheet that declares the media query but not the selector INSIDE it has been
     // restructured, and the OS-preference path would go unchecked without anyone
     // noticing -- report it. A sheet with no prefers-color-scheme at all has no second
     // dark block to disagree with, which is the shape the unit fixtures use.
-    if (vendoredCss.includes('prefers-color-scheme: dark')) {
+    if (mediaBlock !== null) {
       differences.push(
         'dark: @media (prefers-color-scheme: dark) exists but its .ci-page:not([data-theme="light"]) ' +
           'block was not found, so the OS-preference dark tokens are unchecked',

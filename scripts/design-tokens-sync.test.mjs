@@ -62,6 +62,20 @@ test('reports a media-dark block that has drifted from the toggled one', () => {
   ])
 })
 
+test('reports a media query whose selector sits OUTSIDE it rather than within', () => {
+  // The unscoped version of this check searched the whole stylesheet, so a selector
+  // present anywhere satisfied it -- including here, where the media query itself has a
+  // different rule and the OS-preference tokens are genuinely unchecked.
+  const outside = `${vendored}
+.ci-page:not([data-theme="light"]) { --warn-text: yellow; }
+@media (prefers-color-scheme: dark) {
+  .something-else { --warn-text: yellow; }
+}`
+  assert.deepEqual(compare(source, outside), [
+    'dark: @media (prefers-color-scheme: dark) exists but its .ci-page:not([data-theme="light"]) block was not found, so the OS-preference dark tokens are unchecked',
+  ])
+})
+
 test('reports a media query whose expected dark block is missing', () => {
   // Restructured sheet: the OS-preference path would silently go unchecked.
   const restructured = `${vendored}
