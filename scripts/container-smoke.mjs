@@ -109,20 +109,33 @@ async function waitFor(url, deadline) {
 // guards nothing, is a permanent scanner dismissal. Requires openssl on PATH
 // (present on the GitHub ubuntu images and any dev box with Git for Windows).
 const fixturesDir = await mkdtemp(join(tmpdir(), 'ci-frontend-smoke-'))
-await mustRun('openssl', [
-  'req', '-x509', '-newkey', 'rsa:2048',
-  '-keyout', join(fixturesDir, 'key.pem'),
-  '-out', join(fixturesDir, 'cert.pem'),
-  '-days', '1', '-nodes',
-  '-subj', '/CN=host.docker.internal',
-  '-addext', 'subjectAltName=DNS:host.docker.internal',
-])
+
+// Guarded separately from the main try/finally below. mkdtemp has already created the
+// directory by this point, and an openssl that is absent or fails throws PAST that
+// finally -- which is what owns `rm(fixturesDir, ...)` -- so every failed run left a
+// directory behind. The keypair is a per-run throwaway that guards nothing; the leak is
+// the defect, not the material.
+let keyPair
+try {
+  await mustRun('openssl', [
+    'req', '-x509', '-newkey', 'rsa:2048',
+    '-keyout', join(fixturesDir, 'key.pem'),
+    '-out', join(fixturesDir, 'cert.pem'),
+    '-days', '1', '-nodes',
+    '-subj', '/CN=host.docker.internal',
+    '-addext', 'subjectAltName=DNS:host.docker.internal',
+  ])
+  keyPair = {
+    cert: await readFile(join(fixturesDir, 'cert.pem')),
+    key: await readFile(join(fixturesDir, 'key.pem')),
+  }
+} catch (error) {
+  await rm(fixturesDir, { recursive: true, force: true }).catch(() => {})
+  throw error
+}
 
 let upstreamRequest
-const upstream = createServer({
-  cert: await readFile(join(fixturesDir, 'cert.pem')),
-  key: await readFile(join(fixturesDir, 'key.pem')),
-}, (request, response) => {
+const upstream = createServer(keyPair, (request, response) => {
   upstreamRequest = {
     url: request.url,
     headers: request.headers,

@@ -9,10 +9,18 @@ const TOKENS = [
   '--warn-fill-deep', '--font-sans', '--font-mono',
 ]
 
-// The board has two deliberate accessibility overrides over the shared source.
+// ONE deliberate accessibility override over the shared source: the shared --text-muted
+// does not clear contrast on this board's card background.
+//
+// The dark --warn-text entry that used to sit here was NOT an accessibility override. It
+// pinned #f0abfc, which upstream retired in favour of #fcd34d as a palette decision --
+// fuchsia carries no warning convention and collided with a purple accent. Pinning it
+// blessed the gap permanently: the checker reported "matches" while the board rendered a
+// colour upstream no longer ships, so the one real drift this tool existed to catch was
+// the one it was configured to ignore. Re-synced rather than re-pinned.
 const OVERRIDES = {
   light: { '--text-muted': '#5f6472' },
-  dark: { '--warn-text': '#f0abfc' },
+  dark: {},
 }
 
 function block(css, selector) {
@@ -39,16 +47,55 @@ export function values(css, selector) {
   return result
 }
 
+// Absent-tolerant read: `values` throws on a missing selector, which is right for the
+// blocks that must exist and wrong for the media-dark block, which a minimal fixture
+// legitimately omits. Returns null so the caller can distinguish "absent" from "empty".
+function optionalValues(css, selector) {
+  return css.includes(`${selector} {`) ? values(css, selector) : null
+}
+
 export function compare(sourceCss, vendoredCss) {
   const source = {
     light: values(sourceCss, ':root'),
     dark: values(sourceCss, ':root[data-theme="dark"], [data-theme="dark"]'),
   }
+  // The vendored sheet declares the dark set TWICE: once for the explicit
+  // [data-theme="dark"] toggle, and again inside @media (prefers-color-scheme: dark) for
+  // the viewer who never toggled -- which is the default, and so the more travelled path.
+  // Reading only the first left the media block outside the drift detector whose whole
+  // purpose is catching drift: a re-sync touching one and not the other printed
+  // "matches". Both are read, and they must agree with each other before either is
+  // compared against the source.
   const vendored = {
     light: values(vendoredCss, ':root'),
     dark: values(vendoredCss, '.ci-page[data-theme="dark"]'),
   }
+  const vendoredMediaDark = optionalValues(vendoredCss, '.ci-page:not([data-theme="light"])')
   const differences = []
+
+  if (vendoredMediaDark === null) {
+    // A sheet that declares the media query but not the selector this reads has been
+    // restructured, and the OS-preference path would go unchecked without anyone
+    // noticing -- report it. A sheet with no prefers-color-scheme at all has no second
+    // dark block to disagree with, which is the shape the unit fixtures use.
+    if (vendoredCss.includes('prefers-color-scheme: dark')) {
+      differences.push(
+        'dark: @media (prefers-color-scheme: dark) exists but its .ci-page:not([data-theme="light"]) ' +
+          'block was not found, so the OS-preference dark tokens are unchecked',
+      )
+    }
+  } else {
+    for (const token of TOKENS) {
+      const toggled = vendored.dark[token]
+      const preference = vendoredMediaDark[token]
+      if (toggled !== preference) {
+        differences.push(
+          `dark ${token}: [data-theme="dark"] has ${toggled ?? '<missing>'}, ` +
+            `@media (prefers-color-scheme: dark) has ${preference ?? '<missing>'}`,
+        )
+      }
+    }
+  }
 
   for (const theme of ['light', 'dark']) {
     for (const token of TOKENS) {
