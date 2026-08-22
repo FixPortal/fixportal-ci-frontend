@@ -64,7 +64,7 @@
 
   --bad-text: #fecaca;
 
-  --warn-text: #f0abfc;
+  --warn-text: #fcd34d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -79,6 +79,6 @@
 
     --bad-text: #fecaca;
 
-    --warn-text: #f0abfc;
+    --warn-text: #fcd34d;
   }
 }

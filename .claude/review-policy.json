@@ -44,7 +44,9 @@
 
   "high": [
     ".claude/review-policy.json",
-    ".coderabbit.yaml"
+    ".coderabbit.yaml",
+    ".github/workflows/review-policy-guard.yml",
+    ".github/scripts/assert_workflow_hygiene.py"
   ],
 
   "low": [

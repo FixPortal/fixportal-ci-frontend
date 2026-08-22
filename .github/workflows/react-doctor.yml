@@ -16,6 +16,12 @@ on:
   push:
     branches: [main]
 
+# NOT a required status check: the branch ruleset requires exactly "CI Gate" and
+# "Review policy intact", so this workflow's `blocking: error` failures do not block a
+# merge. It is advisory, and the write permissions below are for its own reporting, not
+# for gating. Now the repository is public, note that GitHub downgrades every one of
+# them to read on a fork pull request, so the comment and status steps no-op there
+# rather than failing loudly - a fork contributor sees no React Doctor feedback at all.
 permissions:
   # `actions/checkout` needs this to read the repo source.
   contents: read
@@ -41,13 +47,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          persist-credentials: false          # Full history, not the default shallow clone. React Doctor's PR mode
-          # is baseline-relative: it diffs against `main` to report only what
-          # the PR introduces. With no merge base in the clone that comparison
-          # cannot run, and it silently degrades to listing EVERY issue in the
-          # changed files, pre-existing ones included - which under
-          # `blocking: error` can red a branch for findings it did not create.
-          # The action warns about this in its own summary comment.
+          persist-credentials: false
+          # Full history, not the default shallow clone. React Doctor's PR mode is
+          # baseline-relative: it diffs against `main` to report only what the PR
+          # introduces. With no merge base in the clone that comparison cannot run, and
+          # it silently degrades to listing EVERY issue in the changed files,
+          # pre-existing ones included - which under `blocking: error` can red a branch
+          # for findings it did not create. The action warns about this in its own
+          # summary comment.
           fetch-depth: 0
 
       # Keep the ACTION pin current, not just the CLI `version` below. The
