@@ -34,12 +34,17 @@ reviews:
     # Still load-bearing under label triggering: once a PR carries the label, every later push
     # re-reviews it and spends from the same pool. CodeRabbit ships 5; its own docs suggest 1-2.
     #
-    # UNVERIFIED: that CodeRabbit recognises this key at all. An unknown key is silently
-    # ignored, producing no error and no cap - indistinguishable from a working one, which
-    # is why two reviewers split over it on 2026-08-22 without either being able to settle
-    # it. Refuted either way by the config-validation section of CodeRabbit's next review
-    # comment on this repo: it lists the keys it accepted and flags the ones it did not.
-    # Read that before relying on this as a budget control.
+    # VERIFIED 2026-08-22, by behaviour rather than by documentation. Two reviewers split
+    # over whether CodeRabbit recognises this key at all (an unknown key is silently
+    # ignored, which is indistinguishable from a working one). Settled on
+    # fixportal-ci-backend#116: with this value at 2, CodeRabbit reviewed exactly two
+    # commits and then posted "Reviews paused ... You can configure this behavior by
+    # changing the reviews.auto_review.auto_pause_after_reviewed_commits setting" - naming
+    # the key itself. Observed count matches the configured value, so the cap is real.
+    #
+    # Consequence worth knowing before relying on it: once paused, later commits are NOT
+    # reviewed, and the check still reports success. "CodeRabbit: success" on a branch with
+    # more than two commits means "paused", not "clean" - read the comment body.
     auto_pause_after_reviewed_commits: 2
     # Dependency PRs are out of AI code review on BOTH vendors as of 2026-07-29 — Gitar's bot
     # review is switched off as well. The estate raises enough of them that reviewing each bump
