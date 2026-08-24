@@ -1,5 +1,6 @@
 // src/pages/CiBoardContent.privacy.test.tsx
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DashboardSnapshot } from '../api/types'
 import { CiAdminProvider } from '../CiAdminContext'
@@ -28,12 +29,16 @@ function renderContent(isAdmin: boolean) {
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof snapshotHook.useDashboardSnapshot>)
+  // usePrMerge (hoisted to the page) needs a QueryClient even with the snapshot
+  // hook mocked out.
   render(
-    <CiConfigProvider value={{ apiBase: '' }}>
-      <CiAdminProvider value={isAdmin}>
-        <CiBoardContent />
-      </CiAdminProvider>
-    </CiConfigProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <CiConfigProvider value={{ apiBase: '' }}>
+        <CiAdminProvider value={isAdmin}>
+          <CiBoardContent />
+        </CiAdminProvider>
+      </CiConfigProvider>
+    </QueryClientProvider>,
   )
 }
 

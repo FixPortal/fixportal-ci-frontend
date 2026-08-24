@@ -11,12 +11,16 @@ import { memo } from 'react'
 //
 // When onMerge is supplied (admin viewers), the pill becomes the merge action
 // itself — a rebase merge via the backend, disabled while a merge is in flight.
+// The button then gets an action-oriented accessible name (distinct from the
+// toolbar's "Ready to merge" filter chip, and identifying its PR) while the
+// visible label stays the board's verdict wording.
 export const ReadyToMergePill = memo(function ReadyToMergePill({
-  ready, onMerge, busy,
+  ready, onMerge, busy, prNumber,
 }: {
   ready?: boolean | null
   onMerge?: () => void
   busy?: boolean
+  prNumber?: number
 }) {
   if (ready !== true) return null
   if (!onMerge) {
@@ -28,7 +32,14 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
     )
   }
   return (
-    <button type="button" className="chip chip--ready chip--actionable" title="Rebase-merge this PR" disabled={busy} onClick={onMerge}>
+    <button
+      type="button"
+      className="chip chip--ready chip--actionable"
+      title="Rebase-merge this PR"
+      aria-label={prNumber !== undefined ? `Rebase-merge PR #${prNumber}` : 'Rebase-merge this PR'}
+      disabled={busy}
+      onClick={onMerge}
+    >
       <span className="chip__dot" aria-hidden="true" />
       <span className="chip__label">Ready to merge</span>
     </button>
