@@ -1,0 +1,27 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { expect, test, vi } from 'vitest'
+import { ReadyToMergePill } from './ReadyToMergePill'
+
+test('renders a display-only span when no onMerge handler is given', () => {
+  const { container } = render(<ReadyToMergePill ready />)
+  expect(container.querySelector('button')).toBeNull()
+  expect(container.querySelector('span.chip--ready')).not.toBeNull()
+})
+
+test('renders a button that fires onMerge when clicked', async () => {
+  const onMerge = vi.fn()
+  render(<ReadyToMergePill ready onMerge={onMerge} />)
+  await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
+  expect(onMerge).toHaveBeenCalledTimes(1)
+})
+
+test('disables the button while busy', () => {
+  render(<ReadyToMergePill ready onMerge={() => {}} busy />)
+  expect(screen.getByRole('button', { name: /Ready to merge/ })).toBeDisabled()
+})
+
+test.each([[false], [null], [undefined]])('renders nothing when ready is %s, even with onMerge', ready => {
+  const { container } = render(<ReadyToMergePill ready={ready} onMerge={() => {}} />)
+  expect(container.firstChild).toBeNull()
+})
