@@ -62,7 +62,7 @@ export const RepoBoard = memo(function RepoBoard({
           )}
           <JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={repository.deploys ?? []} />
           <JobLaneRow kind="packages" glyph="▣" label="Packages" signals={repository.packages ?? []} />
-          <PullRequestList pullRequests={pullRequests} />
+          <PullRequestList pullRequests={pullRequests} repoName={repository.name} />
         </>
       )}
     </section>
