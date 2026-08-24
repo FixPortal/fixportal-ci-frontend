@@ -45,3 +45,25 @@ test('stepper shows the merge failure inline', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
+
+test('paging to another PR drops the previous PR\'s merge error', async () => {
+  const prs: OpenPr[] = [
+    openPr,
+    { ...openPr, number: 8, title: 'Add sprocket', repo: 'repo-b' },
+  ]
+  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const queryClient = new QueryClient()
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
+        <CiAdminProvider value={true}>{children}</CiAdminProvider>
+      </CiConfigProvider>
+    </QueryClientProvider>
+  )
+  render(<PullRequestStepper prs={prs} onClose={() => {}} />, { wrapper })
+  await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
+  await userEvent.keyboard('{ArrowRight}')
+  expect(screen.getByText('2 / 2')).toBeInTheDocument()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
