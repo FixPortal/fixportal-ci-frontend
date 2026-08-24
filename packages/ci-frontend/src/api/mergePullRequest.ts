@@ -35,6 +35,13 @@ export async function mergePullRequest(
     return { ok: false, status: null, message: 'Network error' }
   }
   if (!response.ok) return { ok: false, status: response.status, message: await errorMessage(response) }
-  const body = (await response.json()) as { sha?: unknown }
+  // A 200 with a non-JSON body must not throw either — "never throws" covers
+  // every status, not just the error path.
+  let body: { sha?: unknown }
+  try {
+    body = (await response.json()) as { sha?: unknown }
+  } catch {
+    return { ok: false, status: response.status, message: 'Invalid merge response' }
+  }
   return { ok: true, sha: typeof body.sha === 'string' ? body.sha : '' }
 }

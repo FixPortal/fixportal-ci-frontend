@@ -47,12 +47,18 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
 
   // A merge error belongs to the PR it failed on — clear it when paging to a
   // different PR, but never on a same-PR re-render (that would wipe the error
-  // the moment a failed merge sets it). dismissError is a stable useCallback,
-  // so including it cannot retrigger this on unrelated renders.
+  // the moment a failed merge sets it). dismissError is read through a ref so
+  // the paging effect always calls the current callback without listing it as
+  // a dependency (a fresh identity would retrigger a dismiss on every merge
+  // state change, wiping the error it just set).
   const dismissError = merge?.dismissError
+  const dismissRef = useRef(dismissError)
   useEffect(() => {
-    dismissError?.()
-  }, [pr?.repo, pr?.number, dismissError])
+    dismissRef.current = dismissError
+  }, [dismissError])
+  useEffect(() => {
+    dismissRef.current?.()
+  }, [pr?.repo, pr?.number])
 
   if (!pr) return null
   const prHref = isAllowedHref(pr.htmlUrl)

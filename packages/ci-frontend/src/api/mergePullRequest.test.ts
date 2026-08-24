@@ -46,3 +46,9 @@ test('falls back to a generic message when an error body has no error field', as
   const result = await mergePullRequest('/api/dashboard/merge', 'x', 1)
   expect(result).toEqual({ ok: false, status: 500, message: 'Merge failed (500)' })
 })
+
+test('a non-JSON 200 body maps to a failure result instead of throwing', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('merged', { status: 200 })))
+  const result = await mergePullRequest('/api/dashboard/merge', 'x', 1)
+  expect(result).toEqual({ ok: false, status: 200, message: 'Invalid merge response' })
+})
