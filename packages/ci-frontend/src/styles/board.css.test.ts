@@ -78,3 +78,16 @@ describe('board.css skip link', () => {
     expect(body).not.toContain('transform')
   })
 })
+
+// Same guard as the review-pill block above: render tests only assert the
+// class is on the element. Deleting these rules leaves every component test
+// green while the merge affordances silently lose their styling.
+describe('board.css merge affordances', () => {
+  it('styles actionable chips as clickable with a disabled state', () => {
+    expect(css).toMatch(/\.chip--actionable\s*\{[^}]*cursor:\s*pointer/)
+    expect(css).toMatch(/\.chip--actionable:disabled\s*\{[^}]*cursor:\s*default/)
+  })
+  it.each(['.repo-prs__merge-all', '.repo-prs__merge-error', '.pr-card__merge-error'])('defines %s', selector => {
+    expect(css).toContain(selector)
+  })
+})
