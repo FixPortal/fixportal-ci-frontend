@@ -8,12 +8,29 @@ import { memo } from 'react'
 // and both false ("not ready") and null/absent ("not yet determined", or an older
 // backend that never sends it) must render nothing rather than be coerced. An absent
 // pill claims nothing; a wrong one sends Chris to merge a PR that isn't ready.
-export const ReadyToMergePill = memo(function ReadyToMergePill({ ready }: { ready?: boolean | null }) {
+//
+// When onMerge is supplied (admin viewers), the pill becomes the merge action
+// itself — a rebase merge via the backend, disabled while a merge is in flight.
+export const ReadyToMergePill = memo(function ReadyToMergePill({
+  ready, onMerge, busy,
+}: {
+  ready?: boolean | null
+  onMerge?: () => void
+  busy?: boolean
+}) {
   if (ready !== true) return null
+  if (!onMerge) {
+    return (
+      <span className="chip chip--static chip--ready" title="Ready to merge">
+        <span className="chip__dot" aria-hidden="true" />
+        <span className="chip__label">Ready to merge</span>
+      </span>
+    )
+  }
   return (
-    <span className="chip chip--static chip--ready" title="Ready to merge">
+    <button type="button" className="chip chip--ready chip--actionable" title="Rebase-merge this PR" disabled={busy} onClick={onMerge}>
       <span className="chip__dot" aria-hidden="true" />
       <span className="chip__label">Ready to merge</span>
-    </span>
+    </button>
   )
 })
