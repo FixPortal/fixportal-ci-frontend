@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { expect, test, vi } from 'vitest'
 import { CiConfigProvider } from '../CiConfigContext'
@@ -75,21 +76,23 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
     openPr, // repo-a #7, displayed
     { ...openPr, number: 8, title: 'Add sprocket', repo: 'repo-b' },
   ]
-  let mergeRef: ReturnType<typeof usePrMerge> | null = null
+  const mergeRef: { current: ReturnType<typeof usePrMerge> | null } = { current: null }
   function CaptureHarness() {
     const merge = usePrMerge()
-    mergeRef = merge
+    // Publish via an effect: React Compiler forbids mutating outer-scope values
+    // during render, and effects run before the test's awaited assertions.
+    useEffect(() => { mergeRef.current = merge })
     return <PullRequestStepper prs={prs} onClose={() => {}} isAdmin merge={merge} />
   }
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<CaptureHarness />, { wrapper: wrapperWith(mergeFetcher) })
   // Fail a merge on repo-b while the stepper shows repo-a's PR.
-  await act(() => mergeRef!.mergeOne('repo-b', 8))
-  expect(mergeRef!.error).toEqual({ repo: 'repo-b', message: 'not mergeable' })
+  await act(() => mergeRef.current!.mergeOne('repo-b', 8))
+  expect(mergeRef.current!.error).toEqual({ repo: 'repo-b', message: 'not mergeable' })
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   // And the alert does appear once the failing repo's PR is displayed... but
   // paging dismisses stale errors, so instead verify repo-a's own failure shows.
-  await act(() => mergeRef!.dismissError())
+  await act(() => mergeRef.current!.dismissError())
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
