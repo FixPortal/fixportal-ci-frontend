@@ -30,14 +30,14 @@ test('mergeOne merges via the configured fetcher and invalidates the snapshot qu
   expect(result.current.error).toBeNull()
 })
 
-test('mergeOne surfaces a failure message and does not invalidate', async () => {
+test('mergeOne surfaces a scoped failure and refreshes the snapshot on 409', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'Pull request is not mergeable' } satisfies MergeResult)
   const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
   const { result } = renderHook(() => usePrMerge(), { wrapper })
   await act(() => result.current.mergeOne('repo-a', 7))
-  expect(result.current.error).toBe('Pull request is not mergeable')
+  expect(result.current.error).toEqual({ repo: 'repo-a', message: 'Pull request is not mergeable' })
   expect(result.current.merging).toBeNull()
-  expect(invalidateSpy).not.toHaveBeenCalled()
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['dashboard-snapshot'] })
   act(() => result.current.dismissError())
   expect(result.current.error).toBeNull()
 })
@@ -61,6 +61,9 @@ test('mergeAll stops on the first failure and reports progress', async () => {
   const { result } = renderHook(() => usePrMerge(), { wrapper })
   await act(() => result.current.mergeAll('repo-a', [3, 9, 4]))
   expect(mergeFetcher).toHaveBeenCalledTimes(2) // #4 never attempted
-  expect(result.current.error).toBe('Merged 1 of 3; failed on #9: not mergeable')
+  expect(result.current.error).toEqual({
+    repo: 'repo-a',
+    message: 'Merged 1 of 3; failed on #9: not mergeable',
+  })
   expect(invalidateSpy).toHaveBeenCalledTimes(1) // the one success still refreshes
 })

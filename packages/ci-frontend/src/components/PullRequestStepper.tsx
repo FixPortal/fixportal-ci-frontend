@@ -105,9 +105,9 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
           onMerge={isAdmin && merge ? () => merge.mergeOne(pr.repo, pr.number) : undefined}
           busy={merge?.merging != null}
         />
-        {isAdmin && merge && merge.error !== null && (
+        {isAdmin && merge && merge.error?.repo === pr.repo && (
           <span className="pr-card__merge-error" role="alert">
-            {merge.error}
+            {merge.error.message}
             <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
           </span>
         )}

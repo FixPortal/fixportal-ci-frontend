@@ -16,7 +16,7 @@ export function usePrMerge(): PrMerge {
   const { apiBase, mergeFetcher } = useCiConfig()
   const queryClient = useQueryClient()
   const [merging, setMerging] = useState<{ repo: string; pr: number | 'all' } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ repo: string; message: string } | null>(null)
 
   const callMerge = useCallback(
     (repo: string, pullNumber: number): Promise<MergeResult> => {
@@ -41,7 +41,11 @@ export function usePrMerge(): PrMerge {
       if (result.ok) {
         await refresh()
       } else {
-        setError(result.message)
+        // A failed merge (typically a 409: the PR went stale since the last
+        // poll) means our snapshot is out of date — refresh before surfacing
+        // the error so the board catches up.
+        await refresh()
+        setError({ repo, message: result.message })
       }
       setMerging(null)
     },
@@ -57,7 +61,7 @@ export function usePrMerge(): PrMerge {
       for (const n of pullNumbers) {
         const result = await callMerge(repo, n)
         if (!result.ok) {
-          setError(`Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}`)
+          setError({ repo, message: `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}` })
           break
         }
         merged += 1
