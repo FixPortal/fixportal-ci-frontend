@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { OpenPr } from '../lib/flattenOpenPrs'
+import { useCiAdmin } from '../CiAdminContext'
+import { usePrMerge } from '../hooks/usePrMerge'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
 export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: () => void }) {
+  const isAdmin = useCiAdmin()
   const [i, setI] = useState(0)
   const dialogRef = useRef<HTMLDialogElement>(null)
   // Background CI polling can shrink `prs` while the stepper is open (e.g. the
@@ -84,7 +87,11 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         {/* Above the per-reviewer pills: the verdict comes first, the evidence after.
             No wrapper -- it renders nothing at all unless the PR is ready, and
             .review-pills below is block-level so the pill keeps its own line. */}
-        <ReadyToMergePill ready={pr.readyToMerge} />
+        {isAdmin ? (
+          <MergeablePill pr={pr} />
+        ) : (
+          <ReadyToMergePill ready={pr.readyToMerge} />
+        )}
         <ReviewPills signals={pr.reviewSignals} />
         <div className="pr-card__foot">
           <span className="pr-card__author">@{pr.author}</span>
@@ -104,5 +111,29 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         </div>
       )}
     </dialog>
+  )
+}
+
+// Admin-only merge affordance for the displayed PR. The hook lives here rather
+// than in PullRequestStepper so provider-less guest renders never touch
+// usePrMerge -- it needs QueryClient/CiConfig providers guests don't have
+// (same split as PullRequestList / AdminPullRequestList). Keyed off the
+// current PR's repo, so paging re-mounts with the right repo.
+function MergeablePill({ pr }: { pr: OpenPr }) {
+  const merge = usePrMerge(pr.repo)
+  return (
+    <>
+      <ReadyToMergePill
+        ready={pr.readyToMerge}
+        onMerge={() => merge.mergeOne(pr.number)}
+        busy={merge.merging !== null}
+      />
+      {merge.error !== null && (
+        <span className="pr-card__merge-error" role="alert">
+          {merge.error}
+          <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
+        </span>
+      )}
+    </>
   )
 }
