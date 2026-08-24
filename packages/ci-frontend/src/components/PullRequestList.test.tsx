@@ -8,13 +8,13 @@ const prs: PullRequest[] = [
 ]
 
 test('always renders a GitHub link for each PR', () => {
-  render(<PullRequestList pullRequests={prs} />)
+  render(<PullRequestList pullRequests={prs} repoName="x/y" />)
   const link = screen.getByRole('link', { name: /#7\s*Add widget/ })
   expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7')
 })
 
 test('renders nothing when there are no pull requests', () => {
-  const { container } = render(<PullRequestList pullRequests={[]} />)
+  const { container } = render(<PullRequestList pullRequests={[]} repoName="x/y" />)
   expect(container.firstChild).toBeNull()
 })
 
@@ -22,7 +22,7 @@ test('renders static text, not a dead link, when htmlUrl is rejected by the sani
   const rejected: PullRequest[] = [
     { number: 9, title: 'Suspicious PR', author: 'mallory', htmlUrl: 'javascript:alert(1)', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
   ]
-  render(<PullRequestList pullRequests={rejected} />)
+  render(<PullRequestList pullRequests={rejected} repoName="x/y" />)
   expect(screen.queryByRole('link')).toBeNull()
   expect(screen.getByText('Suspicious PR')).toBeInTheDocument()
 })
@@ -33,7 +33,7 @@ test('renders one review pill per signal on the PR row', () => {
     { name: 'Gitar', state: 'clean' },
   ]
   const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
-  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   expect(container.querySelectorAll('.review-pills .chip')).toHaveLength(2)
   expect(screen.getByText('CodeRabbit')).toBeInTheDocument()
   expect(screen.getByText('Gitar')).toBeInTheDocument()
@@ -43,7 +43,7 @@ test('renders one review pill per signal on the PR row', () => {
 // no-signals path is the live one until that config lands. It must render byte
 // for byte what it rendered before this change.
 test('renders no pills when the PR carries no review signals', () => {
-  const { container } = render(<PullRequestList pullRequests={prs} />)
+  const { container } = render(<PullRequestList pullRequests={prs} repoName="x/y" />)
   expect(container.querySelector('.review-pills')).toBeNull()
 })
 
@@ -53,7 +53,7 @@ test('renders no pills when the PR carries no review signals', () => {
 test('renders the pills outside the PR anchor, not nested within it', () => {
   const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
   const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
-  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   const pills = container.querySelector('.review-pills')
   expect(pills).not.toBeNull()
   expect(pills?.closest('a')).toBeNull()
@@ -62,7 +62,7 @@ test('renders the pills outside the PR anchor, not nested within it', () => {
 // The point of the whole feature: the verdict is legible from the board without
 // opening the PR.
 test('renders a Ready to merge pill when the backend has judged the PR ready', () => {
-  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} />)
+  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />)
   expect(screen.getByText('Ready to merge')).toBeInTheDocument()
 })
 
@@ -71,14 +71,14 @@ test('renders a Ready to merge pill when the backend has judged the PR ready', (
 // field -- neither may be coerced into a green light, because acting on a wrong
 // pill means merging a PR that isn't ready.
 test.each([[false], [null], [undefined]])('renders no Ready to merge pill when readyToMerge is %s', ready => {
-  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} />)
+  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} repoName="x/y" />)
   expect(screen.queryByText('Ready to merge')).toBeNull()
 })
 
 // The pill carries no link of its own, but it sits in the same line as the PR
 // anchor -- inside it, it would be inert content inside a link target.
 test('renders the ready pill outside the PR anchor', () => {
-  const { container } = render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} />)
+  const { container } = render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />)
   const pill = container.querySelector('.chip--ready')
   expect(pill).not.toBeNull()
   expect(pill?.closest('a')).toBeNull()
@@ -89,7 +89,7 @@ test('renders the ready pill outside the PR anchor', () => {
 test('wraps the PR link and its pills in a shared line element', () => {
   const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
   const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
-  const { container } = render(<PullRequestList pullRequests={withSignals} />)
+  const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   const line = container.querySelector('.repo-prs__line')
   expect(line).not.toBeNull()
   expect(line?.querySelector('a')).not.toBeNull()
