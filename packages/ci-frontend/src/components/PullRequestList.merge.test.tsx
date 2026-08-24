@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { expect, test, vi } from 'vitest'
@@ -70,4 +70,56 @@ test('shows a dismissible inline error when a merge fails', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
   await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
   expect(screen.queryByRole('alert')).toBeNull()
+})
+
+// Two-repo harness sharing one page-level merge state, like CiBoardContent.
+function TwoRepoHarness() {
+  const merge = usePrMerge()
+  return (
+    <>
+      <PullRequestList pullRequests={[readyPr(7)]} repoName="repo-a" isAdmin merge={merge} />
+      <PullRequestList pullRequests={[readyPr(8)]} repoName="repo-b" isAdmin merge={merge} />
+    </>
+  )
+}
+
+function renderTwoRepos(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>) {
+  const queryClient = new QueryClient()
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
+        {children}
+      </CiConfigProvider>
+    </QueryClientProvider>
+  )
+  return render(<TwoRepoHarness />, { wrapper })
+}
+
+test('a merge error renders only in the failing repo, not board-wide', async () => {
+  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const { container } = renderTwoRepos(mergeFetcher)
+  // Merge repo-b's PR; the alert must land in repo-b's section only.
+  const repoBSection = container.querySelectorAll('.repo-prs')[1]
+  await userEvent.click(within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i }))
+  const alerts = await screen.findAllByRole('alert')
+  expect(alerts).toHaveLength(1)
+  expect(alerts[0]).toHaveTextContent('not mergeable')
+  expect(repoBSection.contains(alerts[0])).toBe(true)
+})
+
+test('an in-flight merge in one repo disables the other repo\'s pills', async () => {
+  let resolveMerge!: (r: MergeResult) => void
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(res => { resolveMerge = res }))
+  const { container } = renderTwoRepos(mergeFetcher)
+  const [repoASection, repoBSection] = container.querySelectorAll('.repo-prs')
+  const pillA = within(repoASection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
+  const pillB = within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
+  expect(pillB).toBeEnabled()
+  await userEvent.click(pillA)
+  // The hook's re-entrancy guard is global, so busy is global too: no pill may
+  // look clickable while its click would be swallowed.
+  expect(pillA).toBeDisabled()
+  expect(pillB).toBeDisabled()
+  resolveMerge({ ok: true, sha: 'abc' })
+  await within(repoBSection as HTMLElement).findByRole('button', { name: /rebase-merge/i })
 })

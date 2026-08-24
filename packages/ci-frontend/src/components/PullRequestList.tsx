@@ -34,9 +34,9 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
           Merge all
         </button>
       )}
-      {isAdmin && merge && merge.error !== null && (
+      {isAdmin && merge && merge.error?.repo === repoName && (
         <span className="repo-prs__merge-error" role="alert">
-          {merge.error}
+          {merge.error.message}
           <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
         </span>
       )}
@@ -69,7 +69,10 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
                     onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number) : undefined}
-                    busy={merging?.repo === repoName && (merging.pr === pr.number || merging.pr === 'all')}
+                    // Busy is global, matching the hook's re-entrancy guard and
+                    // the stepper: any in-flight merge disables every pill on the
+                    // board, so no pill can look clickable while its click no-ops.
+                    busy={merging != null}
                   />
                   <ReviewPills signals={pr.reviewSignals} />
                 </div>
