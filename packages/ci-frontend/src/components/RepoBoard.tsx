@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import type { RepositorySnapshot } from '../api/types'
+import type { PrMerge } from '../lib/prMerge'
 import { isNoCi } from '../lib/isNoCi'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import { SignalChip } from './SignalChip'
@@ -13,11 +14,13 @@ import { RepoActivityIndicator } from './RepoActivityIndicator'
 // onToggle takes the repo name so the parent can pass one stable callback rather
 // than a fresh per-repo closure that would defeat the memo.
 export const RepoBoard = memo(function RepoBoard({
-  repository, collapsed, onToggle,
+  repository, collapsed, onToggle, isAdmin, merge,
 }: {
   repository: RepositorySnapshot
   collapsed: boolean
   onToggle: (name: string) => void
+  isAdmin?: boolean
+  merge?: PrMerge
 }) {
   const pullRequests = repository.pullRequests ?? []
   const noCi = isNoCi(repository)
@@ -62,7 +65,7 @@ export const RepoBoard = memo(function RepoBoard({
           )}
           <JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={repository.deploys ?? []} />
           <JobLaneRow kind="packages" glyph="▣" label="Packages" signals={repository.packages ?? []} />
-          <PullRequestList pullRequests={pullRequests} repoName={repository.name} />
+          <PullRequestList pullRequests={pullRequests} repoName={repository.name} isAdmin={isAdmin} merge={merge} />
         </>
       )}
     </section>

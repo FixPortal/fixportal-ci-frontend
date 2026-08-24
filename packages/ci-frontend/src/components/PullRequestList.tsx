@@ -1,46 +1,40 @@
 import type { PullRequest } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { isAllowedHref } from '../lib/isAllowedHref'
-import { useCiAdmin } from '../CiAdminContext'
-import { usePrMerge } from '../hooks/usePrMerge'
-import type { PrMerge } from '../hooks/usePrMerge'
+import type { PrMerge } from '../lib/prMerge'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
 
-export function PullRequestList({ pullRequests, repoName }: { pullRequests: PullRequest[]; repoName: string }) {
-  const isAdmin = useCiAdmin()
+// Presentational: merge state is hoisted to the page (usePrMerge) and handed
+// down as props. Guests get no `merge` (and isAdmin false), so their render is
+// exactly what it was before the merge feature.
+export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
+  pullRequests: PullRequest[]
+  repoName: string
+  isAdmin?: boolean
+  merge?: PrMerge
+}) {
   if (pullRequests.length === 0) return null
-  // Merge state lives in an admin-only child so the guest render never touches
-  // usePrMerge -- it needs QueryClient/CiConfig providers guests don't have.
-  if (!isAdmin) return <PullRequestListView pullRequests={pullRequests} />
-  return <AdminPullRequestList pullRequests={pullRequests} repoName={repoName} />
-}
-
-function AdminPullRequestList({ pullRequests, repoName }: { pullRequests: PullRequest[]; repoName: string }) {
-  const merge = usePrMerge(repoName)
-  return <PullRequestListView pullRequests={pullRequests} merge={merge} />
-}
-
-function PullRequestListView({ pullRequests, merge }: { pullRequests: PullRequest[]; merge?: PrMerge }) {
   // Strict === true, same rule as the pill itself: never coerce the tri-state.
   const readyPrs = pullRequests.filter(pr => pr.readyToMerge === true)
+  const merging = merge?.merging
   return (
     <div className="repo-prs">
       <span className="repo-prs__count">
         {pullRequests.length} open PR{pullRequests.length === 1 ? '' : 's'}
       </span>
       {/* One ready PR has its own pill; Merge all only earns its place at two+. */}
-      {merge && readyPrs.length >= 2 && (
+      {isAdmin && merge && readyPrs.length >= 2 && (
         <button
           type="button"
           className="chip chip--actionable repo-prs__merge-all"
           disabled={merge.merging !== null}
-          onClick={() => merge.mergeAll(readyPrs.map(pr => pr.number))}
+          onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
         >
           Merge all
         </button>
       )}
-      {merge && merge.error !== null && (
+      {isAdmin && merge && merge.error !== null && (
         <span className="repo-prs__merge-error" role="alert">
           {merge.error}
           <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
@@ -73,8 +67,9 @@ function PullRequestListView({ pullRequests, merge }: { pullRequests: PullReques
                 <div className="repo-prs__badges">
                   <ReadyToMergePill
                     ready={pr.readyToMerge}
-                    onMerge={merge ? () => merge.mergeOne(pr.number) : undefined}
-                    busy={merge !== undefined && (merge.merging === pr.number || merge.merging === 'all')}
+                    prNumber={pr.number}
+                    onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number) : undefined}
+                    busy={merging?.repo === repoName && (merging.pr === pr.number || merging.pr === 'all')}
                   />
                   <ReviewPills signals={pr.reviewSignals} />
                 </div>

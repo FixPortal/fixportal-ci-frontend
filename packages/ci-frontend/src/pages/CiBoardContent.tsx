@@ -5,6 +5,8 @@ import { useCollapseState } from '../hooks/useCollapseState'
 import { useHideNoCi } from '../hooks/useHideNoCi'
 import { useCiAdmin } from '../CiAdminContext'
 import { useCiConfig } from '../CiConfigContext'
+import { usePrMerge } from '../hooks/usePrMerge'
+import type { PrMerge } from '../hooks/usePrMerge'
 import { isNoCi } from '../lib/isNoCi'
 import { computeSummary, withNlocAvailability } from '../lib/computeSummary'
 import { SummaryStrip } from '../components/SummaryStrip'
@@ -40,6 +42,8 @@ function buildRepoList(
   collapse: ReturnType<typeof useCollapseState>,
   filtersActive: boolean,
   onClearFilters: () => void,
+  isAdmin: boolean,
+  merge: PrMerge,
 ) {
   if (visibleRepos.length === 0) {
     // Hide No-CI alone has emptied the board: clearing filters cannot restore
@@ -80,6 +84,8 @@ function buildRepoList(
               repository={repository}
               collapsed={collapse.isCollapsed(repository.name)}
               onToggle={collapse.toggle}
+              isAdmin={isAdmin}
+              merge={merge}
             />
           ))
         }
@@ -96,6 +102,8 @@ function buildRepoList(
               repository={repository}
               collapsed={collapse.isCollapsed(repository.name)}
               onToggle={collapse.toggle}
+              isAdmin={isAdmin}
+              merge={merge}
             />
           ))
         }
@@ -108,6 +116,8 @@ function buildRepoList(
       repository={repository}
       collapsed={collapse.isCollapsed(repository.name)}
       onToggle={collapse.toggle}
+      isAdmin={isAdmin}
+      merge={merge}
     />
   ))
 }
@@ -118,6 +128,9 @@ export function CiBoardContent() {
   const hideNoCi = useHideNoCi()
   const filters = useRepoFilters()
   const isAdmin = useCiAdmin()
+  // Merge state is hoisted here (pages own stateful wiring; components stay
+  // presentational) and handed to RepoBoard/PullRequestStepper as props.
+  const merge = usePrMerge()
   const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope, storageNamespace } = useCiConfig()
   // Same derivation as the skip link in CiBoard — namespaced so co-hosted
   // boards on one page don't duplicate the anchor id.
@@ -262,7 +275,7 @@ export function CiBoardContent() {
   const noCiHidEverything = hideNoCi.hidden && noCiFiltered.length === 0 && repositories.length > 0
   const repoListContent = buildRepoList(
     visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, noCiHidEverything, collapse,
-    filters.isActive, filters.clear,
+    filters.isActive, filters.clear, isAdmin, merge,
   )
 
   return (
@@ -358,7 +371,7 @@ export function CiBoardContent() {
         {repoListContent}
       </div>
       {stepperOpen && openPrs.length > 0 && (
-        <PullRequestStepper prs={openPrs} onClose={() => setStepperOpen(false)} />
+        <PullRequestStepper prs={openPrs} onClose={() => setStepperOpen(false)} isAdmin={isAdmin} merge={merge} />
       )}
     </main>
   )

@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { expect, test, vi } from 'vitest'
-import { CiAdminProvider } from '../CiAdminContext'
 import { CiConfigProvider } from '../CiConfigContext'
+import { usePrMerge } from '../hooks/usePrMerge'
 import { PullRequestStepper } from './PullRequestStepper'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import type { MergeResult } from '../api/mergePullRequest'
@@ -15,22 +15,32 @@ const openPr: OpenPr = {
   createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, repo: 'repo-a',
 }
 
-function renderStepper(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>, admin: boolean) {
+// The component is presentational now; merge state comes from the page-level
+// hook, so the test harness wires it the same way CiBoardContent does.
+function Harness({ prs, admin }: { prs: OpenPr[]; admin: boolean }) {
+  const merge = usePrMerge()
+  return <PullRequestStepper prs={prs} onClose={() => {}} isAdmin={admin} merge={merge} />
+}
+
+function wrapperWith(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>) {
   const queryClient = new QueryClient()
-  const wrapper = ({ children }: { children: ReactNode }) => (
+  return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
-        <CiAdminProvider value={admin}>{children}</CiAdminProvider>
+        {children}
       </CiConfigProvider>
     </QueryClientProvider>
   )
-  return render(<PullRequestStepper prs={[openPr]} onClose={() => {}} />, { wrapper })
+}
+
+function renderStepper(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>, admin: boolean) {
+  return render(<Harness prs={[openPr]} admin={admin} />, { wrapper: wrapperWith(mergeFetcher) })
 }
 
 test('admin merges the displayed PR from the stepper', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
-  await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
 })
 
@@ -42,7 +52,7 @@ test('guest sees a display-only pill in the stepper', () => {
 test('stepper shows the merge failure inline', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
-  await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
 
@@ -52,16 +62,8 @@ test('paging to another PR drops the previous PR\'s merge error', async () => {
     { ...openPr, number: 8, title: 'Add sprocket', repo: 'repo-b' },
   ]
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
-  const queryClient = new QueryClient()
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
-        <CiAdminProvider value={true}>{children}</CiAdminProvider>
-      </CiConfigProvider>
-    </QueryClientProvider>
-  )
-  render(<PullRequestStepper prs={prs} onClose={() => {}} />, { wrapper })
-  await userEvent.click(screen.getByRole('button', { name: /Ready to merge/ }))
+  render(<Harness prs={prs} admin={true} />, { wrapper: wrapperWith(mergeFetcher) })
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
   await userEvent.keyboard('{ArrowRight}')
   expect(screen.getByText('2 / 2')).toBeInTheDocument()

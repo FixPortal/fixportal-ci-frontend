@@ -3,32 +3,28 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCiConfig } from '../CiConfigContext'
 import { mergePullRequest } from '../api/mergePullRequest'
 import type { MergeResult } from '../api/mergePullRequest'
+import type { PrMerge } from '../lib/prMerge'
 
-export interface PrMerge {
-  merging: number | 'all' | null
-  error: string | null
-  mergeOne: (pullNumber: number) => Promise<void>
-  mergeAll: (pullNumbers: number[]) => Promise<void>
-  dismissError: () => void
-}
+export type { PrMerge }
 
-// Merge state for one repo's PR list. merging doubles as the busy flag and a
-// re-entrancy guard: a second click while a merge is in flight is a no-op.
-// The 30s snapshot poll can leave a green pill stale, so failures are normal
-// and surface inline via `error` rather than throwing.
-export function usePrMerge(repoName: string): PrMerge {
+// Merge state for the whole board, hoisted to the page so components stay
+// presentational. merging doubles as the busy flag and a re-entrancy guard: a
+// second click while a merge is in flight is a no-op. The 30s snapshot poll can
+// leave a green pill stale, so failures are normal and surface inline via
+// `error` rather than throwing.
+export function usePrMerge(): PrMerge {
   const { apiBase, mergeFetcher } = useCiConfig()
   const queryClient = useQueryClient()
-  const [merging, setMerging] = useState<number | 'all' | null>(null)
+  const [merging, setMerging] = useState<{ repo: string; pr: number | 'all' } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const callMerge = useCallback(
-    (pullNumber: number): Promise<MergeResult> => {
-      if (mergeFetcher) return mergeFetcher(repoName, pullNumber)
+    (repo: string, pullNumber: number): Promise<MergeResult> => {
+      if (mergeFetcher) return mergeFetcher(repo, pullNumber)
       const mergeUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/merge`
-      return mergePullRequest(mergeUrl, repoName, pullNumber)
+      return mergePullRequest(mergeUrl, repo, pullNumber)
     },
-    [apiBase, mergeFetcher, repoName],
+    [apiBase, mergeFetcher],
   )
 
   const refresh = useCallback(
@@ -37,11 +33,11 @@ export function usePrMerge(repoName: string): PrMerge {
   )
 
   const mergeOne = useCallback(
-    async (pullNumber: number) => {
+    async (repo: string, pullNumber: number) => {
       if (merging !== null) return
-      setMerging(pullNumber)
+      setMerging({ repo, pr: pullNumber })
       setError(null)
-      const result = await callMerge(pullNumber)
+      const result = await callMerge(repo, pullNumber)
       if (result.ok) {
         await refresh()
       } else {
@@ -53,13 +49,13 @@ export function usePrMerge(repoName: string): PrMerge {
   )
 
   const mergeAll = useCallback(
-    async (pullNumbers: number[]) => {
+    async (repo: string, pullNumbers: number[]) => {
       if (merging !== null) return
-      setMerging('all')
+      setMerging({ repo, pr: 'all' })
       setError(null)
       let merged = 0
       for (const n of pullNumbers) {
-        const result = await callMerge(n)
+        const result = await callMerge(repo, n)
         if (!result.ok) {
           setError(`Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}`)
           break

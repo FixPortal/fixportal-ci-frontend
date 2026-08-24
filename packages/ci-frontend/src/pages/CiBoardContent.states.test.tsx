@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DashboardSnapshot } from '../api/types'
 import { CiAdminProvider } from '../CiAdminContext'
@@ -27,12 +28,16 @@ const snapshot: DashboardSnapshot = {
 }
 
 function renderContent() {
+  // usePrMerge (hoisted to the page) needs a QueryClient even with the snapshot
+  // hook mocked out.
   render(
-    <CiConfigProvider value={{ apiBase: '' }}>
-      <CiAdminProvider value={false}>
-        <CiBoardContent />
-      </CiAdminProvider>
-    </CiConfigProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <CiConfigProvider value={{ apiBase: '' }}>
+        <CiAdminProvider value={false}>
+          <CiBoardContent />
+        </CiAdminProvider>
+      </CiConfigProvider>
+    </QueryClientProvider>,
   )
 }
 

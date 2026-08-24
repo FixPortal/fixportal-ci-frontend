@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { OpenPr } from '../lib/flattenOpenPrs'
-import { useCiAdmin } from '../CiAdminContext'
-import { usePrMerge } from '../hooks/usePrMerge'
+import type { PrMerge } from '../lib/prMerge'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
-export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: () => void }) {
-  const isAdmin = useCiAdmin()
+export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
+  prs: OpenPr[]
+  onClose: () => void
+  isAdmin?: boolean
+  merge?: PrMerge
+}) {
   const [i, setI] = useState(0)
   const dialogRef = useRef<HTMLDialogElement>(null)
   // Background CI polling can shrink `prs` while the stepper is open (e.g. the
@@ -41,6 +44,15 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
   useEffect(() => {
     if (prs.length === 0) onClose()
   }, [prs.length, onClose])
+
+  // A merge error belongs to the PR it failed on — clear it when paging to a
+  // different PR, but never on a same-PR re-render (that would wipe the error
+  // the moment a failed merge sets it). dismissError is a stable useCallback,
+  // so including it cannot retrigger this on unrelated renders.
+  const dismissError = merge?.dismissError
+  useEffect(() => {
+    dismissError?.()
+  }, [pr?.repo, pr?.number, dismissError])
 
   if (!pr) return null
   const prHref = isAllowedHref(pr.htmlUrl)
@@ -87,10 +99,17 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         {/* Above the per-reviewer pills: the verdict comes first, the evidence after.
             No wrapper -- it renders nothing at all unless the PR is ready, and
             .review-pills below is block-level so the pill keeps its own line. */}
-        {isAdmin ? (
-          <MergeablePill key={`${pr.repo}#${pr.number}`} pr={pr} />
-        ) : (
-          <ReadyToMergePill ready={pr.readyToMerge} />
+        <ReadyToMergePill
+          ready={pr.readyToMerge}
+          prNumber={pr.number}
+          onMerge={isAdmin && merge ? () => merge.mergeOne(pr.repo, pr.number) : undefined}
+          busy={merge?.merging != null}
+        />
+        {isAdmin && merge && merge.error !== null && (
+          <span className="pr-card__merge-error" role="alert">
+            {merge.error}
+            <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
+          </span>
         )}
         <ReviewPills signals={pr.reviewSignals} />
         <div className="pr-card__foot">
@@ -111,29 +130,5 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
         </div>
       )}
     </dialog>
-  )
-}
-
-// Admin-only merge affordance for the displayed PR. The hook lives here rather
-// than in PullRequestStepper so provider-less guest renders never touch
-// usePrMerge -- it needs QueryClient/CiConfig providers guests don't have
-// (same split as PullRequestList / AdminPullRequestList). Keyed off the
-// current PR's repo, so paging re-mounts with the right repo.
-function MergeablePill({ pr }: { pr: OpenPr }) {
-  const merge = usePrMerge(pr.repo)
-  return (
-    <>
-      <ReadyToMergePill
-        ready={pr.readyToMerge}
-        onMerge={() => merge.mergeOne(pr.number)}
-        busy={merge.merging !== null}
-      />
-      {merge.error !== null && (
-        <span className="pr-card__merge-error" role="alert">
-          {merge.error}
-          <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
-        </span>
-      )}
-    </>
   )
 }
