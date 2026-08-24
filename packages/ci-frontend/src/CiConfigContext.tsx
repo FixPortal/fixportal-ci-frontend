@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { DashboardSnapshot } from './api/types'
+import type { MergeResult } from './api/mergePullRequest'
 
 // Runtime config for the CI board. apiBase is the origin of the CI backend
 // snapshot API (no trailing slash). Empty string means relative URLs — works
@@ -28,6 +29,10 @@ export interface CiConfig {
   adminSnapshotUrl?: string
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
   adminSnapshotCacheKey?: string
+  // mergeFetcher: used for merge requests when the host needs to attach auth
+  // headers (e.g. MSAL Bearer token). Falls back to a plain POST of
+  // apiBase + /api/dashboard/merge when absent. Same pattern as snapshotFetcher.
+  mergeFetcher?: (repo: string, pullNumber: number) => Promise<MergeResult>
   storageNamespace?: string
   repositoryScope?: string
 }
