@@ -88,7 +88,7 @@ export function PullRequestStepper({ prs, onClose }: { prs: OpenPr[]; onClose: (
             No wrapper -- it renders nothing at all unless the PR is ready, and
             .review-pills below is block-level so the pill keeps its own line. */}
         {isAdmin ? (
-          <MergeablePill pr={pr} />
+          <MergeablePill key={`${pr.repo}#${pr.number}`} pr={pr} />
         ) : (
           <ReadyToMergePill ready={pr.readyToMerge} />
         )}
