@@ -145,6 +145,7 @@ export function App() {
 | `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. The host must add `X-Admin-Key` server-side; never expose that secret to the browser. |
 | `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
 | `adminSnapshotCacheKey` | `string` | unset | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`. |
+| `mergeFetcher` | `(repo: string, pullNumber: number) => Promise<MergeResult>` | unset | Authenticated callback for a single rebase merge. Keep credentials server-side and return a `MergeResult`. |
 | `logo` | `ReactNode` | text wordmark | Brand mark rendered in the dashboard header. |
 | `footerSlot` | `ReactNode` | generic footer | Footer content; pass your own to replace the default. |
 | `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
