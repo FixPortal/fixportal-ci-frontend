@@ -68,6 +68,7 @@ creates an internal client.
 | `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. Add `X-Admin-Key` server-side; never expose it to the browser. |
 | `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
 | `adminSnapshotCacheKey` | `string` | unset | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`. |
+| `mergeFetcher` | `(repo: string, pullNumber: number) => Promise<MergeResult>` | unset | Authenticated callback for a single rebase merge. Keep credentials server-side and return a `MergeResult`. |
 | `logo` | `ReactNode` | text wordmark | Brand mark in the dashboard header. |
 | `footerSlot` | `ReactNode` | generic footer | Footer content. |
 | `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |

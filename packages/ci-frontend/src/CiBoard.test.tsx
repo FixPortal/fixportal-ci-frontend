@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DashboardSnapshot } from './api/types'
 import { CiBoard } from './CiBoard'
 
@@ -20,6 +21,26 @@ const snapshot: DashboardSnapshot = {
   ],
   summary: [],
   lastMergedPr: null,
+}
+
+const readySnapshot: DashboardSnapshot = {
+  ...snapshot,
+  repositories: [
+    {
+      ...snapshot.repositories[0],
+      pullRequests: [
+        {
+          number: 42,
+          title: 'Ready for release',
+          author: 'octocat',
+          htmlUrl: 'https://github.com/FixPortal/ci-frontend/pull/42',
+          isDraft: false,
+          createdAt: '2026-07-16T10:00:00Z',
+          readyToMerge: true,
+        },
+      ],
+    },
+  ],
 }
 
 describe('CiBoard landmark structure', () => {
@@ -71,6 +92,26 @@ describe('CiBoard admin source gating', () => {
     expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
     expect(screen.getByText(/\[Admin\]/)).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Visibility' })).toBeInTheDocument()
+  })
+
+  it('uses the host merge fetcher for an admin ready-PR action', async () => {
+    const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc123' })
+    render(
+      <CiBoard
+        adminSignal
+        snapshotFetcher={async () => readySnapshot}
+        adminSnapshotFetcher={async () => readySnapshot}
+        mergeFetcher={mergeFetcher}
+        storageNamespace="admin-merge"
+      />,
+    )
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Rebase-merge PR #42' }),
+    )
+
+    expect(mergeFetcher).toHaveBeenCalledOnce()
+    expect(mergeFetcher).toHaveBeenCalledWith('ci-frontend', 42)
   })
 
   it('updates a controlled repository scope when the host rerenders', async () => {

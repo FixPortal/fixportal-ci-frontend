@@ -6,6 +6,7 @@ import { CiConfigProvider, useCiConfig, DEFAULT_CI_API_BASE } from './CiConfigCo
 import { CiBoardContent } from './pages/CiBoardContent'
 import { DefaultFooter } from './DefaultFooter'
 import type { DashboardSnapshot } from './api/types'
+import type { CiConfig } from './CiConfigContext'
 
 export interface CiBoardProps {
   /** Whether the viewer is an admin: sees private repos + actionable PR links when an admin-specific snapshot URL or fetcher is also configured. Host-computed. */
@@ -22,6 +23,8 @@ export interface CiBoardProps {
   adminSnapshotFetcher?: () => Promise<DashboardSnapshot | null>
   /** Optional stable cache-key override for adminSnapshotFetcher. Counterpart of snapshotCacheKey for the admin path. */
   adminSnapshotCacheKey?: string
+  /** Authenticated host callback for a single rebase merge. */
+  mergeFetcher?: CiConfig['mergeFetcher']
   /** Brand mark for the header. Defaults to a plain text wordmark. */
   logo?: ReactNode
   /** Footer node. Defaults to a generic, brand-free footer. */
@@ -140,6 +143,7 @@ export function CiBoard({
   adminSnapshotUrl,
   adminSnapshotFetcher,
   adminSnapshotCacheKey,
+  mergeFetcher,
   logo,
   footerSlot,
   storageNamespace,
@@ -175,7 +179,7 @@ export function CiBoard({
   }, [])
 
   return (
-    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, storageNamespace, repositoryScope }}>
+    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, mergeFetcher, storageNamespace, repositoryScope }}>
       <QueryClientSafeProvider>
         <div className="ci-page" ref={pageRef}>
           {/* First tab stop: keyboard bypass of the ~11 toolbar controls before
