@@ -12,20 +12,21 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-26
+
+### Added
+
+- Admin hosts can supply `mergeFetcher` to rebase-merge ready pull requests without exposing server credentials to the browser.
+- Ready pull requests render as actionable merge pills for admins, with per-repository `Merge all` when at least two are ready.
+
 ### Changed
 
-- The vendored dark `--warn-text` token is re-synced to the shared design source
-  (`#fcd34d`). It had been pinned at the retired `#f0abfc` by an entry in the drift
-  checker's override list, so the checker reported a match while the board rendered a
-  colour the source no longer ships.
+- The vendored dark `--warn-text` token is re-synced to the shared design source (`#fcd34d`).
 
 ### Fixed
 
-- The design-token drift check now reads both dark blocks in the vendored sheet - the
-  `[data-theme="dark"]` toggle and the `@media (prefers-color-scheme: dark)` block -
-  and asserts they agree. Only the first was read, so the OS-preference path, which is
-  the default for any viewer who never toggled a theme, sat outside the detector whose
-  purpose is catching exactly that drift.
+- Merge failures remain scoped to their repository, refresh stale snapshots, and never throw on malformed responses.
+- The design-token drift check now verifies both explicit-dark and OS-dark blocks.
 
 ## [3.0.0]
 
