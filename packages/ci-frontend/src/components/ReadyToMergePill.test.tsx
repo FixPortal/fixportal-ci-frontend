@@ -9,6 +9,11 @@ test('renders a display-only span when no onMerge handler is given', () => {
   expect(container.querySelector('span.chip--ready')).not.toBeNull()
 })
 
+test('shows a merged receipt to display-only viewers', () => {
+  render(<ReadyToMergePill ready={false} merged />)
+  expect(screen.getByTitle('Merge completed')).toHaveTextContent('✓ Merged')
+})
+
 test('renders a button that fires onMerge when clicked', async () => {
   const onMerge = vi.fn()
   render(<ReadyToMergePill ready onMerge={onMerge} />)

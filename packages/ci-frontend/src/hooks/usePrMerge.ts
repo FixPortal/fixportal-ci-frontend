@@ -9,6 +9,7 @@ import { prMergeKey } from '../lib/prMerge'
 export type { PrMerge }
 
 const MERGE_RECEIPT_MS = 900
+const MAX_MERGED_KEYS = 1_000
 
 // Merge state for the whole board, hoisted to the page so components stay
 // presentational. merging doubles as the busy flag and a re-entrancy guard: a
@@ -30,7 +31,12 @@ export function usePrMerge(): PrMerge {
 
   const markMerged = useCallback((repo: string, pullNumber: number) => {
     const key = prMergeKey(repo, pullNumber)
-    setMerged(current => new Set(current).add(key))
+    setMerged(current => {
+      const next = new Set(current).add(key)
+      // ponytail: cap merged keys; prune against snapshots if 1,000 merges between polls becomes realistic.
+      if (next.size > MAX_MERGED_KEYS) next.delete(next.values().next().value!)
+      return next
+    })
     setReceipts(current => new Set(current).add(key))
     const timer = setTimeout(() => {
       setReceipts(current => {
@@ -62,18 +68,21 @@ export function usePrMerge(): PrMerge {
       if (merging !== null) return
       setMerging({ repo, pr: pullNumber })
       setError(null)
-      const result = await callMerge(repo, pullNumber)
-      if (result.ok) {
-        markMerged(repo, pullNumber)
-        await refresh()
-      } else {
-        // A failed merge (typically a 409: the PR went stale since the last
-        // poll) means our snapshot is out of date — refresh before surfacing
-        // the error so the board catches up.
-        await refresh()
-        setError({ repo, message: result.message })
+      try {
+        const result = await callMerge(repo, pullNumber)
+        if (result.ok) {
+          markMerged(repo, pullNumber)
+          await refresh()
+        } else {
+          // A failed merge (typically a 409: the PR went stale since the last
+          // poll) means our snapshot is out of date — refresh before surfacing
+          // the error so the board catches up.
+          await refresh()
+          setError({ repo, message: result.message })
+        }
+      } finally {
+        setMerging(null)
       }
-      setMerging(null)
     },
     [merging, callMerge, markMerged, refresh],
   )
@@ -84,17 +93,20 @@ export function usePrMerge(): PrMerge {
       setMerging({ repo, pr: 'all' })
       setError(null)
       let merged = 0
-      for (const n of pullNumbers) {
-        const result = await callMerge(repo, n)
-        if (!result.ok) {
-          setError({ repo, message: `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}` })
-          break
+      try {
+        for (const n of pullNumbers) {
+          const result = await callMerge(repo, n)
+          if (!result.ok) {
+            setError({ repo, message: `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}` })
+            break
+          }
+          merged += 1
+          markMerged(repo, n)
         }
-        merged += 1
-        markMerged(repo, n)
+        if (merged > 0) await refresh()
+      } finally {
+        setMerging(null)
       }
-      if (merged > 0) await refresh()
-      setMerging(null)
     },
     [merging, callMerge, markMerged, refresh],
   )

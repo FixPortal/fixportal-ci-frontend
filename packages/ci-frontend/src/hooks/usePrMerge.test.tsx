@@ -67,3 +67,42 @@ test('mergeAll stops on the first failure and reports progress', async () => {
   })
   expect(invalidateSpy).toHaveBeenCalledTimes(1) // the one success still refreshes
 })
+
+test('mergeOne releases the re-entrancy guard when the configured fetcher throws', async () => {
+  let rejectMerge!: (error: Error) => void
+  const { wrapper } = wrapperWith(vi.fn().mockImplementation(() => new Promise<MergeResult>((_, reject) => { rejectMerge = reject })))
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  let merge!: Promise<void>
+  act(() => { merge = result.current.mergeOne('repo-a', 7) })
+  expect(result.current.merging).toEqual({ repo: 'repo-a', pr: 7 })
+  const rejected = expect(merge).rejects.toThrow('network failed')
+  await act(async () => {
+    rejectMerge(new Error('network failed'))
+    await rejected
+  })
+  expect(result.current.merging).toBeNull()
+})
+
+test('mergeAll releases the re-entrancy guard when the configured fetcher throws', async () => {
+  let rejectMerge!: (error: Error) => void
+  const { wrapper } = wrapperWith(vi.fn().mockImplementation(() => new Promise<MergeResult>((_, reject) => { rejectMerge = reject })))
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  let merge!: Promise<void>
+  act(() => { merge = result.current.mergeAll('repo-a', [7, 8]) })
+  expect(result.current.merging).toEqual({ repo: 'repo-a', pr: 'all' })
+  const rejected = expect(merge).rejects.toThrow('network failed')
+  await act(async () => {
+    rejectMerge(new Error('network failed'))
+    await rejected
+  })
+  expect(result.current.merging).toBeNull()
+})
+
+test('retains only the most recent 1,000 merged PR keys', async () => {
+  const { wrapper } = wrapperWith(vi.fn().mockResolvedValue(ok))
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  await act(() => result.current.mergeAll('repo-a', Array.from({ length: 1_001 }, (_, index) => index + 1)))
+  expect(result.current.merged).toHaveLength(1_000)
+  expect(result.current.merged.has('repo-a#1')).toBe(false)
+  expect(result.current.merged.has('repo-a#1001')).toBe(true)
+})
