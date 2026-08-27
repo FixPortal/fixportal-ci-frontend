@@ -7,6 +7,7 @@ test('renders a display-only span when no onMerge handler is given', () => {
   const { container } = render(<ReadyToMergePill ready />)
   expect(container.querySelector('button')).toBeNull()
   expect(container.querySelector('span.chip--ready')).not.toBeNull()
+  expect(screen.getByTitle('Ready to merge')).toBeInTheDocument()
 })
 
 test('shows a merged receipt to display-only viewers', () => {
