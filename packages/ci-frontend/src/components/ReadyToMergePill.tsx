@@ -25,14 +25,6 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
   prNumber?: number
 }) {
   if (ready !== true && !merged) return null
-  if (!onMerge) {
-    return (
-      <span className="chip chip--static chip--ready" title="Ready to merge">
-        <span className="chip__dot" aria-hidden="true" />
-        <span className="chip__label">Ready to merge</span>
-      </span>
-    )
-  }
   let label = 'Ready to merge'
   let title = 'Rebase-merge this PR'
   let accessibleAction = 'Rebase-merge'
@@ -45,6 +37,14 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
     label = '✓ Merged'
     title = 'Merge completed'
     accessibleAction = 'Merged'
+  }
+  if (!onMerge) {
+    return (
+      <span className="chip chip--static chip--ready" title={title}>
+        <span className="chip__dot" aria-hidden="true" />
+        <span className="chip__label">{label}</span>
+      </span>
+    )
   }
   const accessibleLabel = prNumber === undefined
     ? `${accessibleAction} pull request`
