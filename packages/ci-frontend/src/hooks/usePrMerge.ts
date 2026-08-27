@@ -1,11 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCiConfig } from '../CiConfigContext'
 import { mergePullRequest } from '../api/mergePullRequest'
 import type { MergeResult } from '../api/mergePullRequest'
 import type { PrMerge } from '../lib/prMerge'
+import { prMergeKey } from '../lib/prMerge'
 
 export type { PrMerge }
+
+const MERGE_RECEIPT_MS = 900
 
 // Merge state for the whole board, hoisted to the page so components stay
 // presentational. merging doubles as the busy flag and a re-entrancy guard: a
@@ -17,6 +20,28 @@ export function usePrMerge(): PrMerge {
   const queryClient = useQueryClient()
   const [merging, setMerging] = useState<{ repo: string; pr: number | 'all' } | null>(null)
   const [error, setError] = useState<{ repo: string; message: string } | null>(null)
+  const [merged, setMerged] = useState<ReadonlySet<string>>(() => new Set())
+  const [receipts, setReceipts] = useState<ReadonlySet<string>>(() => new Set())
+  const receiptTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
+
+  useEffect(() => () => {
+    for (const timer of receiptTimers.current) clearTimeout(timer)
+  }, [])
+
+  const markMerged = useCallback((repo: string, pullNumber: number) => {
+    const key = prMergeKey(repo, pullNumber)
+    setMerged(current => new Set(current).add(key))
+    setReceipts(current => new Set(current).add(key))
+    const timer = setTimeout(() => {
+      setReceipts(current => {
+        const next = new Set(current)
+        next.delete(key)
+        return next
+      })
+      receiptTimers.current.delete(timer)
+    }, MERGE_RECEIPT_MS)
+    receiptTimers.current.add(timer)
+  }, [])
 
   const callMerge = useCallback(
     (repo: string, pullNumber: number): Promise<MergeResult> => {
@@ -39,6 +64,7 @@ export function usePrMerge(): PrMerge {
       setError(null)
       const result = await callMerge(repo, pullNumber)
       if (result.ok) {
+        markMerged(repo, pullNumber)
         await refresh()
       } else {
         // A failed merge (typically a 409: the PR went stale since the last
@@ -49,7 +75,7 @@ export function usePrMerge(): PrMerge {
       }
       setMerging(null)
     },
-    [merging, callMerge, refresh],
+    [merging, callMerge, markMerged, refresh],
   )
 
   const mergeAll = useCallback(
@@ -65,14 +91,15 @@ export function usePrMerge(): PrMerge {
           break
         }
         merged += 1
+        markMerged(repo, n)
       }
       if (merged > 0) await refresh()
       setMerging(null)
     },
-    [merging, callMerge, refresh],
+    [merging, callMerge, markMerged, refresh],
   )
 
   const dismissError = useCallback(() => setError(null), [])
 
-  return { merging, error, mergeOne, mergeAll, dismissError }
+  return { merging, merged, receipts, error, mergeOne, mergeAll, dismissError }
 }

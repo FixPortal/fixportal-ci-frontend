@@ -7,6 +7,7 @@ import { useCiAdmin } from '../CiAdminContext'
 import { useCiConfig } from '../CiConfigContext'
 import { usePrMerge } from '../hooks/usePrMerge'
 import type { PrMerge } from '../hooks/usePrMerge'
+import { prMergeKey } from '../lib/prMerge'
 import { isNoCi } from '../lib/isNoCi'
 import { computeSummary, withNlocAvailability } from '../lib/computeSummary'
 import { SummaryStrip } from '../components/SummaryStrip'
@@ -27,6 +28,21 @@ import { FilterChip } from '../components/FilterChip'
 // in one place.
 function applyNoCiFilter(repos: RepositorySnapshot[], hidden: boolean): RepositorySnapshot[] {
   return hidden ? repos.filter(r => !isNoCi(r)) : repos
+}
+
+function reconcileMergedPrs(
+  repositories: RepositorySnapshot[],
+  merged: ReadonlySet<string>,
+  receipts: ReadonlySet<string>,
+): RepositorySnapshot[] {
+  if (merged.size === 0) return repositories
+  return repositories.map(repository => ({
+    ...repository,
+    pullRequests: repository.pullRequests.filter(pr => {
+      const key = prMergeKey(repository.name, pr.number)
+      return !merged.has(key) || receipts.has(key)
+    }),
+  }))
 }
 
 const KEY_PUBLIC = 'section:public'
@@ -148,9 +164,10 @@ export function CiBoardContent() {
   const repositories = useMemo(() => {
     const repos = snapshot.data?.repositories ?? []
     const authorised = isAdmin ? repos : repos.filter(r => !r.private)
-    if (!hasRepositoryScope || scope === undefined) return authorised
-    return authorised.filter(repository => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope)
-  }, [hasRepositoryScope, isAdmin, scope, snapshot.data])
+    const reconciled = reconcileMergedPrs(authorised, merge.merged, merge.receipts)
+    if (!hasRepositoryScope || scope === undefined) return reconciled
+    return reconciled.filter(repository => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope)
+  }, [hasRepositoryScope, isAdmin, merge.merged, merge.receipts, scope, snapshot.data])
   const noCiFiltered = useMemo(
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
     [repositories, hideNoCi.hidden],

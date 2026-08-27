@@ -1,7 +1,7 @@
 // src/pages/CiBoardContent.test.tsx
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest'
 import type { DashboardSnapshot } from '../api/types'
 import { CiBoard } from '../CiBoard'
 
@@ -43,6 +43,31 @@ function renderBoard() {
 
 describe('CiBoardContent filtering', () => {
   beforeEach(() => localStorage.clear())
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('reconciles a successful merge before the stale snapshot catches up', async () => {
+    const staleSnapshotFetcher = vi.fn().mockResolvedValue(readySnapshot)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ merged: true, sha: 'abc123' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })))
+    render(
+      <CiBoard
+        adminSignal={true}
+        apiBase="https://ci.test"
+        snapshotFetcher={async () => readySnapshot}
+        adminSnapshotFetcher={staleSnapshotFetcher}
+        storageNamespace="merge-receipt"
+      />,
+    )
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Rebase-merge PR #7' }))
+
+    expect(await screen.findByRole('button', { name: 'Merged PR #7' })).toHaveTextContent('Merged')
+    await waitFor(() => expect(staleSnapshotFetcher).toHaveBeenCalledTimes(2))
+    await waitForElementToBeRemoved(() => screen.queryByText('Add widget'), { timeout: 2_000 })
+    expect(screen.queryByText('Add widget')).not.toBeInTheDocument()
+  })
 
   it('shows the filtered empty state with a Clear filters action when nothing matches', async () => {
     renderBoard()

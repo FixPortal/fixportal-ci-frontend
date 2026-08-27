@@ -15,14 +15,16 @@ import { memo } from 'react'
 // toolbar's "Ready to merge" filter chip, and identifying its PR) while the
 // visible label stays the board's verdict wording.
 export const ReadyToMergePill = memo(function ReadyToMergePill({
-  ready, onMerge, busy, prNumber,
+  ready, onMerge, busy, merging, merged, prNumber,
 }: {
   ready?: boolean | null
   onMerge?: () => void
   busy?: boolean
+  merging?: boolean
+  merged?: boolean
   prNumber?: number
 }) {
-  if (ready !== true) return null
+  if (ready !== true && !merged) return null
   if (!onMerge) {
     return (
       <span className="chip chip--static chip--ready" title="Ready to merge">
@@ -31,17 +33,34 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
       </span>
     )
   }
+  let label = 'Ready to merge'
+  let title = 'Rebase-merge this PR'
+  let accessibleAction = 'Rebase-merge'
+  if (merging) {
+    label = 'Merging…'
+    title = 'Merge in progress'
+    accessibleAction = 'Merging'
+  }
+  if (merged) {
+    label = '✓ Merged'
+    title = 'Merge completed'
+    accessibleAction = 'Merged'
+  }
+  const accessibleLabel = prNumber === undefined
+    ? `${accessibleAction} pull request`
+    : `${accessibleAction} PR #${prNumber}`
   return (
     <button
       type="button"
       className="chip chip--ready chip--actionable"
-      title="Rebase-merge this PR"
-      aria-label={prNumber !== undefined ? `Rebase-merge PR #${prNumber}` : 'Rebase-merge this PR'}
-      disabled={busy}
+      title={title}
+      aria-label={accessibleLabel}
+      aria-live="polite"
+      disabled={busy || merged}
       onClick={onMerge}
     >
       <span className="chip__dot" aria-hidden="true" />
-      <span className="chip__label">Ready to merge</span>
+      <span className="chip__label">{label}</span>
     </button>
   )
 })
