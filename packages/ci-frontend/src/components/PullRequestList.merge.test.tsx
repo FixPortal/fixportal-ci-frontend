@@ -54,7 +54,7 @@ test('Merge all merges every ready PR in listed order', async () => {
   const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
   renderList(mergeFetcher, true, [readyPr(3), { ...readyPr(9), readyToMerge: false }, readyPr(4)])
   await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
-  await screen.findByRole('button', { name: /Merge all/i }) // wait for re-render
+  await screen.findByRole('button', { name: 'Merged PR #4' })
   expect(calls).toEqual([3, 4]) // the not-ready PR is skipped
 })
 

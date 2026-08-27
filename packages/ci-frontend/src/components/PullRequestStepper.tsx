@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import type { PrMerge } from '../lib/prMerge'
+import { prMergeKey } from '../lib/prMerge'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
 import { isAllowedHref } from '../lib/isAllowedHref'
@@ -62,6 +63,7 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
 
   if (!pr) return null
   const prHref = isAllowedHref(pr.htmlUrl)
+  const key = prMergeKey(pr.repo, pr.number)
 
   return (
     <dialog
@@ -109,6 +111,8 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
           ready={pr.readyToMerge}
           prNumber={pr.number}
           onMerge={isAdmin && merge ? () => merge.mergeOne(pr.repo, pr.number) : undefined}
+          merging={merge?.merging?.repo === pr.repo && merge.merging.pr === pr.number}
+          merged={merge?.merged.has(key)}
           busy={merge?.merging != null}
         />
         {isAdmin && merge && merge.error?.repo === pr.repo && (

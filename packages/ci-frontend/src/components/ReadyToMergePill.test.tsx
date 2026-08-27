@@ -21,6 +21,11 @@ test('disables the button while busy', () => {
   expect(screen.getByRole('button', { name: /rebase-merge/i })).toBeDisabled()
 })
 
+test('names the in-flight state instead of looking ready again', () => {
+  render(<ReadyToMergePill ready prNumber={7} onMerge={() => {}} busy merging />)
+  expect(screen.getByRole('button', { name: 'Merging PR #7' })).toHaveTextContent('Merging…')
+})
+
 test.each([[false], [null], [undefined]])('renders nothing when ready is %s, even with onMerge', ready => {
   const { container } = render(<ReadyToMergePill ready={ready} onMerge={() => {}} />)
   expect(container.firstChild).toBeNull()

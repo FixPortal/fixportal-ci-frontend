@@ -2,6 +2,7 @@ import type { PullRequest } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import type { PrMerge } from '../lib/prMerge'
+import { prMergeKey } from '../lib/prMerge'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
 
@@ -16,12 +17,13 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
 }) {
   if (pullRequests.length === 0) return null
   // Strict === true, same rule as the pill itself: never coerce the tri-state.
-  const readyPrs = pullRequests.filter(pr => pr.readyToMerge === true)
+  const readyPrs = pullRequests.filter(pr => pr.readyToMerge === true && !merge?.merged.has(prMergeKey(repoName, pr.number)))
+  const openPrCount = pullRequests.filter(pr => !merge?.merged.has(prMergeKey(repoName, pr.number))).length
   const merging = merge?.merging
   return (
     <div className="repo-prs">
       <span className="repo-prs__count">
-        {pullRequests.length} open PR{pullRequests.length === 1 ? '' : 's'}
+        {openPrCount} open PR{openPrCount === 1 ? '' : 's'}
       </span>
       {/* One ready PR has its own pill; Merge all only earns its place at two+. */}
       {isAdmin && merge && readyPrs.length >= 2 && (
@@ -43,6 +45,8 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
       <ul>
         {pullRequests.map(pr => {
           const href = isAllowedHref(pr.htmlUrl)
+          const key = prMergeKey(repoName, pr.number)
+          const locallyMerged = merge?.merged.has(key) ?? false
           return (
             <li key={pr.number} className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}>
               {/* The link and the pills share one flex line so the pills can take the
@@ -69,6 +73,8 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
                     onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number) : undefined}
+                    merging={merging?.repo === repoName && merging.pr === pr.number}
+                    merged={locallyMerged}
                     // Busy is global, matching the hook's re-entrancy guard and
                     // the stepper: any in-flight merge disables every pill on the
                     // board, so no pill can look clickable while its click no-ops.
