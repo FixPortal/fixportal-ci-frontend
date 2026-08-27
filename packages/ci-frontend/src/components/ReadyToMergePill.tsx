@@ -26,7 +26,7 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
 }) {
   if (ready !== true && !merged) return null
   let label = 'Ready to merge'
-  let title = 'Rebase-merge this PR'
+  let title = onMerge ? 'Rebase-merge this PR' : 'Ready to merge'
   let accessibleAction = 'Rebase-merge'
   if (merging) {
     label = 'Merging…'
