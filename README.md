@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/ci-dashboard-hero.png" alt="CI Dashboard by FixPortal" width="1200">
+  <img src="docs/images/ci-dashboard-hero.png" alt="CI Dashboard by FixPortal" width="1200">
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 > backend snapshot supplies `reviewSignals` on a pull request; older or unconfigured backends are
 > rendered exactly as before.
 
-![FixPortal CI dashboard](docs/dashboard.png)
+![FixPortal CI dashboard](docs/images/dashboard.png)
 
 > New here? [**The Neophyte's guide to setting up the CI dashboard**](docs/setup-guide.md)
 > walks through every route from "just show me" to "point it at my own GitHub org",
