@@ -12,6 +12,14 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-08-28
+
+### Fixed
+
+- Successful single and batch merges immediately reconcile the open-PR count, filters, summary, and merge pills while the backend snapshot catches up.
+- Merge controls keep an explicit in-progress state, show a short merged receipt, release their busy guard when host callbacks throw, and bound retained merge state.
+- Display-only Ready-to-merge pills retain their original tooltip while merged receipts remain visible to non-admin viewers.
+
 ## [3.1.0] - 2026-08-26
 
 ### Added
