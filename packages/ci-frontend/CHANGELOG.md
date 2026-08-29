@@ -12,6 +12,16 @@ lists every published release.
 
 ## [Unreleased]
 
+### Fixed
+
+- A merge in progress no longer disables merge controls board-wide: only the pill being
+  merged (and, during `Merge all`, the rest of that repository's ready pills) stands down,
+  so merges in other repositories can be started while one is in flight.
+- Merge failures are retained per repository, so a second failure elsewhere on the board no
+  longer replaces the first.
+- Opening the pull-request stepper on a repository whose merge has just failed keeps that
+  error on screen instead of clearing it.
+
 ## [3.1.1] - 2026-08-28
 
 ### Fixed

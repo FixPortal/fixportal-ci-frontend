@@ -44,6 +44,12 @@ npm run build:app    # type-check and build the standalone app
 
 - One focused change per PR.
 - Tests for new behaviour or a bug fix that would have caught the regression.
+- Anything a consumer of the package would notice gets a bullet under
+  `## [Unreleased]` in [packages/ci-frontend/CHANGELOG.md](packages/ci-frontend/CHANGELOG.md),
+  under `Added` / `Changed` / `Fixed` / `Removed`. Write it for someone upgrading the
+  package, not for someone reading the diff. The release that ships it moves those
+  bullets under its version heading. Internal-only changes (refactors, test or CI work)
+  need no entry.
 - No new runtime dependency unless a few lines of code genuinely cannot do it.
 - Public API changes (`CiBoard` props, exported types) called out in the PR
   description.
