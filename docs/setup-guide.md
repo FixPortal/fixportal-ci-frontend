@@ -171,15 +171,26 @@ does not block the rest of the board:
   adminSignal={isSignedIn}
   apiBase="https://your-backend.example.com"
   adminSnapshotFetcher={fetchAdminSnapshot}
-  mergeFetcher={(repo, pullNumber) =>
-    fetch('/api/merge', {
+  mergeFetcher={async (repo, pullNumber) => {
+    const response = await fetch('/api/merge', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ repo, pullNumber }),
-    }).then(response => response.json())
-  }
+    })
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: 'Merge failed' }
+    }
+    const body = await response.json()
+    return { ok: true, sha: body.sha }
+  }}
 />
 ```
+
+Return a `MergeResult` — `{ ok: true, sha }` or
+`{ ok: false, status, message }` — and resolve it for failures too rather than
+throwing or returning the raw response body. The board renders `message`
+inline beside the repository; a resolved value that has no `ok` field reads as
+a failure with nothing to show.
 
 The callback runs in the browser, so send the request to **your own server** and
 attach the GitHub credential there. Omit `mergeFetcher` and the board posts to
