@@ -96,3 +96,19 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
+test('opening the stepper keeps an error already recorded for the shown PR\'s repo', async () => {
+  const mergeRef: { current: ReturnType<typeof usePrMerge> | null } = { current: null }
+  function LateOpenHarness({ open }: { open: boolean }) {
+    const merge = usePrMerge()
+    useEffect(() => { mergeRef.current = merge })
+    if (!open) return null
+    return <PullRequestStepper prs={[openPr]} onClose={() => {}} isAdmin merge={merge} />
+  }
+  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const { rerender } = render(<LateOpenHarness open={false} />, { wrapper: wrapperWith(mergeFetcher) })
+  // Fail repo-a's merge from the board, then open the stepper on that PR: the
+  // paging effect's mount run must not swallow the error it lands on.
+  await act(() => mergeRef.current!.mergeOne('repo-a', 7))
+  rerender(<LateOpenHarness open={true} />)
+  expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
+})

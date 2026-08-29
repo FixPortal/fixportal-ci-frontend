@@ -59,7 +59,10 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
   }, [dismissError])
   // Errors are keyed by repo, so paging clears the repo we just left — the one
   // whose error the departing PR owned.
-  const shownRepo = useRef(pr?.repo)
+  // Seeded undefined, not with the first PR's repo: the effect also runs on
+  // mount, and dismissing there would wipe an error the opening PR's repo
+  // already earned — the stepper reopened on the PR whose merge just failed.
+  const shownRepo = useRef<string | undefined>(undefined)
   useEffect(() => {
     const departing = shownRepo.current
     shownRepo.current = pr?.repo
