@@ -107,19 +107,28 @@ test('a merge error renders only in the failing repo, not board-wide', async () 
   expect(repoBSection.contains(alerts[0])).toBe(true)
 })
 
-test('an in-flight merge in one repo disables the other repo\'s pills', async () => {
-  let resolveMerge!: (r: MergeResult) => void
-  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(res => { resolveMerge = res }))
+test('an in-flight merge disables only its own pill, and a second merge can start', async () => {
+  const resolvers: ((r: MergeResult) => void)[] = []
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(res => { resolvers.push(res) }))
   const { container } = renderTwoRepos(mergeFetcher)
   const [repoASection, repoBSection] = container.querySelectorAll('.repo-prs')
   const pillA = within(repoASection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
   const pillB = within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
-  expect(pillB).toBeEnabled()
   await userEvent.click(pillA)
-  // The hook's re-entrancy guard is global, so busy is global too: no pill may
-  // look clickable while its click would be swallowed.
   expect(pillA).toBeDisabled()
-  expect(pillB).toBeDisabled()
-  resolveMerge({ ok: true, sha: 'abc' })
-  await within(repoBSection as HTMLElement).findByRole('button', { name: /rebase-merge/i })
+  expect(pillB).toBeEnabled() // one card merging must not lock the board
+  await userEvent.click(pillB)
+  expect(mergeFetcher).toHaveBeenCalledTimes(2)
+  expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8)
+  resolvers.forEach(resolve => resolve({ ok: true, sha: 'abc' }))
+  await within(repoBSection as HTMLElement).findByRole('button', { name: 'Merged PR #8' })
+})
+
+test('a second click on the pill already merging is swallowed', async () => {
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(() => {}))
+  renderList(mergeFetcher, true, [readyPr(7)])
+  const pill = screen.getByRole('button', { name: /rebase-merge/i })
+  await userEvent.click(pill)
+  await userEvent.click(pill)
+  expect(mergeFetcher).toHaveBeenCalledTimes(1)
 })

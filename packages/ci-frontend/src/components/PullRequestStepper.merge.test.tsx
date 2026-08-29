@@ -88,11 +88,11 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   render(<CaptureHarness />, { wrapper: wrapperWith(mergeFetcher) })
   // Fail a merge on repo-b while the stepper shows repo-a's PR.
   await act(() => mergeRef.current!.mergeOne('repo-b', 8))
-  expect(mergeRef.current!.error).toEqual({ repo: 'repo-b', message: 'not mergeable' })
+  expect(mergeRef.current!.errors.get('repo-b')).toBe('not mergeable')
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   // And the alert does appear once the failing repo's PR is displayed... but
   // paging dismisses stale errors, so instead verify repo-a's own failure shows.
-  await act(() => mergeRef.current!.dismissError())
+  await act(async () => mergeRef.current!.dismissError('repo-b'))
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
