@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import type { PrMerge } from '../lib/prMerge'
-import { prMergeKey } from '../lib/prMerge'
+import { isPrBusy, prMergeKey } from '../lib/prMerge'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { prAgeTone } from '../lib/prAgeTone'
 import { isAllowedHref } from '../lib/isAllowedHref'
@@ -57,8 +57,13 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
   useEffect(() => {
     dismissRef.current = dismissError
   }, [dismissError])
+  // Errors are keyed by repo, so paging clears the repo we just left — the one
+  // whose error the departing PR owned.
+  const shownRepo = useRef(pr?.repo)
   useEffect(() => {
-    dismissRef.current?.()
+    const departing = shownRepo.current
+    shownRepo.current = pr?.repo
+    if (departing !== undefined) dismissRef.current?.(departing)
   }, [pr?.repo, pr?.number])
 
   if (!pr) return null
@@ -111,14 +116,14 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
           ready={pr.readyToMerge}
           prNumber={pr.number}
           onMerge={isAdmin && merge ? () => merge.mergeOne(pr.repo, pr.number) : undefined}
-          merging={merge?.merging?.repo === pr.repo && merge.merging.pr === pr.number}
+          merging={merge?.merging.has(key) ?? false}
           merged={merge?.merged.has(key)}
-          busy={merge?.merging != null}
+          busy={merge ? isPrBusy(merge.merging, pr.repo, pr.number) : false}
         />
-        {isAdmin && merge && merge.error?.repo === pr.repo && (
+        {isAdmin && merge?.errors.has(pr.repo) && (
           <span className="pr-card__merge-error" role="alert">
-            {merge.error.message}
-            <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
+            {merge.errors.get(pr.repo)}
+            <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(pr.repo)}>✕</button>
           </span>
         )}
         <ReviewPills signals={pr.reviewSignals} />

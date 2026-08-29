@@ -2,7 +2,7 @@ import type { PullRequest } from '../api/types'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import type { PrMerge } from '../lib/prMerge'
-import { prMergeKey } from '../lib/prMerge'
+import { isPrBusy, isRepoMerging, prMergeKey } from '../lib/prMerge'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
 
@@ -30,16 +30,16 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
         <button
           type="button"
           className="chip chip--actionable repo-prs__merge-all"
-          disabled={merge.merging !== null}
+          disabled={isRepoMerging(merge.merging, repoName)}
           onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
         >
           Merge all
         </button>
       )}
-      {isAdmin && merge && merge.error?.repo === repoName && (
+      {isAdmin && merge?.errors.has(repoName) && (
         <span className="repo-prs__merge-error" role="alert">
-          {merge.error.message}
-          <button type="button" aria-label="Dismiss" onClick={merge.dismissError}>✕</button>
+          {merge.errors.get(repoName)}
+          <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(repoName)}>✕</button>
         </span>
       )}
       <ul>
@@ -73,12 +73,12 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
                     onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number) : undefined}
-                    merging={merging?.repo === repoName && merging.pr === pr.number}
+                    merging={merging?.has(key) ?? false}
                     merged={locallyMerged}
-                    // Busy is global, matching the hook's re-entrancy guard and
-                    // the stepper: any in-flight merge disables every pill on the
-                    // board, so no pill can look clickable while its click no-ops.
-                    busy={merging != null}
+                    // Busy is per-PR: only this pill's own merge (or a Merge all
+                    // working through its repo) disables it. Every other pill on
+                    // the board stays clickable, and its click really does merge.
+                    busy={merging ? isPrBusy(merging, repoName, pr.number) : false}
                   />
                   <ReviewPills signals={pr.reviewSignals} />
                 </div>

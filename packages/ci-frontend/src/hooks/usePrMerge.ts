@@ -12,21 +12,54 @@ const MERGE_RECEIPT_MS = 900
 const MAX_MERGED_KEYS = 1_000
 
 // Merge state for the whole board, hoisted to the page so components stay
-// presentational. merging doubles as the busy flag and a re-entrancy guard: a
-// second click while a merge is in flight is a no-op. The 30s snapshot poll can
-// leave a green pill stale, so failures are normal and surface inline via
-// `error` rather than throwing.
+// presentational. `merging` holds a key per in-flight merge and doubles as the
+// re-entrancy guard: a second click on the SAME pill is a no-op, while a click on
+// any other pill starts its own merge. The 30s snapshot poll can leave a green
+// pill stale, so failures are normal and surface inline via `errors` rather than
+// throwing.
 export function usePrMerge(): PrMerge {
   const { apiBase, mergeFetcher } = useCiConfig()
   const queryClient = useQueryClient()
-  const [merging, setMerging] = useState<{ repo: string; pr: number | 'all' } | null>(null)
-  const [error, setError] = useState<{ repo: string; message: string } | null>(null)
+  const [merging, setMerging] = useState<ReadonlySet<string>>(() => new Set())
+  const [errors, setErrors] = useState<ReadonlyMap<string, string>>(() => new Map())
   const [merged, setMerged] = useState<ReadonlySet<string>>(() => new Set())
   const [receipts, setReceipts] = useState<ReadonlySet<string>>(() => new Set())
   const receiptTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
+  // The guard reads from a ref, not from `merging`: two clicks in the same tick
+  // would both see the pre-render state and both start the same merge.
+  const inFlight = useRef(new Set<string>())
 
   useEffect(() => () => {
     for (const timer of receiptTimers.current) clearTimeout(timer)
+  }, [])
+
+  const startMerge = useCallback((key: string) => {
+    if (inFlight.current.has(key)) return false
+    inFlight.current.add(key)
+    setMerging(current => new Set(current).add(key))
+    return true
+  }, [])
+
+  const endMerge = useCallback((key: string) => {
+    inFlight.current.delete(key)
+    setMerging(current => {
+      const next = new Set(current)
+      next.delete(key)
+      return next
+    })
+  }, [])
+
+  const dismissError = useCallback((repo: string) => {
+    setErrors(current => {
+      if (!current.has(repo)) return current
+      const next = new Map(current)
+      next.delete(repo)
+      return next
+    })
+  }, [])
+
+  const setRepoError = useCallback((repo: string, message: string) => {
+    setErrors(current => new Map(current).set(repo, message))
   }, [])
 
   const markMerged = useCallback((repo: string, pullNumber: number) => {
@@ -65,9 +98,9 @@ export function usePrMerge(): PrMerge {
 
   const mergeOne = useCallback(
     async (repo: string, pullNumber: number) => {
-      if (merging !== null) return
-      setMerging({ repo, pr: pullNumber })
-      setError(null)
+      const key = prMergeKey(repo, pullNumber)
+      if (!startMerge(key)) return
+      dismissError(repo)
       try {
         const result = await callMerge(repo, pullNumber)
         if (result.ok) {
@@ -78,26 +111,35 @@ export function usePrMerge(): PrMerge {
           // poll) means our snapshot is out of date — refresh before surfacing
           // the error so the board catches up.
           await refresh()
-          setError({ repo, message: result.message })
+          setRepoError(repo, result.message)
         }
       } finally {
-        setMerging(null)
+        endMerge(key)
       }
     },
-    [merging, callMerge, markMerged, refresh],
+    [startMerge, endMerge, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
   const mergeAll = useCallback(
     async (repo: string, pullNumbers: number[]) => {
-      if (merging !== null) return
-      setMerging({ repo, pr: 'all' })
-      setError(null)
+      const allKey = prMergeKey(repo, 'all')
+      if (!startMerge(allKey)) return
+      dismissError(repo)
       let merged = 0
       try {
         for (const n of pullNumbers) {
-          const result = await callMerge(repo, n)
+          // The PR being merged carries its own key too, so its pill reads
+          // "Merging…" as the queue reaches it rather than just going flat.
+          const key = prMergeKey(repo, n)
+          startMerge(key)
+          let result: MergeResult
+          try {
+            result = await callMerge(repo, n)
+          } finally {
+            endMerge(key)
+          }
           if (!result.ok) {
-            setError({ repo, message: `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}` })
+            setRepoError(repo, `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}`)
             break
           }
           merged += 1
@@ -105,13 +147,11 @@ export function usePrMerge(): PrMerge {
         }
         if (merged > 0) await refresh()
       } finally {
-        setMerging(null)
+        endMerge(allKey)
       }
     },
-    [merging, callMerge, markMerged, refresh],
+    [startMerge, endMerge, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
-  const dismissError = useCallback(() => setError(null), [])
-
-  return { merging, merged, receipts, error, mergeOne, mergeAll, dismissError }
+  return { merging, merged, receipts, errors, mergeOne, mergeAll, dismissError }
 }
