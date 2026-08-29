@@ -12,6 +12,8 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-08-29
+
 ### Fixed
 
 - A merge in progress no longer disables merge controls board-wide: only the pill being
