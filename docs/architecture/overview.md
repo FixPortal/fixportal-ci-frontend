@@ -60,7 +60,8 @@ GET {apiBase}/api/dashboard/snapshot
         ▼ (consume RepositorySnapshot + pure helpers)
   lib/* ................... representative pure helpers: computeSummary, flattenOpenPrs,
                             isNoCi, prAgeTone, worstState, dedupeJobLabel, stateLabel,
-                            formatCompactNumber, relativeTime, isAllowedHref
+                            formatCompactNumber, relativeTime, isAllowedHref, prMerge
+                            (merge-state keys and the isPrBusy / isRepoMerging predicates)
 ```
 
 ## Load-bearing seams (what the graph gets right)
@@ -82,6 +83,16 @@ GET {apiBase}/api/dashboard/snapshot
   or fetcher is also configured; only then are private repos and admin-only
   controls shown. Safe GitHub links present in the guest snapshot remain
   actionable.
+- **`mergeFetcher` is the board's only write path**, added in 3.1.0. Everything else
+  here reads a snapshot; this one prop lets an admin host rebase-merge a ready pull
+  request from the board. The library never holds a credential: it calls the host's
+  callback (or `POST {apiBase}/api/dashboard/merge`, which the host's own server is
+  expected to authenticate), so the token stays server-side exactly as it does for the
+  admin snapshot. `hooks/usePrMerge.ts` owns the whole of that state — in-flight keys,
+  the confirmed-merge set that survives a stale poll, per-repository errors — and hands
+  it to presentational components as the `PrMerge` prop defined in `lib/prMerge.ts`.
+  `PrMerge` is deliberately NOT exported from `index.ts`: the supported surface is the
+  `mergeFetcher` prop, not the internal state shape.
 - **"Library, not app" tension is encoded in `QueryClientSafeProvider`** — it
   avoids creating a second TanStack `QueryClient` when the host application
   already provides one. This is the seam that makes the board droppable into a
@@ -112,7 +123,7 @@ GET {apiBase}/api/dashboard/snapshot
 ## Layers (from the understand-anything graph)
 
 1. **Library Core** — `api/types.ts`, `api/getDashboardSnapshot.ts`, and the `lib/` pure helpers
-2. **Library Hooks** — `useDashboardSnapshot`, `useCollapseState`, `useHideNoCi`, `useRepoFilters`
+2. **Library Hooks** — `useDashboardSnapshot`, `usePrMerge`, `useCollapseState`, `useHideNoCi`, `useRepoFilters`
 3. **Library Components** — board widgets, `pages/CiBoardContent`, the root entry files (`CiBoard`, `CiAdminContext`, `CiConfigContext`, `DefaultFooter`, `index.ts` barrel)
 4. **Library Styles** — `board.css`, `tokens.css`
 5. **Dashboard App** — `apps/dashboard` source, HTML shell, app configs

@@ -161,6 +161,33 @@ Three things people trip over, all covered in the
 - If you write tests that render this component under jsdom, you need two small
   stubs. jsdom does not implement `ResizeObserver` or `window.matchMedia`.
 
+**Letting admins merge from the board.** Pass a `mergeFetcher` and every ready
+pull request's verdict pill becomes a rebase-merge button (plus a per-repository
+`Merge all` once two are ready). Merges run per pull request, so one in progress
+does not block the rest of the board:
+
+```tsx
+<CiBoard
+  adminSignal={isSignedIn}
+  apiBase="https://your-backend.example.com"
+  adminSnapshotFetcher={fetchAdminSnapshot}
+  mergeFetcher={(repo, pullNumber) =>
+    fetch('/api/merge', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ repo, pullNumber }),
+    }).then(response => response.json())
+  }
+/>
+```
+
+The callback runs in the browser, so send the request to **your own server** and
+attach the GitHub credential there. Omit `mergeFetcher` and the board posts to
+`{apiBase}/api/dashboard/merge` instead, which your backend is expected to
+authenticate. Either way the frontend never sees a token. The controls appear
+only for an effective admin — `adminSignal` alone does nothing without an admin
+snapshot source.
+
 ---
 
 ## 4. "I want to change the code"
