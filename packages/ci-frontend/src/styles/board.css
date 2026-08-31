@@ -759,7 +759,7 @@
 
   /* Buttons get the chip look minus the user-agent button chrome. Actionable =
      clickable chip (merge pills); chip--static stays for display-only chips. */
-  button.chip { font: inherit; background: none; border: none; padding: 0; }
+  button.chip { font: inherit; }
   .chip--actionable { cursor: pointer; }
   .chip--actionable:disabled { cursor: default; opacity: 0.6; }
   .repo-prs__merge-all { margin-left: 0.5rem; }
