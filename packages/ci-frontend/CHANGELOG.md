@@ -12,6 +12,13 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-08-31
+
+### Fixed
+
+- `button.chip` no longer strips border, background, and padding from chips rendered as a
+  `<button>` (e.g. the `Merge all` pill), which previously rendered as bare unstyled text.
+
 ## [3.1.2] - 2026-08-29
 
 ### Fixed
