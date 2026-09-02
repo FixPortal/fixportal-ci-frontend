@@ -33,8 +33,10 @@ export interface CiBoardProps {
   storageNamespace?: string
   /** Optional canonical owner/repository identity that limits this board to one already-authorised repository. */
   repositoryScope?: string
-  /** Whether to show the theme switcher (Light / Dark / System) in the header. Defaults to true. */
+  /** Whether to show the theme switcher (Light / Dark / System) in the header. Defaults to true. Ignored when `theme` is set — a controlled board has no use for it. */
   showThemeSwitcher?: boolean
+  /** Host-resolved theme ('light' | 'dark'). When set, the board is controlled: this value is written to the board's own .ci-page container as data-theme, and the internal ThemeSwitcher (with its localStorage persistence) is suppressed so there is exactly one writer. Hosts that offer 'system' resolve it themselves and pass the result. */
+  theme?: 'light' | 'dark'
 }
 
 function QueryClientSafeProvider({ children }: { children: ReactNode }) {
@@ -149,6 +151,7 @@ export function CiBoard({
   storageNamespace,
   repositoryScope,
   showThemeSwitcher = true,
+  theme,
 }: CiBoardProps) {
   // Label reflects whether the board actually consumes a privileged data source,
   // not merely that a signal was passed — matches the toolbar scope descriptor.
@@ -166,6 +169,14 @@ export function CiBoard({
   // The theme switcher applies `data-theme` to this container, not <html>, so the
   // board's theme never leaks onto the host page.
   const pageRef = useRef<HTMLDivElement>(null)
+  // Controlled theme: the host shell owns the mode, so write it to the board's own
+  // container here (same attribute the ThemeSwitcher targets) and keep the switcher
+  // unmounted below — one writer, no localStorage. Absent prop = unchanged
+  // uncontrolled behaviour.
+  useEffect(() => {
+    if (theme === undefined) return
+    pageRef.current?.setAttribute('data-theme', theme)
+  }, [theme])
   useEffect(() => {
     const header = headerRef.current
     if (!header) return
@@ -195,7 +206,7 @@ export function CiBoard({
                   {effectiveAdmin ? '[Admin]' : '[Guest]'}
                 </span>
               </div>
-              {showThemeSwitcher && (
+              {showThemeSwitcher && theme === undefined && (
                 <div style={{ marginLeft: 'auto' }}>
                   <ThemeSwitcher pageRef={pageRef} />
                 </div>

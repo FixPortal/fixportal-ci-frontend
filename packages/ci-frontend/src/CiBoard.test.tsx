@@ -141,3 +141,55 @@ describe('CiBoard admin source gating', () => {
     expect(await screen.findByText('No repositories found.')).toBeInTheDocument()
   })
 })
+
+describe('CiBoard controlled theme', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('applies the host-resolved theme to .ci-page with the switcher suppressed', async () => {
+    const { container } = render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={async () => snapshot}
+        showThemeSwitcher={false}
+        theme="dark"
+        storageNamespace="theme-controlled"
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' })).toBeInTheDocument()
+    expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'dark')
+    expect(screen.queryByRole('combobox', { name: 'Select theme' })).not.toBeInTheDocument()
+  })
+
+  it('follows the host when the theme prop changes', async () => {
+    const props = {
+      adminSignal: false,
+      snapshotFetcher: async () => snapshot,
+      storageNamespace: 'theme-rerender',
+    }
+    const { container, rerender } = render(<CiBoard {...props} theme="light" />)
+
+    expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'light')
+    // Controlled means the host owns theme outright: the switcher stays out even
+    // when showThemeSwitcher is left at its default.
+    expect(screen.queryByRole('combobox', { name: 'Select theme' })).not.toBeInTheDocument()
+
+    rerender(<CiBoard {...props} theme="dark" />)
+
+    expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'dark')
+  })
+
+  it('keeps the internal switcher owning data-theme when no theme prop is given', async () => {
+    const { container } = render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={async () => snapshot}
+        storageNamespace="theme-uncontrolled"
+      />,
+    )
+
+    expect(await screen.findByRole('combobox', { name: 'Select theme' })).toBeInTheDocument()
+    // The matchMedia stub reports no dark preference, so 'system' resolves light.
+    expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'light')
+  })
+})
