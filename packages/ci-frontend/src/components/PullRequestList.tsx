@@ -29,11 +29,13 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
       {isAdmin && merge && readyPrs.length >= 2 && (
         <button
           type="button"
-          className="chip chip--actionable repo-prs__merge-all"
+          className="chip chip--ready chip--actionable repo-prs__merge-all"
+          title="Rebase-merge every ready PR"
           disabled={isRepoMerging(merge.merging, repoName)}
           onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
         >
-          Merge all
+          <span className="chip__dot" aria-hidden="true" />
+          <span className="chip__label">Merge all</span>
         </button>
       )}
       {isAdmin && merge?.errors.has(repoName) && (
