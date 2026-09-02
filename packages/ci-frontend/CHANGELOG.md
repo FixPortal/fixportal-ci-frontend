@@ -12,6 +12,15 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-02
+
+### Added
+
+- `CiBoard` accepts a controlled `theme?: 'light' | 'dark'` prop. When set, the board writes
+  `data-theme` onto its own `.ci-page` container and the internal theme switcher (with its
+  localStorage persistence) stays unmounted, so an embedded host shell owns the mode with a
+  single writer. Absent prop keeps the previous uncontrolled behaviour unchanged.
+
 ## [3.1.3] - 2026-08-31
 
 ### Fixed
