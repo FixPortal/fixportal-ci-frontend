@@ -15,9 +15,17 @@ permissions:
 jobs:
   stryker-ci-frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 60, not 30. The lane grew into its old ceiling and started cancelling: the four
+    # scheduled runs to 2026-08-27 took 14.7, 27.2, 26.4 and 29.3 minutes, and the fifth
+    # was killed at the 30-minute mark with nothing reported. A cancelled mutation run is
+    # not a slow one -- it produces no score at all, so the lane had silently stopped
+    # measuring anything. Doubling the ceiling restores the headroom the 14.7-minute run
+    # originally had. This is a weekly workflow on a public repository, so the runner
+    # minutes are free; the only cost of the larger bound is a longer wait when Stryker
+    # genuinely hangs, which is what the bound is still there to catch.
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -26,7 +34,7 @@ jobs:
         with:
           shellcheck: true
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           # Safe now that every dependency is public (same reasoning as ci.yml).
@@ -42,7 +50,7 @@ jobs:
 
       - name: Upload mutation report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@v7
         with:
           name: mutation-report
           path: packages/ci-frontend/reports/mutation/**
