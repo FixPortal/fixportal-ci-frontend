@@ -54,6 +54,28 @@ jobs:
         with:
           shellcheck: true
 
+      # A ref gate on refs/tags/v* proves the ref's SHAPE, never that the commit was
+      # reviewed. `git push origin v1.2.3` puts the tag on whatever commit you name,
+      # including one that never opened a PR, and this job would then publish it to the
+      # public npm registry. Rulesets target branches; a branch ruleset does not
+      # constrain tags, and this repository has no tag-target ruleset. Assert
+      # reachability instead: it fails closed and is visible in the diff.
+      - name: Assert the tagged commit is reachable from main
+        run: |
+          set -euo pipefail
+          # Full fetch of main, not --depth: the tag may name an older main commit, and a
+          # shallow fetch leaves merge-base no shared history to walk.
+          git fetch --no-tags origin main
+          # PEEL the ref first. For an ANNOTATED or signed tag, GITHUB_SHA is the tag
+          # OBJECT's sha, not a commit, and merge-base then fails with a confusing
+          # message rather than the intended one. `^{commit}` peels a tag object and is
+          # the identity for a plain commit sha, so this is correct either way.
+          tagged_commit="$(git rev-parse "${GITHUB_SHA}^{commit}")"
+          if ! git merge-base --is-ancestor "$tagged_commit" FETCH_HEAD; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' names a commit that is not reachable from main. Only reviewed, merged commits may be released."
+            exit 1
+          fi
+
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
