@@ -210,10 +210,18 @@
     padding: var(--space-3) 0;
   }
 
+  /* Wraps rather than overflows. .repo-filter__search carries min-width: 180px and the
+     "Ready to merge" chip does not shrink either, so on a 390px phone this row could not
+     fit and the refresh timestamp ended up under the chip - obscuring the dashboard's
+     primary filter, the control someone opens the page to press. Unconditional rather
+     than inside the 720px breakpoint: the row can also overrun at wider widths once the
+     timestamp grows ("updated 23 minutes ago"), and at a width where everything fits,
+     wrap does nothing. Same treatment .ci-embed__header already gets. */
   .dashboard__toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: var(--space-3);
     margin-bottom: var(--space-4);
   }
