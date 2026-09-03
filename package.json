@@ -17,7 +17,7 @@
     "design:tokens:check": "node scripts/design-tokens-sync.mjs",
     "test:e2e": "playwright test",
     "lint": "eslint .",
-    "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run design:tokens:check && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
+    "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
     "dev": "npm run build:lib && npm run dev -w dashboard"
   },
   "overrides": {

@@ -251,6 +251,14 @@ two documented frontend accessibility overrides. Update
 `packages/ci-frontend/src/styles/tokens.css` deliberately, then rerun the check
 and the normal verification suite.
 
+It is deliberately **not** part of `npm run verify`, and must not be added back.
+`fixportal-assets` is private and this repository is public, so no workflow here
+can reach the shared sheet: as a gate it could only ever fail, or pass by being
+skipped. It ran inside `verify` briefly and took down the v3.3.0 release, which
+is the only thing that ever exercised it in CI. Run it by hand from a checkout
+that has `fixportal-assets` beside it, which is where it can actually tell you
+something.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
