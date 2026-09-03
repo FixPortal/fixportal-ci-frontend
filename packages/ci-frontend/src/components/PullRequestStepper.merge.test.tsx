@@ -41,7 +41,9 @@ function renderStepper(mergeFetcher: (repo: string, n: number) => Promise<MergeR
 test('admin merges the displayed PR from the stepper', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
-  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
+  const mergePill = screen.getByRole('button', { name: /rebase-merge/i })
+  await userEvent.click(mergePill) // arm
+  await userEvent.click(mergePill) // confirm
   expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
 })
 
@@ -53,7 +55,9 @@ test('guest sees a display-only pill in the stepper', () => {
 test('stepper shows the merge failure inline', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
-  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
+  const mergePill = screen.getByRole('button', { name: /rebase-merge/i })
+  await userEvent.click(mergePill) // arm
+  await userEvent.click(mergePill) // confirm
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
 
@@ -64,7 +68,9 @@ test('paging to another PR drops the previous PR\'s merge error', async () => {
   ]
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<Harness prs={prs} admin={true} />, { wrapper: wrapperWith(mergeFetcher) })
-  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
+  const mergePill = screen.getByRole('button', { name: /rebase-merge/i })
+  await userEvent.click(mergePill) // arm
+  await userEvent.click(mergePill) // confirm
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
   await userEvent.keyboard('{ArrowRight}')
   expect(screen.getByText('2 / 2')).toBeInTheDocument()
@@ -93,7 +99,9 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   // And the alert does appear once the failing repo's PR is displayed... but
   // paging dismisses stale errors, so instead verify repo-a's own failure shows.
   await act(async () => mergeRef.current!.dismissError('repo-b'))
-  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
+  const mergePill = screen.getByRole('button', { name: /rebase-merge/i })
+  await userEvent.click(mergePill) // arm
+  await userEvent.click(mergePill) // confirm
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
 test('opening the stepper keeps an error already recorded for the shown PR\'s repo', async () => {
