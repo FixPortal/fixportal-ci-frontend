@@ -154,7 +154,7 @@ export function compare(sourceCss, vendoredCss) {
 //
 // And when the guess is wrong it now says so, and says what to do instead, rather than
 // throwing a Node filesystem trace at the reader.
-function repoRoot() {
+export function repoRoot() {
   try {
     const gitCommonDir = execFileSync('git', ['rev-parse', '--git-common-dir'], {
       encoding: 'utf8',
