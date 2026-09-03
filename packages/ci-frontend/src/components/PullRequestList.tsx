@@ -11,9 +11,12 @@ import { useArmedAction } from './useArmedAction'
 // it takes the same two-step as the per-PR pill: the first click arms, the second
 // merges. Its own component because PullRequestList returns early above, and a
 // hook cannot sit behind an early return.
-function MergeAllButton({ disabled, count, onMergeAll }: {
+// The armed label deliberately carries no count. The set of ready PRs can change
+// under an armed button (the snapshot refreshes every 30s) and mergeAll acts on
+// whatever is ready at the confirming click, so a number captured at arming time
+// would be the one part of the confirmation able to go stale and lie.
+function MergeAllButton({ disabled, onMergeAll }: {
   disabled: boolean
-  count: number
   onMergeAll: () => void
 }) {
   const { armed, onClick, onBlur } = useArmedAction(onMergeAll)
@@ -21,14 +24,14 @@ function MergeAllButton({ disabled, count, onMergeAll }: {
     <button
       type="button"
       className={`chip chip--ready chip--actionable repo-prs__merge-all${armed ? ' chip--arming' : ''}`}
-      title={armed ? `Click again to rebase-merge all ${count} ready PRs` : 'Rebase-merge every ready PR'}
+      title={armed ? 'Click again to rebase-merge every ready PR' : 'Rebase-merge every ready PR'}
       aria-live="polite"
       disabled={disabled}
       onClick={onClick}
       onBlur={onBlur}
     >
       <span className="chip__dot" aria-hidden="true" />
-      <span className="chip__label">{armed ? `Confirm merge all ${count}` : 'Merge all'}</span>
+      <span className="chip__label">{armed ? 'Confirm merge all' : 'Merge all'}</span>
     </button>
   )
 }
@@ -56,7 +59,6 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
       {isAdmin && merge && readyPrs.length >= 2 && (
         <MergeAllButton
           disabled={isRepoMerging(merge.merging, repoName)}
-          count={readyPrs.length}
           onMergeAll={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
         />
       )}
