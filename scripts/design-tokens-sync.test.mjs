@@ -6,14 +6,18 @@ import { compare } from './design-tokens-sync.mjs'
 const source = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: grey; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
 :root[data-theme="dark"], [data-theme="dark"] { --app-bg: black; --card-bg: black; --border: grey; --border-strong: grey; --text: white; --text-muted: silver; --text-faint: silver; --warn-text: yellow; }`
 
-const vendored = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: #5f6472; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
+const vendored = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: grey; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
 .ci-page[data-theme="dark"] { --app-bg: black; --card-bg: black; --border: grey; --border-strong: grey; --text: white; --text-muted: silver; --text-faint: silver; --warn-text: yellow; }`
 
-// Dark --warn-text now tracks the source rather than being pinned by an override entry.
-// These fixtures previously asserted the pinned value was acceptable, which is exactly
-// the behaviour that let the one real drift the checker existed to catch pass as a match.
+// OVERRIDES is empty now, and these fixtures follow it: light --text-muted was the last
+// entry, pinned as an accessibility correction that upstream has since made itself (and
+// made slightly better - 6.00:1 against the pin's 5.91:1). Dark --warn-text went the same
+// way earlier. Both fixtures previously asserted the PINNED value was acceptable, which is
+// precisely the behaviour that let the one real drift this checker exists to catch pass as
+// a match. An override is a claim about today's shared value, and it stops being true
+// silently, so the tests below assert the detector is ARMED rather than that a pin holds.
 
-test('accepts the deliberate frontend token overrides', () => {
+test('accepts a vendored sheet that matches the source', () => {
   assert.deepEqual(compare(source, vendored), [])
 })
 
@@ -34,10 +38,14 @@ test('reports a token missing from the vendored sheet', () => {
   ])
 })
 
-test('reports drift in a deliberate override itself', () => {
-  const wrongOverride = vendored.replace('--text-muted: #5f6472', '--text-muted: #000000')
-  assert.deepEqual(compare(source, wrongOverride), [
-    'light --text-muted: expected #5f6472, found #000000',
+test('reports a local pin that an empty OVERRIDES map no longer blesses', () => {
+  // The specific value the last override held. While it sat in OVERRIDES this produced
+  // NOTHING - the token was outside the detector, which is what made the pin dangerous
+  // rather than merely stale. With the map empty it is reported like any other divergence,
+  // so this test fails the moment someone re-pins a token instead of re-syncing it.
+  const pinned = vendored.replace('--text-muted: grey', '--text-muted: #5f6472')
+  assert.deepEqual(compare(source, pinned), [
+    'light --text-muted: expected grey, found #5f6472',
   ])
 })
 
