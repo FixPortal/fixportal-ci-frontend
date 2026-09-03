@@ -12,6 +12,17 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-03
+
+### Changed
+
+- Merging now confirms in the control itself. The `Ready to merge` pill and `Merge all` take
+  two clicks: the first arms the button and relabels it, the second performs the merge. An
+  armed button stands down on blur, and on its own after five seconds. Hosts that wrapped
+  `mergeFetcher` in `window.confirm()` should drop that dialog: a browser-suppressed
+  `confirm()` returns false with nothing shown, which reached the board as an ordinary merge
+  failure and was indistinguishable from one GitHub refused.
+
 ## [3.2.0] - 2026-09-02
 
 ### Added
