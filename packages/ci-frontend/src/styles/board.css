@@ -78,10 +78,28 @@
   --unknown: #5d6880;
   --no-ci: #7c83b8;
 
-  --brand-ink: var(--brand);
-  --chip-on-ink: var(--brand);
-  --chip-on-passing-ink: var(--ok-border);
-  /* #dc2626 on the dark 16% failing tint is 3.8:1; #f87171 measures 6.7:1. */
+  /* Dark inks are EXPLICIT now rather than inherited from the universal tokens, and
+     measured on BOTH dark surfaces rather than on --app-bg alone.
+
+     Two things forced that. The surfaces moved: re-syncing --app-bg #020617 -> #07111f
+     and --card-bg #0f172a -> #0d1b2e lightened both, and a dark-on-tint ink loses
+     contrast when its background lightens. And the ">=4.6:1" claim in the light block
+     above was measured against --app-bg only, so it was ALREADY false on cards before
+     that move - --chip-on-ink was 3.94:1 on the old --card-bg. The re-sync widened a gap
+     it did not create.
+
+     Worst case across both surfaces, each ink on the tint it actually sits on:
+       --brand-ink            #14b8a6  5.99:1 on the 12% brand pill tint  (was 3.99:1)
+       --chip-on-ink          #14b8a6  5.73:1 on the 16% brand chip tint  (was 3.81:1)
+       --chip-on-passing-ink  #22c55e  6.13:1 on the 16% ok chip tint     (was 4.24:1)
+       --chip-on-failing-ink  #f87171  5.71:1 on the 16% bad chip tint    (already passed)
+
+     Not var(--brand) any more, deliberately: --brand is the one token still diverging
+     from the shared sheet, pending a decision on the teal. Inheriting it here tied an
+     accessibility floor to an unresolved brand question. */
+  --brand-ink: #14b8a6;
+  --chip-on-ink: #14b8a6;
+  --chip-on-passing-ink: #22c55e;
   --chip-on-failing-ink: #f87171;
 }
 

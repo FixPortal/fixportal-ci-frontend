@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 
-import { compare, repoRoot } from './design-tokens-sync.mjs'
+import { compare, compareShellFallback, repoRoot } from './design-tokens-sync.mjs'
 
 const source = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: grey; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
 :root[data-theme="dark"], [data-theme="dark"] { --app-bg: black; --card-bg: black; --border: grey; --border-strong: grey; --text: white; --text-muted: silver; --text-faint: silver; --warn-text: yellow; }`
@@ -87,6 +87,26 @@ test('reports a media query whose selector sits OUTSIDE it rather than within', 
   assert.deepEqual(compare(source, outside), [
     'dark: @media (prefers-color-scheme: dark) exists but its .ci-page:not([data-theme="light"]) block was not found, so the OS-preference dark tokens are unchecked',
   ])
+})
+
+// The dashboard shell's pre-paint fallback is a hand-maintained copy of the light
+// --app-bg, in a different file from every other colour this script reads. It kept the
+// old value through a re-sync and flashed it on every cold load, which is the same silent
+// drift the rest of the checker exists to catch - so it is checked, not commented.
+const shell = (fallback) => `<style>html, body { background-color: var(--app-bg, ${fallback}); }</style>`
+
+test('accepts a shell fallback equal to the light --app-bg', () => {
+  assert.deepEqual(compareShellFallback(shell('white'), vendored), [])
+})
+
+test('reports a shell fallback that has drifted from the light --app-bg', () => {
+  assert.deepEqual(compareShellFallback(shell('#f7f8fa'), vendored), [
+    'shell fallback: var(--app-bg, #f7f8fa) disagrees with the light --app-bg white - the pre-paint frame would flash the wrong colour',
+  ])
+})
+
+test('treats an absent fallback as fine - the shell may stop doing this', () => {
+  assert.deepEqual(compareShellFallback('<style>html { background: red; }</style>', vendored), [])
 })
 
 // repoRoot() exists because the CWD-relative version could not run from a review worktree,
