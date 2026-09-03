@@ -59,15 +59,22 @@
   /* AA text inks (A11Y-CIF-001/002). The universal status tokens (--brand,
      --ok-border, --bad-solid) are fills/borders — UI chrome, fine at 3:1 — but
      fall short of 4.5:1 as 11-14px text on light surfaces, so small text reads
-     these darker inks instead. Measured (sRGB relative luminance):
-       --brand-ink        5.5:1 on --card-bg, 4.7:1 on the 12% brand pill tint
-       --chip-on-ink      5.9:1 on the 16% brand chip tint
-       --chip-on-passing  5.6:1 on the 16% ok chip tint
-       --chip-on-failing  6.1:1 on the 16% bad chip tint (= light --bad-text)
-     Dark theme overrides below keep the universal tokens, which already pass
-     there (>=4.6:1) — except the failing-chip ink, lightened for the same reason. */
-  --brand-ink: #0f766e;
-  --chip-on-ink: #115e59;
+     these darker inks instead. Recomputed 2026-09-03 for --brand's re-sync to the
+     shared blue (was teal #0d9488) - both light and dark inks are hue-dependent
+     and had to move with it, not just this pair; the passing/failing inks are
+     ok/bad-hued and unaffected. Worst case across both surfaces (--app-bg and
+     --card-bg), each ink against the tint it actually sits on:
+       --brand-ink        8.2:1 on --card-bg, 6.5:1 on the 12% brand pill tint
+       --chip-on-ink      6.1:1 on the 16% brand chip tint
+       --chip-on-passing  5.6:1 on the 16% ok chip tint (unchanged, ok-hued)
+       --chip-on-failing  6.1:1 on the 16% bad chip tint (unchanged, bad-hued)
+     The dark block below is NOT simply "the universal tokens, which already
+     pass" - that claim predates this file's own measurement showing it was
+     already false on --card-bg pre-resync. Dark inks are pinned explicitly for
+     the same reason light ones are: a hue-matched text colour, computed against
+     both dark surfaces, not inherited from a fill token tuned for 3:1 chrome. */
+  --brand-ink: #114aa7;
+  --chip-on-ink: #114aa7;
   --chip-on-passing-ink: #166534;
   --chip-on-failing-ink: #991b1b;
 }
@@ -78,27 +85,28 @@
   --unknown: #5d6880;
   --no-ci: #7c83b8;
 
-  /* Dark inks are EXPLICIT now rather than inherited from the universal tokens, and
-     measured on BOTH dark surfaces rather than on --app-bg alone.
+  /* Dark inks are EXPLICIT rather than inherited from the universal tokens, and
+     measured on BOTH dark surfaces (--app-bg #07111f, --card-bg #0d1b2e), not
+     --app-bg alone - a lesson from this block's own history: the ">=4.6:1" claim
+     this comment used to make was measured against --app-bg only, and was already
+     false on --card-bg before anything else changed.
 
-     Two things forced that. The surfaces moved: re-syncing --app-bg #020617 -> #07111f
-     and --card-bg #0f172a -> #0d1b2e lightened both, and a dark-on-tint ink loses
-     contrast when its background lightens. And the ">=4.6:1" claim in the light block
-     above was measured against --app-bg only, so it was ALREADY false on cards before
-     that move - --chip-on-ink was 3.94:1 on the old --card-bg. The re-sync widened a gap
-     it did not create.
+     Recomputed 2026-09-03 alongside the light block above, for the same reason:
+     --brand re-synced from teal (#0d9488) to the shared blue, and a hue-matched
+     ink has to move with its hue. Worst case across both surfaces, each ink on
+     the tint it actually sits on:
+       --brand-ink            #669bf0  5.55:1 on the 12% brand pill tint
+       --chip-on-ink          #669bf0  5.31:1 on the 16% brand chip tint
+       --chip-on-passing-ink  #22c55e  6.13:1 on the 16% ok chip tint  (unchanged, ok-hued)
+       --chip-on-failing-ink  #f87171  5.71:1 on the 16% bad chip tint (unchanged, bad-hued)
 
-     Worst case across both surfaces, each ink on the tint it actually sits on:
-       --brand-ink            #14b8a6  5.99:1 on the 12% brand pill tint  (was 3.99:1)
-       --chip-on-ink          #14b8a6  5.73:1 on the 16% brand chip tint  (was 3.81:1)
-       --chip-on-passing-ink  #22c55e  6.13:1 on the 16% ok chip tint     (was 4.24:1)
-       --chip-on-failing-ink  #f87171  5.71:1 on the 16% bad chip tint    (already passed)
-
-     Not var(--brand) any more, deliberately: --brand is the one token still diverging
-     from the shared sheet, pending a decision on the teal. Inheriting it here tied an
-     accessibility floor to an unresolved brand question. */
-  --brand-ink: #14b8a6;
-  --chip-on-ink: #14b8a6;
+     Still not var(--brand) directly: the raw fill, tuned for 3:1 chrome contrast,
+     is not reliably a 4.5:1 text colour on either dark surface at any single
+     lightness - that was true for teal and is true for blue. Pinning a
+     hue-matched, separately-measured ink is the fix in either colour, not a
+     workaround for one of them. */
+  --brand-ink: #669bf0;
+  --chip-on-ink: #669bf0;
   --chip-on-passing-ink: #22c55e;
   --chip-on-failing-ink: #f87171;
 }
