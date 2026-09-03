@@ -109,6 +109,9 @@ describe('CiBoard admin source gating', () => {
     await userEvent.click(
       await screen.findByRole('button', { name: 'Rebase-merge PR #42' }),
     )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Confirm rebase-merge of PR #42' }),
+    )
 
     expect(mergeFetcher).toHaveBeenCalledOnce()
     expect(mergeFetcher).toHaveBeenCalledWith('ci-frontend', 42)
