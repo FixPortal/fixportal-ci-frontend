@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 
-import { compare, compareShellFallback, repoRoot } from './design-tokens-sync.mjs'
+import { compare, compareShellFallback, repoRoot, worktreeRoot } from './design-tokens-sync.mjs'
 
 const source = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: grey; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
 :root[data-theme="dark"], [data-theme="dark"] { --app-bg: black; --card-bg: black; --border: grey; --border-strong: grey; --text: white; --text-muted: silver; --text-faint: silver; --warn-text: yellow; }`
@@ -109,6 +109,26 @@ test('treats an absent fallback as fine - the shell may stop doing this', () => 
   assert.deepEqual(compareShellFallback('<style>html { background: red; }</style>', vendored), [])
 })
 
+// A fallback is a colour, and a colour may be a function. Truncating at the first ')'
+// captures `rgb(0 0 0` and reports drift that is not there - a false failure in a check
+// whose only value is being believed.
+test('matches a fallback containing its own parentheses', () => {
+  const sourceFn = source.replace('--app-bg: white', '--app-bg: rgb(0 0 0)')
+  const vendoredFn = vendored.replace('--app-bg: white', '--app-bg: rgb(0 0 0)')
+  assert.deepEqual(compareShellFallback(shell('rgb(0 0 0)'), vendoredFn), [])
+  assert.deepEqual(compareShellFallback(shell('rgb(1 1 1)'), vendoredFn), [
+    'shell fallback: var(--app-bg, rgb(1 1 1)) disagrees with the light --app-bg rgb(0 0 0) - the pre-paint frame would flash the wrong colour',
+  ])
+  assert.ok(sourceFn.includes('rgb(0 0 0)'))
+})
+
+// A second declaration further down the file is precisely the one a re-sync forgets.
+test('checks every fallback in the file, not just the first', () => {
+  assert.deepEqual(compareShellFallback(`${shell('white')}\n${shell('#f7f8fa')}`, vendored), [
+    'shell fallback: var(--app-bg, #f7f8fa) disagrees with the light --app-bg white - the pre-paint frame would flash the wrong colour',
+  ])
+})
+
 // repoRoot() exists because the CWD-relative version could not run from a review worktree,
 // which is the one workspace this checker is most needed in: `..` from
 // .claude/worktrees/<name> named .claude/worktrees/fixportal-assets, a path that cannot
@@ -156,6 +176,58 @@ test('repoRoot resolves to the MAIN checkout from a linked worktree', () => {
     mkdirSync(nested, { recursive: true })
     process.chdir(nested)
     assert.equal(repoRoot(), real(main))
+  } finally {
+    process.chdir(cwd)
+    rmSync(scratch, { recursive: true, force: true })
+  }
+})
+
+// worktreeRoot() is the OTHER anchor and must disagree with repoRoot() inside a linked
+// worktree - that is the whole reason both exist. The vendored sheet belongs to the tree
+// being checked; the shared sheet is a sibling of the main checkout, and a linked worktree
+// has no siblings of its own. If these two ever returned the same thing from a worktree,
+// the checker would read one repo's tokens against another's.
+test('worktreeRoot resolves to THIS worktree, not the main checkout', () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'tokens-sync-wt-'))
+  const main = path.join(scratch, 'repo')
+  const linked = path.join(scratch, 'wt')
+  const cwd = process.cwd()
+  try {
+    mkdirSync(main)
+    git(main, 'init', '-q')
+    git(main, 'config', 'user.email', 'test@example.invalid')
+    git(main, 'config', 'user.name', 'test')
+    writeFileSync(path.join(main, 'f.txt'), 'x')
+    git(main, 'add', 'f.txt')
+    git(main, 'commit', '-qm', 'init')
+    git(main, 'worktree', 'add', '-q', linked, 'HEAD')
+
+    process.chdir(main)
+    assert.equal(worktreeRoot(), real(main))
+
+    // The load-bearing assertion: from the linked worktree the two anchors DIFFER.
+    process.chdir(linked)
+    assert.equal(worktreeRoot(), real(linked))
+    assert.notEqual(worktreeRoot(), repoRoot())
+
+    // From a subdirectory it still names the worktree root, not the subdirectory - the
+    // bug this replaced looked for packages/ci-frontend/packages/ci-frontend/....
+    const nested = path.join(linked, 'packages', 'ci-frontend')
+    mkdirSync(nested, { recursive: true })
+    process.chdir(nested)
+    assert.equal(worktreeRoot(), real(linked))
+  } finally {
+    process.chdir(cwd)
+    rmSync(scratch, { recursive: true, force: true })
+  }
+})
+
+test('worktreeRoot falls back to the CWD outside a git checkout', () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'tokens-sync-wt-nogit-'))
+  const cwd = process.cwd()
+  try {
+    process.chdir(scratch)
+    assert.equal(worktreeRoot(), process.cwd())
   } finally {
     process.chdir(cwd)
     rmSync(scratch, { recursive: true, force: true })

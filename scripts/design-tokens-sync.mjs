@@ -178,10 +178,16 @@ export function repoRoot() {
  *  at all on unchanged disk state. */
 export function worktreeRoot() {
   try {
-    return execFileSync('git', ['rev-parse', '--show-toplevel'], {
+    const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim()
+    // path.resolve, and not merely for tidiness: on Windows `--show-toplevel` answers with
+    // FORWARD slashes ('C:/Users/...'), while repoRoot() goes through path.resolve and
+    // answers with backslashes. Two anchors that disagree about separators compare unequal
+    // to each other and to anything built from either, which is how a path check passes in
+    // one place and fails in another on the same directory.
+    return path.resolve(top)
   } catch {
     return process.cwd()
   }
@@ -206,13 +212,39 @@ export function defaultSourcePath() {
  * this. A fallback that disagrees is.
  */
 export function compareShellFallback(shellHtml, vendoredCss) {
-  const declared = /var\(\s*--app-bg\s*,\s*([^)]+?)\s*\)/.exec(shellHtml)
-  if (!declared) return []
+  const declared = shellFallbacks(shellHtml)
+  if (declared.length === 0) return []
   const expected = values(vendoredCss, ':root')['--app-bg']
   if (expected === undefined) return ['shell fallback: --app-bg is missing from the vendored :root block']
-  return declared[1].toLowerCase() === expected.toLowerCase()
-    ? []
-    : [`shell fallback: var(--app-bg, ${declared[1]}) disagrees with the light --app-bg ${expected} - the pre-paint frame would flash the wrong colour`]
+  return declared
+    .filter((actual) => actual.toLowerCase() !== expected.toLowerCase())
+    .map((actual) => `shell fallback: var(--app-bg, ${actual}) disagrees with the light --app-bg ${expected} - the pre-paint frame would flash the wrong colour`)
+}
+
+/**
+ * Every `var(--app-bg, <fallback>)` fallback in the shell, depth-matched.
+ *
+ * Depth-matched rather than `[^)]+`, because a fallback is a colour and a colour may be a
+ * function: `var(--app-bg, rgb(0 0 0))` truncates at the first `)` under a lazy character
+ * class and captures `rgb(0 0 0`, which then never equals the token and reports drift that
+ * is not there - a false failure in a check whose whole job is to be believed. And ALL
+ * matches, not just the first: a second declaration further down the file is exactly the
+ * one that would be forgotten in a re-sync.
+ */
+function shellFallbacks(shellHtml) {
+  const found = []
+  const opener = /var\(\s*--app-bg\s*,\s*/g
+  for (let m = opener.exec(shellHtml); m !== null; m = opener.exec(shellHtml)) {
+    let depth = 1
+    let i = m.index + m[0].length
+    for (; i < shellHtml.length && depth > 0; i += 1) {
+      if (shellHtml[i] === '(') depth += 1
+      else if (shellHtml[i] === ')') depth -= 1
+    }
+    // depth > 0 means the declaration is unterminated - malformed CSS, not our business.
+    if (depth === 0) found.push(shellHtml.slice(m.index + m[0].length, i - 1).trim())
+  }
+  return found
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
