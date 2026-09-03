@@ -41,7 +41,10 @@
   --text-muted: #5a6472;
   --text-faint: #646d7b;
 
-  --brand: #0d9488;
+  /* Re-synced to the shared sheet's blue, 2026-09-03 - see board.css for the AA
+     ink recompute this required. Was #0d9488 (teal), a deliberate local pin while
+     the brand question was open; it is now closed in favour of the shared value. */
+  --brand: hsl(217 82% 50%);
 
   --ok-border: #16a34a;
 
