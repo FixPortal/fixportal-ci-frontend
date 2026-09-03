@@ -25,17 +25,21 @@
  * a consumer wanting the exact FixPortal type can add the @fontsource packages. */
 
 :root {
-  --app-bg: #f7f8fa;
+  --app-bg: #f3f7fc;
   --card-bg: #ffffff;
   --border: #e5e7eb;
   --border-strong: #7c8ca2;
   --text: #1f2937;
-  --text-muted: #5f6472;
-  /* #94a3b8 on #f7f8fa is ~2.41:1 — fails WCAG AA (4.5:1) for the 10px
-     uppercase footer tagline, its only consumer. Darkened to #5b6b85
-     (~5.08:1) in light mode only; dark-mode value is unchanged (already
-     ~7.4:1 there — see the .ci-page[data-theme="dark"] block below). */
-  --text-faint: #5b6b85;
+  /* --text-muted and --text-faint below used to diverge from the shared sheet as
+     local AA corrections. Upstream has since made the same corrections itself, so
+     both are re-synced and the divergence is gone. Measured against the shared
+     values now in use:
+       --text-muted #5a6472  6.00:1 on --card-bg, 5.58:1 on --app-bg
+       --text-faint #646d7b  4.86:1 on --app-bg  (AA small-text floor is 4.5:1)
+     Both beat what the local pins gave (5.91 / 5.50 and 5.02), so re-syncing
+     improves contrast rather than trading it away. */
+  --text-muted: #5a6472;
+  --text-faint: #646d7b;
 
   --brand: #0d9488;
 
@@ -52,15 +56,17 @@
 }
 
 .ci-page[data-theme="dark"] {
-  --app-bg: #020617;
-  --card-bg: #0f172a;
+  --app-bg: #07111f;
+  --card-bg: #0d1b2e;
   --border: #1e293b;
   --border-strong: #5b6b85;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
-  /* #64748b on #020617 is ~4.23:1 — below the 4.5:1 AA threshold for small text.
-     Lightened to #94a3b8 (~7.4:1) in dark mode only; light-mode value is unchanged. */
-  --text-faint: #94a3b8;
+  /* Re-synced, same story as the light block: the local lightening to #94a3b8 was
+     a correction upstream has since made itself. Measured on the shared dark
+     surfaces now in use: #8496ae is 6.27:1 on --app-bg and 5.73:1 on --card-bg,
+     both clear of the 4.5:1 AA floor. */
+  --text-faint: #8496ae;
 
   --bad-text: #fecaca;
 
@@ -69,13 +75,13 @@
 
 @media (prefers-color-scheme: dark) {
   .ci-page:not([data-theme="light"]) {
-    --app-bg: #020617;
-    --card-bg: #0f172a;
+    --app-bg: #07111f;
+    --card-bg: #0d1b2e;
     --border: #1e293b;
     --border-strong: #5b6b85;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
-    --text-faint: #94a3b8;
+    --text-faint: #8496ae;
 
     --bad-text: #fecaca;
 

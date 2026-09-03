@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -9,8 +10,21 @@ const TOKENS = [
   '--warn-fill-deep', '--font-sans', '--font-mono',
 ]
 
-// ONE deliberate accessibility override over the shared source: the shared --text-muted
-// does not clear contrast on this board's card background.
+// EMPTY, and that is the finding rather than an omission.
+//
+// This map held one entry, --text-muted light, described as a deliberate accessibility
+// override because the shared value did not clear contrast on this board's card
+// background. Re-measured against the shared sheet as it stands today:
+//
+//   --text-muted  shared #5a6472   6.00:1 on --card-bg, 5.58:1 on --app-bg
+//                 pinned #5f6472   5.91:1 on --card-bg, 5.50:1 on --app-bg
+//
+// Upstream has since made the same correction, and made it slightly better. The pin was
+// no longer buying contrast - it was costing a little, while reporting "matches" and
+// keeping the token outside the drift detector. Same for the two undeclared local
+// lightenings of --text-faint, light and dark, which the vendored sheet carried in
+// comments rather than here. All three are re-synced; see packages/ci-frontend/src/
+// styles/tokens.css for the measured ratios.
 //
 // The dark --warn-text entry that used to sit here was NOT an accessibility override. It
 // pinned #f0abfc, which upstream retired in favour of #fcd34d as a palette decision --
@@ -18,8 +32,12 @@ const TOKENS = [
 // blessed the gap permanently: the checker reported "matches" while the board rendered a
 // colour upstream no longer ships, so the one real drift this tool existed to catch was
 // the one it was configured to ignore. Re-synced rather than re-pinned.
+//
+// That is now three entries added for a good reason and outlived by upstream. Before
+// adding a fourth, re-measure: an override is a claim about TODAY's shared value, and it
+// stops being true silently.
 const OVERRIDES = {
-  light: { '--text-muted': '#5f6472' },
+  light: {},
   dark: {},
 }
 
@@ -123,19 +141,59 @@ export function compare(sourceCss, vendoredCss) {
   return differences
 }
 
+// The shared sheet lives in a SIBLING checkout, so the default is a guess about how the
+// machine is laid out. Two things make that guess better than it was.
+//
+// It is resolved from the repository, not from the current working directory. `..` from
+// the CWD is only right when the script is run from the repo root of a plain clone; from
+// a review worktree (.claude/worktrees/<name>) it pointed at
+// .claude/worktrees/fixportal-assets, which cannot exist - so the check could never run
+// in the workspace where remediation actually happens, and failed with a bare ENOENT
+// stack trace. `git rev-parse --git-common-dir` names the MAIN worktree's .git, whose
+// parent is the real clone, whichever worktree we are standing in.
+//
+// And when the guess is wrong it now says so, and says what to do instead, rather than
+// throwing a Node filesystem trace at the reader.
+function repoRoot() {
+  try {
+    const gitCommonDir = execFileSync('git', ['rev-parse', '--git-common-dir'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+    return path.dirname(path.resolve(gitCommonDir))
+  } catch {
+    // Not a git checkout, or no git on PATH. Fall back to the old CWD-relative guess
+    // rather than failing here - the caller reports a missing file clearly either way.
+    return process.cwd()
+  }
+}
+
 export function defaultSourcePath() {
   return process.env.FIXPORTAL_DESIGN_TOKENS
     ? path.resolve(process.env.FIXPORTAL_DESIGN_TOKENS)
-    : path.resolve('..', 'fixportal-assets', 'packages', 'design', 'tokens.css')
+    : path.resolve(repoRoot(), '..', 'fixportal-assets', 'packages', 'design', 'tokens.css')
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const sourcePath = process.argv.find((arg) => arg.startsWith('--source='))?.slice('--source='.length) ?? defaultSourcePath()
   const vendoredPath = path.resolve('packages', 'ci-frontend', 'src', 'styles', 'tokens.css')
-  const [sourceCss, vendoredCss] = await Promise.all([
-    readFile(path.resolve(sourcePath), 'utf8'),
-    readFile(vendoredPath, 'utf8'),
-  ])
+  let sourceCss
+  let vendoredCss
+  try {
+    ;[sourceCss, vendoredCss] = await Promise.all([
+      readFile(path.resolve(sourcePath), 'utf8'),
+      readFile(vendoredPath, 'utf8'),
+    ])
+  } catch (err) {
+    if (err?.code !== 'ENOENT') throw err
+    console.error(`Could not read ${err.path}`)
+    console.error(
+      'The shared token sheet is expected in a fixportal-assets checkout beside this repo. ' +
+        'Point at it explicitly with --source=<path> or FIXPORTAL_DESIGN_TOKENS=<path>.',
+    )
+    process.exitCode = 1
+    process.exit()
+  }
   const differences = compare(sourceCss, vendoredCss)
   if (differences.length > 0) {
     console.error('Design token drift detected:')
