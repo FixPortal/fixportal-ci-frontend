@@ -1,7 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
 
-import { compare } from './design-tokens-sync.mjs'
+import { compare, repoRoot } from './design-tokens-sync.mjs'
 
 const source = `:root { --app-bg: white; --card-bg: white; --border: grey; --border-strong: grey; --text: black; --text-muted: grey; --text-faint: grey; --brand: teal; --ok-border: green; --bad-solid: red; --bad-text: red; --warn-text: amber; --warn-fill-deep: amber; --font-sans: sans; --font-mono: mono; }
 :root[data-theme="dark"], [data-theme="dark"] { --app-bg: black; --card-bg: black; --border: grey; --border-strong: grey; --text: white; --text-muted: silver; --text-faint: silver; --warn-text: yellow; }`
@@ -82,6 +87,73 @@ test('reports a media query whose selector sits OUTSIDE it rather than within', 
   assert.deepEqual(compare(source, outside), [
     'dark: @media (prefers-color-scheme: dark) exists but its .ci-page:not([data-theme="light"]) block was not found, so the OS-preference dark tokens are unchecked',
   ])
+})
+
+// repoRoot() exists because the CWD-relative version could not run from a review worktree,
+// which is the one workspace this checker is most needed in: `..` from
+// .claude/worktrees/<name> named .claude/worktrees/fixportal-assets, a path that cannot
+// exist, and the script died on a bare ENOENT. Nothing tested that, so it is tested here
+// against a REAL worktree rather than a mocked one - the whole point is what git reports,
+// and `git rev-parse --git-common-dir` is exactly the call a mock would have to guess at.
+// It returns a RELATIVE path from the main checkout and an ABSOLUTE one from a linked
+// worktree, so both shapes have to resolve to the same directory.
+const git = (cwd, ...args) =>
+  execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+
+// Windows temp paths are commonly a short-name junction (C:\Users\X~1). git reports the
+// resolved form, so compare against the resolved form or an equal path fails on spelling.
+const real = (p) => execFileSync(process.execPath, ['-p', `require('fs').realpathSync(${JSON.stringify(p)})`], {
+  encoding: 'utf8',
+}).trim()
+
+test('repoRoot resolves to the MAIN checkout from a linked worktree', () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'tokens-sync-'))
+  const main = path.join(scratch, 'repo')
+  const linked = path.join(scratch, 'wt')
+  const cwd = process.cwd()
+  try {
+    mkdirSync(main)
+    git(main, 'init', '-q')
+    git(main, 'config', 'user.email', 'test@example.invalid')
+    git(main, 'config', 'user.name', 'test')
+    writeFileSync(path.join(main, 'f.txt'), 'x')
+    git(main, 'add', 'f.txt')
+    git(main, 'commit', '-qm', 'init')
+    git(main, 'worktree', 'add', '-q', linked, 'HEAD')
+
+    // From the main checkout: git reports a RELATIVE '.git'.
+    process.chdir(main)
+    assert.equal(repoRoot(), real(main))
+
+    // From the linked worktree: git reports an ABSOLUTE path into the main .git. Without
+    // the fix this line is the bug - the old code returned the worktree, so the sibling
+    // lookup went looking beside .claude/worktrees.
+    process.chdir(linked)
+    assert.equal(repoRoot(), real(main))
+
+    // And from a SUBDIRECTORY, which is the other way a CWD-relative guess goes wrong.
+    const nested = path.join(linked, 'packages', 'ci-frontend')
+    mkdirSync(nested, { recursive: true })
+    process.chdir(nested)
+    assert.equal(repoRoot(), real(main))
+  } finally {
+    process.chdir(cwd)
+    rmSync(scratch, { recursive: true, force: true })
+  }
+})
+
+test('repoRoot falls back to the CWD outside a git checkout', () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'tokens-sync-nogit-'))
+  const cwd = process.cwd()
+  try {
+    process.chdir(scratch)
+    // No repository here, so `git rev-parse` fails and the catch returns the CWD - the
+    // caller then reports the missing source file readably rather than throwing.
+    assert.equal(repoRoot(), process.cwd())
+  } finally {
+    process.chdir(cwd)
+    rmSync(scratch, { recursive: true, force: true })
+  }
 })
 
 test('reports a media query whose expected dark block is missing', () => {
