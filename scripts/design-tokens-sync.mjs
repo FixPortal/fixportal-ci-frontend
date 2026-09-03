@@ -168,15 +168,56 @@ export function repoRoot() {
   }
 }
 
+/** THIS working tree's root, which is not repoRoot() inside a linked worktree.
+ *  The two anchors are different on purpose: the vendored sheet is the one in the tree
+ *  being checked, while the shared sheet is a sibling of the MAIN checkout - a worktree
+ *  has no siblings of its own. Anchoring the vendored path here is what stops the verdict
+ *  depending on the directory the script was invoked from: with source repo-anchored and
+ *  vendored cwd-relative, running from packages/ci-frontend looked for
+ *  packages/ci-frontend/packages/ci-frontend/src/styles/tokens.css and produced no verdict
+ *  at all on unchanged disk state. */
+export function worktreeRoot() {
+  try {
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+  } catch {
+    return process.cwd()
+  }
+}
+
 export function defaultSourcePath() {
   return process.env.FIXPORTAL_DESIGN_TOKENS
     ? path.resolve(process.env.FIXPORTAL_DESIGN_TOKENS)
     : path.resolve(repoRoot(), '..', 'fixportal-assets', 'packages', 'design', 'tokens.css')
 }
 
+/**
+ * The dashboard shell paints a background BEFORE the token sheet loads, so
+ * apps/dashboard/index.html carries a literal fallback in `var(--app-bg, <hex>)`. Nothing
+ * links that literal to the token, and it is in a different file from every other colour
+ * this script reads - so when --app-bg was re-synced it kept the old value and flashed it
+ * on every cold load. A comment would rely on the next person remembering; this is the
+ * same "hand-maintained copy drifts silently" failure the rest of the script exists for,
+ * so it gets checked rather than documented.
+ *
+ * Absent file or absent fallback is NOT a difference: the shell is allowed to stop doing
+ * this. A fallback that disagrees is.
+ */
+export function compareShellFallback(shellHtml, vendoredCss) {
+  const declared = /var\(\s*--app-bg\s*,\s*([^)]+?)\s*\)/.exec(shellHtml)
+  if (!declared) return []
+  const expected = values(vendoredCss, ':root')['--app-bg']
+  if (expected === undefined) return ['shell fallback: --app-bg is missing from the vendored :root block']
+  return declared[1].toLowerCase() === expected.toLowerCase()
+    ? []
+    : [`shell fallback: var(--app-bg, ${declared[1]}) disagrees with the light --app-bg ${expected} - the pre-paint frame would flash the wrong colour`]
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const sourcePath = process.argv.find((arg) => arg.startsWith('--source='))?.slice('--source='.length) ?? defaultSourcePath()
-  const vendoredPath = path.resolve('packages', 'ci-frontend', 'src', 'styles', 'tokens.css')
+  const vendoredPath = path.resolve(worktreeRoot(), 'packages', 'ci-frontend', 'src', 'styles', 'tokens.css')
   let sourceCss
   let vendoredCss
   try {
@@ -186,15 +227,34 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     ])
   } catch (err) {
     if (err?.code !== 'ENOENT') throw err
+    // Promise.all surfaces ONE rejection, so say which file it was and give advice that
+    // can actually fix that arm. Undifferentiated, a missing vendored sheet printed
+    // "point at the shared sheet with --source=", which is no help at all.
     console.error(`Could not read ${err.path}`)
     console.error(
-      'The shared token sheet is expected in a fixportal-assets checkout beside this repo. ' +
-        'Point at it explicitly with --source=<path> or FIXPORTAL_DESIGN_TOKENS=<path>.',
+      path.resolve(err.path ?? '') === vendoredPath
+        ? `That is this repo's vendored token sheet, expected at ${vendoredPath}. ` +
+            'If the path looks wrong, the working tree could not be located - run from inside the repository.'
+        : 'That is the shared token sheet, expected in a fixportal-assets checkout beside this repo. ' +
+            'Point at it explicitly with --source=<path> or FIXPORTAL_DESIGN_TOKENS=<path>.',
     )
     process.exitCode = 1
     process.exit()
   }
-  const differences = compare(sourceCss, vendoredCss)
+  // The dashboard shell is optional - this script also runs in checkouts of the published
+  // package, which has no apps/. A missing shell is not drift.
+  const shellPath = path.resolve(worktreeRoot(), 'apps', 'dashboard', 'index.html')
+  let shellHtml = null
+  try {
+    shellHtml = await readFile(shellPath, 'utf8')
+  } catch (err) {
+    if (err?.code !== 'ENOENT') throw err
+  }
+
+  const differences = [
+    ...compare(sourceCss, vendoredCss),
+    ...(shellHtml === null ? [] : compareShellFallback(shellHtml, vendoredCss)),
+  ]
   if (differences.length > 0) {
     console.error('Design token drift detected:')
     for (const difference of differences) console.error(`- ${difference}`)
