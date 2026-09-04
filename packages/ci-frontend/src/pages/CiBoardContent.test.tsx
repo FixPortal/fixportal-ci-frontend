@@ -62,7 +62,6 @@ describe('CiBoardContent filtering', () => {
     )
 
     await userEvent.click(await screen.findByRole('button', { name: 'Rebase-merge PR #7' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm rebase-merge of PR #7' }))
 
     expect(await screen.findByRole('button', { name: 'Merged PR #7' })).toHaveTextContent('Merged')
     await waitFor(() => expect(staleSnapshotFetcher).toHaveBeenCalledTimes(2))

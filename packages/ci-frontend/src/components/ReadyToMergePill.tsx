@@ -1,5 +1,4 @@
-import { memo, useCallback } from 'react'
-import { useArmedAction } from './useArmedAction'
+import { memo } from 'react'
 
 // The whole-PR verdict, not a per-reviewer state: every required reviewer is clean
 // and nothing is outstanding. Rendered as a solid pill so it does not read as one
@@ -15,10 +14,6 @@ import { useArmedAction } from './useArmedAction'
 // The button then gets an action-oriented accessible name (distinct from the
 // toolbar's "Ready to merge" filter chip, and identifying its PR) while the
 // visible label stays the board's verdict wording.
-//
-// The confirmation is the pill's own two-step (useArmedAction), not a dialog in
-// the host: a suppressed window.confirm() reached the board as an ordinary merge
-// failure, indistinguishable from one GitHub refused.
 export const ReadyToMergePill = memo(function ReadyToMergePill({
   ready, onMerge, busy, merging, merged, prNumber,
 }: {
@@ -29,18 +24,10 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
   merged?: boolean
   prNumber?: number
 }) {
-  const fire = useCallback(() => onMerge?.(), [onMerge])
-  const { armed, onClick, onBlur } = useArmedAction(fire)
-
   if (ready !== true && !merged) return null
   let label = 'Ready to merge'
   let title = onMerge ? 'Rebase-merge this PR' : 'Ready to merge'
   let accessibleAction = 'Rebase-merge'
-  if (armed && onMerge) {
-    label = 'Confirm merge'
-    title = 'Click again to rebase-merge this PR'
-    accessibleAction = 'Confirm rebase-merge of'
-  }
   if (merging) {
     label = 'Merging…'
     title = 'Merge in progress'
@@ -65,13 +52,12 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
   return (
     <button
       type="button"
-      className={`chip chip--ready chip--actionable${armed ? ' chip--arming' : ''}`}
+      className="chip chip--ready chip--actionable"
       title={title}
       aria-label={accessibleLabel}
       aria-live="polite"
       disabled={busy || merged}
-      onClick={onClick}
-      onBlur={onBlur}
+      onClick={onMerge}
     >
       <span className="chip__dot" aria-hidden="true" />
       <span className="chip__label">{label}</span>

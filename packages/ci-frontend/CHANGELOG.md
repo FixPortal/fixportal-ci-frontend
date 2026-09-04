@@ -12,6 +12,17 @@ lists every published release.
 
 ## [Unreleased]
 
+### Changed
+
+- Merging is one click again. The `Ready to merge` pill and `Merge all` fire on the first
+  click, as they did before 3.3.0; the two-step arm-then-confirm added there is removed.
+  The confirmation came from a review sweep over destructive flows rather than from the
+  board's own needs: the backend has already certified the PR ready, the merge is a rebase
+  merge into `main`, and GitHub's own merge button asks for no confirmation either. 3.3.0's
+  actual defect -- a host `window.confirm()` the browser could answer on the viewer's
+  behalf -- stays fixed, because nothing now sits between the click and the merge. Hosts
+  must still not reintroduce a dialog in `mergeFetcher`.
+
 ## [3.3.0] - 2026-09-03
 
 ### Changed
