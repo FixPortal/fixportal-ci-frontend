@@ -34,13 +34,10 @@ function renderList(mergeFetcher: (repo: string, n: number) => Promise<MergeResu
   return render(<Harness prs={prs} admin={admin} />, { wrapper })
 }
 
-test('admin arms a ready pill, then a second click merges that PR', async () => {
+test('admin can click a ready pill to merge that PR', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc' } satisfies MergeResult)
   renderList(mergeFetcher, true, [readyPr(7)])
-  const pill = screen.getByRole('button', { name: /rebase-merge/i })
-  await userEvent.click(pill)
-  expect(mergeFetcher).not.toHaveBeenCalled()
-  await userEvent.click(pill)
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
 })
 
@@ -56,10 +53,7 @@ test('Merge all merges every ready PR in listed order', async () => {
   const calls: number[] = []
   const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
   renderList(mergeFetcher, true, [readyPr(3), { ...readyPr(9), readyToMerge: false }, readyPr(4)])
-  const mergeAll = screen.getByRole('button', { name: /Merge all/i })
-  await userEvent.click(mergeAll)
-  expect(calls).toEqual([]) // the first click only arms the bulk action
-  await userEvent.click(screen.getByRole('button', { name: /Confirm merge all/i }))
+  await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
   await screen.findByRole('button', { name: 'Merged PR #4' })
   expect(calls).toEqual([3, 4]) // the not-ready PR is skipped
 })
@@ -72,9 +66,7 @@ test('Merge all button is hidden when fewer than two PRs are ready', () => {
 test('shows a dismissible inline error when a merge fails', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   renderList(mergeFetcher, true, [readyPr(7)])
-  const pill = screen.getByRole('button', { name: /rebase-merge/i })
-  await userEvent.click(pill)
-  await userEvent.click(pill)
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
   await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
   expect(screen.queryByRole('alert')).toBeNull()
@@ -108,9 +100,7 @@ test('a merge error renders only in the failing repo, not board-wide', async () 
   const { container } = renderTwoRepos(mergeFetcher)
   // Merge repo-b's PR; the alert must land in repo-b's section only.
   const repoBSection = container.querySelectorAll('.repo-prs')[1]
-  const pillB = within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
-  await userEvent.click(pillB)
-  await userEvent.click(pillB)
+  await userEvent.click(within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i }))
   const alerts = await screen.findAllByRole('alert')
   expect(alerts).toHaveLength(1)
   expect(alerts[0]).toHaveTextContent('not mergeable')
@@ -125,10 +115,8 @@ test('an in-flight merge disables only its own pill, and a second merge can star
   const pillA = within(repoASection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
   const pillB = within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
   await userEvent.click(pillA)
-  await userEvent.click(pillA)
   expect(pillA).toBeDisabled()
   expect(pillB).toBeEnabled() // one card merging must not lock the board
-  await userEvent.click(pillB)
   await userEvent.click(pillB)
   expect(mergeFetcher).toHaveBeenCalledTimes(2)
   expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8)
@@ -136,13 +124,11 @@ test('an in-flight merge disables only its own pill, and a second merge can star
   await within(repoBSection as HTMLElement).findByRole('button', { name: 'Merged PR #8' })
 })
 
-test('further clicks on the pill already merging are swallowed', async () => {
+test('a second click on the pill already merging is swallowed', async () => {
   const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(() => {}))
   renderList(mergeFetcher, true, [readyPr(7)])
   const pill = screen.getByRole('button', { name: /rebase-merge/i })
-  await userEvent.click(pill) // arm
-  await userEvent.click(pill) // merge
-  await userEvent.click(pill) // disabled while in flight
+  await userEvent.click(pill)
   await userEvent.click(pill)
   expect(mergeFetcher).toHaveBeenCalledTimes(1)
 })

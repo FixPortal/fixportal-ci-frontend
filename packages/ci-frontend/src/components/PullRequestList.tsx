@@ -5,36 +5,6 @@ import type { PrMerge } from '../lib/prMerge'
 import { isPrBusy, isRepoMerging, prMergeKey } from '../lib/prMerge'
 import { ReviewPills } from './ReviewPills'
 import { ReadyToMergePill } from './ReadyToMergePill'
-import { useArmedAction } from './useArmedAction'
-
-// Bulk merge is the one control on the board that acts on several PRs at once, so
-// it takes the same two-step as the per-PR pill: the first click arms, the second
-// merges. Its own component because PullRequestList returns early above, and a
-// hook cannot sit behind an early return.
-// The armed label deliberately carries no count. The set of ready PRs can change
-// under an armed button (the snapshot refreshes every 30s) and mergeAll acts on
-// whatever is ready at the confirming click, so a number captured at arming time
-// would be the one part of the confirmation able to go stale and lie.
-function MergeAllButton({ disabled, onMergeAll }: {
-  disabled: boolean
-  onMergeAll: () => void
-}) {
-  const { armed, onClick, onBlur } = useArmedAction(onMergeAll)
-  return (
-    <button
-      type="button"
-      className={`chip chip--ready chip--actionable repo-prs__merge-all${armed ? ' chip--arming' : ''}`}
-      title={armed ? 'Click again to rebase-merge every ready PR' : 'Rebase-merge every ready PR'}
-      aria-live="polite"
-      disabled={disabled}
-      onClick={onClick}
-      onBlur={onBlur}
-    >
-      <span className="chip__dot" aria-hidden="true" />
-      <span className="chip__label">{armed ? 'Confirm merge all' : 'Merge all'}</span>
-    </button>
-  )
-}
 
 // Presentational: merge state is hoisted to the page (usePrMerge) and handed
 // down as props. Guests get no `merge` (and isAdmin false), so their render is
@@ -57,10 +27,16 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
       </span>
       {/* One ready PR has its own pill; Merge all only earns its place at two+. */}
       {isAdmin && merge && readyPrs.length >= 2 && (
-        <MergeAllButton
+        <button
+          type="button"
+          className="chip chip--ready chip--actionable repo-prs__merge-all"
+          title="Rebase-merge every ready PR"
           disabled={isRepoMerging(merge.merging, repoName)}
-          onMergeAll={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
-        />
+          onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
+        >
+          <span className="chip__dot" aria-hidden="true" />
+          <span className="chip__label">Merge all</span>
+        </button>
       )}
       {isAdmin && merge?.errors.has(repoName) && (
         <span className="repo-prs__merge-error" role="alert">
