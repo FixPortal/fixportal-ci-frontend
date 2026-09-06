@@ -103,7 +103,16 @@ describe('applyRepoFilters', () => {
     expect(out.map(r => r.name).sort()).toEqual(['docs', 'engine'])
   })
 
-  it('excludes running / all-unknown repos when any CI-status chip is selected', () => {
+  it('buckets a running repo under the running chip', () => {
+    const out = applyRepoFilters(all, filters({ ciStatus: new Set(['running']) }))
+    expect(out.map(r => r.name)).toEqual(['web'])
+  })
+  it('buckets a repo with both a failing and a running workflow as failing', () => {
+    const mixed = repo({ name: 'mixed', workflows: [wf('failure'), wf('running')] })
+    expect(applyRepoFilters([mixed], filters({ ciStatus: new Set(['running']) }))).toEqual([])
+    expect(applyRepoFilters([mixed], filters({ ciStatus: new Set(['failing']) }))).toEqual([mixed])
+  })
+  it('excludes unselected buckets / all-unknown repos when any CI-status chip is selected', () => {
     const out = applyRepoFilters(all, filters({ ciStatus: new Set(['passing']) }))
     expect(out).not.toContain(running)
     expect(out.map(r => r.name).sort()).toEqual(['portal', 'review', 'secret'])

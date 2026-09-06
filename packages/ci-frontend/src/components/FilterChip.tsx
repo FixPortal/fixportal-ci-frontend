@@ -3,12 +3,13 @@
 // across two rows: most sit in RepoFilterBar, while Ready to merge sits beside
 // the search box in the toolbar.
 //
-// `tone` maps a chip to a status colour class so Failing reads red and Passing
-// green, matching the board's status palette; others use the neutral accent.
+// `tone` maps a chip to a status colour class so Failing reads red, Running blue
+// and Passing green, matching the board's status palette; others use the neutral
+// accent.
 export function FilterChip(props: {
   label: string
   pressed: boolean
-  tone?: 'failing' | 'passing'
+  tone?: 'running' | 'failing' | 'passing'
   onClick: () => void
 }) {
   const tone = props.tone ? ` repo-filter__chip--${props.tone}` : ''
