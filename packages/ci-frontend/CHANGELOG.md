@@ -12,6 +12,15 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-06
+
+### Added
+
+- A `Running` chip in the CI Status filter group, left of `Failing`. It selects repos whose
+  worst workflow state is `running`, which previously belonged to no bucket at all and so
+  disappeared the moment any CI-status chip was pressed. Precedence follows the card's own
+  activity dot: a repo with one failing and one running workflow still buckets as failing.
+
 ### Changed
 
 - Merging is one click again. The `Ready to merge` pill and `Merge all` fire on the first
@@ -22,6 +31,9 @@ lists every published release.
   actual defect -- a host `window.confirm()` the browser could answer on the viewer's
   behalf -- stays fixed, because nothing now sits between the click and the merge. Hosts
   must still not reintroduce a dialog in `mergeFetcher`.
+- `Merge all` now reads `Merging...` and announces politely while a merge in its repo is in
+  flight, matching the `Ready to merge` pill it shares its livery with. It was already
+  disabled for the duration, but kept its idle label, which read as a dead button.
 
 ## [3.3.0] - 2026-09-03
 
