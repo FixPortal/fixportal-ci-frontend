@@ -642,9 +642,14 @@
     border-color: var(--border-strong);
   }
 
+  /* The group wraps for the same reason the bar above it does. The bar can only
+     wrap BETWEEN its flex items, and a group is one item -- so an unwrappable
+     group wider than the viewport overflows the document however much room the
+     bar has to wrap. Four CI-status chips crossed 375px and did exactly that. */
   .repo-filter__group {
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--space-2);
   }
 
