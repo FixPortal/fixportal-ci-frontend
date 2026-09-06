@@ -91,10 +91,10 @@ describe('useRepoFilters', () => {
 
   it('drops unknown members from persisted Sets (untrusted localStorage)', () => {
     localStorage.setItem(KEY, JSON.stringify({
-      search: '', visibility: ['public', 'bogus'], ciStatus: ['failing', 'garbage', 42], hasOpenPrs: false,
+      search: '', visibility: ['public', 'bogus'], ciStatus: ['running', 'failing', 'garbage', 42], hasOpenPrs: false,
     }))
     const { result } = renderHook(() => useRepoFilters())
     expect([...result.current.filters.visibility]).toEqual(['public'])
-    expect([...result.current.filters.ciStatus]).toEqual(['failing'])
+    expect([...result.current.filters.ciStatus]).toEqual(['running', 'failing'])
   })
 })

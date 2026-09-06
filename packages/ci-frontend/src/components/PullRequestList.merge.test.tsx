@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { expect, test, vi } from 'vitest'
@@ -58,6 +58,22 @@ test('Merge all merges every ready PR in listed order', async () => {
   expect(calls).toEqual([3, 4]) // the not-ready PR is skipped
 })
 
+// Merge all wears the same livery as the pill beside it, so it has to speak the
+// same way in flight: an unchanged "Merge all" on a disabled button reads as dead.
+test('Merge all reads Merging while a merge in its repo is in flight', async () => {
+  const resolvers: ((r: MergeResult) => void)[] = []
+  const mergeFetcher = vi.fn(() => new Promise<MergeResult>(res => { resolvers.push(res) }))
+  renderList(mergeFetcher, true, [readyPr(3), readyPr(4)])
+  await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
+  const inFlight = await screen.findByRole('button', { name: 'Merging…' })
+  expect(inFlight).toBeDisabled()
+  expect(inFlight).toHaveAttribute('aria-live', 'polite')
+  resolvers[0]({ ok: true, sha: 'x' })
+  await screen.findByRole('button', { name: 'Merged PR #3' })
+  await waitFor(() => expect(resolvers).toHaveLength(2))
+  resolvers[1]({ ok: true, sha: 'y' })
+  await screen.findByRole('button', { name: 'Merged PR #4' })
+})
 test('Merge all button is hidden when fewer than two PRs are ready', () => {
   renderList(vi.fn(), true, [readyPr(7), { ...readyPr(8), readyToMerge: false }])
   expect(screen.queryByRole('button', { name: /Merge all/i })).toBeNull()

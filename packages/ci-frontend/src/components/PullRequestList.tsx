@@ -20,6 +20,7 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
   const readyPrs = pullRequests.filter(pr => pr.readyToMerge === true && !merge?.merged.has(prMergeKey(repoName, pr.number)))
   const openPrCount = pullRequests.filter(pr => !merge?.merged.has(prMergeKey(repoName, pr.number))).length
   const merging = merge?.merging
+  const repoMerging = merging ? isRepoMerging(merging, repoName) : false
   return (
     <div className="repo-prs">
       <span className="repo-prs__count">
@@ -30,12 +31,18 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
         <button
           type="button"
           className="chip chip--ready chip--actionable repo-prs__merge-all"
-          title="Rebase-merge every ready PR"
-          disabled={isRepoMerging(merge.merging, repoName)}
+          title={repoMerging ? 'Merge in progress' : 'Rebase-merge every ready PR'}
+          // Same in-flight wording and announcement as ReadyToMergePill: the two
+          // sit on the same card in the same livery, so a merge that says nothing
+          // on one of them reads as a dead button. The condition is the repo, not
+          // just Merge all's own key -- a single pill's merge disables this button
+          // too, and a disabled button with an idle label is the same dead read.
+          aria-live="polite"
+          disabled={repoMerging}
           onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
         >
           <span className="chip__dot" aria-hidden="true" />
-          <span className="chip__label">Merge all</span>
+          <span className="chip__label">{repoMerging ? 'Merging…' : 'Merge all'}</span>
         </button>
       )}
       {isAdmin && merge?.errors.has(repoName) && (

@@ -682,6 +682,14 @@
     border-color: var(--brand);
     background: color-mix(in srgb, var(--brand) 16%, transparent);
   }
+  /* Running borrows --chip-on-ink rather than earning its own ink token: --run
+     (#2563eb / #60a5fa) and --brand (hsl 217 82% 50%) are the same blue within a
+     few degrees of hue, so the measured brand pairing carries over unchanged. */
+  .repo-filter__chip--running.repo-filter__chip--on {
+    color: var(--chip-on-ink);
+    border-color: var(--run);
+    background: color-mix(in srgb, var(--run) 16%, transparent);
+  }
   .repo-filter__chip--failing.repo-filter__chip--on {
     color: var(--chip-on-failing-ink);
     border-color: var(--bad-solid);

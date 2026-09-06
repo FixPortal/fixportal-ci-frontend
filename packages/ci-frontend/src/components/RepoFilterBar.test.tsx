@@ -40,6 +40,14 @@ describe('RepoFilterBar', () => {
     expect(screen.getByRole('button', { name: /has prs/i })).toBeInTheDocument()
   })
 
+  // Order is the ask, not an accident: Running sits left of Failing so the
+  // CI-status group reads in the order a run moves through.
+  it('renders Running first in the CI-status group', () => {
+    setup()
+    const group = screen.getByRole('group', { name: 'CI Status' })
+    const labels = [...group.querySelectorAll('button')].map(b => b.textContent)
+    expect(labels).toEqual(['Running', 'Failing', 'Passing', 'No-CI'])
+  })
   it('fires the matching toggle handler when a chip is clicked', async () => {
     const props = setup()
     await userEvent.click(screen.getByRole('button', { name: /failing/i }))
@@ -48,6 +56,8 @@ describe('RepoFilterBar', () => {
     expect(props.onToggleHasOpenPrs).toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: /^public$/i }))
     expect(props.onToggleVisibility).toHaveBeenCalledWith('public')
+    await userEvent.click(screen.getByRole('button', { name: /running/i }))
+    expect(props.onToggleCiStatus).toHaveBeenCalledWith('running')
   })
 
   it('reflects selected state via aria-pressed', () => {

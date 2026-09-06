@@ -4,7 +4,7 @@ import { worstState } from './worstState'
 import { isNoCi } from './isNoCi'
 
 export type Visibility = 'public' | 'private'
-export type CiStatus = 'failing' | 'passing' | 'no-ci'
+export type CiStatus = 'running' | 'failing' | 'passing' | 'no-ci'
 
 // Filter state shape. Each Set empty (or boolean false / empty string) means
 // "no constraint": within a group the selected members are ORed, and the groups
@@ -39,12 +39,14 @@ export function hasReadyPr(repo: RepositorySnapshot): boolean {
 }
 
 // The CI bucket a repo belongs to, or null when it sits outside all buckets
-// (workflows in progress / all-unknown). Mirrors RepoActivityIndicator's read of
-// worstState so the filter agrees with the dot shown on each card.
+// (all-unknown). Mirrors RepoActivityIndicator's read of worstState so the filter
+// agrees with the dot shown on each card -- including its precedence: a repo with
+// one failing and one running workflow buckets as failing, not running.
 function ciStatusOf(repo: RepositorySnapshot): CiStatus | null {
   if (isNoCi(repo)) return 'no-ci'
   const state = worstState((repo.workflows ?? []).map(w => w.state))
   if (state === 'failure') return 'failing'
+  if (state === 'running') return 'running'
   if (state === 'success') return 'passing'
   return null
 }

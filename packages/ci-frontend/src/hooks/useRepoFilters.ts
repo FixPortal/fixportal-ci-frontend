@@ -11,7 +11,7 @@ import {
 const DEFAULT_KEY = 'ci-dashboard:repo-filters'
 
 const VISIBILITIES: readonly Visibility[] = ['public', 'private']
-const CI_STATUSES: readonly CiStatus[] = ['failing', 'passing', 'no-ci']
+const CI_STATUSES: readonly CiStatus[] = ['running', 'failing', 'passing', 'no-ci']
 
 interface Persisted {
   search?: string
