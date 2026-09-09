@@ -504,7 +504,7 @@ def check_ref(job, ref, origin, unpinned):
 def check_local_action(job, ref, origin, unpinned, visited):
     """Pin-check one local action's external refs, recursively for composites.
 
-    Docker actions can name an external `docker://` image in `runs.image`; that image
+    Docker actions can name an external image in `runs.image`; that image
     executes just like a workflow container and needs the same immutable digest.
     Returns (failed, unpinned).
 
@@ -560,9 +560,9 @@ def check_local_action(job, ref, origin, unpinned, visited):
 
     inner_refs = composite_step_refs(inner)
     runs = inner.get("runs")
-    if isinstance(runs, dict):
+    if isinstance(runs, dict) and runs.get("using") == "docker":
         image = runs.get("image")
-        if runs.get("using") == "docker" and isinstance(image, str) and image.lower().startswith("docker://"):
+        if isinstance(image, str) and Path(image).name != "Dockerfile":
             inner_refs.append(image)
 
     for inner_ref in inner_refs:
