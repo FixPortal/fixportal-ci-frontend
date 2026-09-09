@@ -101,7 +101,7 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<CaptureHarness />, { wrapper: wrapperWith(mergeFetcher) })
   // Fail a merge on repo-b while the stepper shows repo-a's PR.
-  await act(() => mergeRef.current!.mergeOne('repo-b', 8))
+  await act(() => mergeRef.current!.mergeOne('repo-b', 8, 'sha-8'))
   expect(mergeRef.current!.errors.get('repo-b')).toBe('not mergeable')
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   // And the alert does appear once the failing repo's PR is displayed... but
@@ -122,7 +122,7 @@ test('opening the stepper keeps an error already recorded for the shown PR\'s re
   const { rerender } = render(<LateOpenHarness open={false} />, { wrapper: wrapperWith(mergeFetcher) })
   // Fail repo-a's merge from the board, then open the stepper on that PR: the
   // paging effect's mount run must not swallow the error it lands on.
-  await act(() => mergeRef.current!.mergeOne('repo-a', 7))
+  await act(() => mergeRef.current!.mergeOne('repo-a', 7, 'sha-7'))
   rerender(<LateOpenHarness open={true} />)
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })

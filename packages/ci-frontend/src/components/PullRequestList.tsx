@@ -39,7 +39,7 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
           // too, and a disabled button with an idle label is the same dead read.
           aria-live="polite"
           disabled={repoMerging}
-          onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => pr.number))}
+          onClick={() => merge.mergeAll(repoName, readyPrs.map(pr => ({ number: pr.number, headSha: pr.headSha ?? '' })))}
         >
           <span className="chip__dot" aria-hidden="true" />
           <span className="chip__label">{repoMerging ? 'Merging…' : 'Merge all'}</span>
@@ -81,7 +81,7 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                   <ReadyToMergePill
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
-                    onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number) : undefined}
+                    onMerge={isAdmin && merge ? () => merge.mergeOne(repoName, pr.number, pr.headSha ?? '') : undefined}
                     merging={merging?.has(key) ?? false}
                     merged={locallyMerged}
                     // Busy is per-PR: only this pill's own merge (or a Merge all
