@@ -12,6 +12,8 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-09-09
+
 ### Fixed
 
 - The merge request sent to the default `/api/dashboard/merge` endpoint now includes
