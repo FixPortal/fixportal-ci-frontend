@@ -12,6 +12,22 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-09-09
+
+### Fixed
+
+- The merge response is now validated for a `merged: true` field before it is treated
+  as success. A 200 response whose body was well-formed JSON but not the expected
+  shape previously read as a successful merge with a blank SHA.
+- `usePrMerge` now resets its merge/error/receipt state when the snapshot's org
+  changes, and in-flight merges from the previous org no longer write into the new
+  org's state on completion.
+- The `PullRequestStepper` merge-error banner is no longer dismissed when paging
+  between PRs within the same repo — only when leaving the repo the error belongs to.
+- The `open-prs` summary count in the admin view is now derived from the visible PR
+  list rather than the raw snapshot, so it matches the PRs the stepper can actually page
+  through.
+
 ## [3.4.0] - 2026-09-06
 
 ### Added
