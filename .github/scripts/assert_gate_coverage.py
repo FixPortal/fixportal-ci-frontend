@@ -48,8 +48,8 @@ COMMENT_OR_BLANK = re.compile(r"^\s*(?:\#.*)?$")
 # finding `needs.*.result` inside a condition accepted `false && contains(...)`, which
 # can never reach the failing step and leaves the required gate green.
 FAILURE_CONDITION_ATOM = re.compile(
-    rf"(?:contains\(needs\.({ID}|\*)\.result,['\"](?:failure|cancelled)['\"]\)|"
-    rf"needs\.({ID})\.result(?:==['\"](?:failure|cancelled)['\"]|!=['\"]success['\"]))"
+    rf"(?:contains\(needs\.({ID}|\*)\.result,['\"](failure|cancelled)['\"]\)|"
+    rf"needs\.({ID})\.result(?:==['\"](failure|cancelled)['\"]|!=['\"]success['\"]))"
 )
 BACKSLASH = "\\"
 
@@ -736,7 +736,7 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
     # clean fail-closed exit. Found by CodeRabbit on the upstream review.
     step_indent = body_indent + 1
 
-    referenced = set()
+    referenced = {}
     failing = []
     for condition, index in step_conditions(block, step_indent):
         normalised = normalise_condition(condition)
@@ -744,9 +744,14 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
         matches = [FAILURE_CONDITION_ATOM.fullmatch(atom) for atom in atoms]
         if not matches or any(match is None for match in matches):
             continue
-        ids = [_first_group(match) for match in matches if match is not None]
-        referenced.update(ids)
-        failing.append((condition, index, ids))
+        coverage = []
+        for match in matches:
+            job_id = match.group(1) or match.group(3)
+            outcome = match.group(2) or match.group(4)
+            outcomes = {outcome} if outcome else {"failure", "cancelled"}
+            referenced.setdefault(job_id, set()).update(outcomes)
+            coverage.append((job_id, outcomes))
+        failing.append((condition, index, coverage))
 
     if not referenced:
         sys.exit(
@@ -763,16 +768,20 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
     # left the required context green -- the exact fail-OPEN shape the assertion
     # exists to refuse, reached by deleting half a condition rather than all of it.
     # The parser already had the full needs: set and simply was not consulting it.
-    if "*" not in referenced:
-        uncovered = sorted(set(needs) - referenced)
-        if uncovered:
-            sys.exit(
-                f"{workflow_path}: '{gate_job}' step conditions reference "
-                f"{', '.join(sorted(referenced))} but not {', '.join(uncovered)}.\n"
-                "A dependency whose result is never referenced can fail while the gate "
-                "still reports success. Use `needs.*.result`, or reference every job in "
-                f"the '{gate_job}' needs: list."
-            )
+    wildcard = referenced.get("*", set())
+    uncovered = sorted(
+        f"{job_id}:{outcome}"
+        for job_id in needs
+        for outcome in ("failure", "cancelled")
+        if outcome not in wildcard and outcome not in referenced.get(job_id, set())
+    )
+    if uncovered:
+        sys.exit(
+            f"{workflow_path}: '{gate_job}' step conditions do not cover "
+            f"{', '.join(uncovered)}.\n"
+            "Every dependency must make the gate fail for both failure and cancellation. "
+            "Use `needs.<job>.result != 'success'`, or cover both terminal results."
+        )
 
     # A condition proves the step is REACHED, not that reaching it costs anything. See
     # step_can_fail: continue-on-error, or a body with no non-zero exit, keeps the
@@ -784,10 +793,9 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
     # coverage assertion above closes, reopened one assertion later.
     reason = "could not be located as a step in the job body"
     reported = failing[0][0]
-    covered = set()
-    wildcard_covered = False
+    covered = {}
     step_if_value = step_key_pattern(step_indent, "if")
-    for condition, index, ids in failing:
+    for condition, index, coverage in failing:
         reported = condition
         match = step_if_value.match(block[index])
         # Guarded rather than assumed. `index` came from a line this very pattern
@@ -802,12 +810,10 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
         ok, reason = step_can_fail(block, span, len(match.group(1)))
         if not ok:
             continue
-        ids = set(ids)
-        if "*" in ids:
-            wildcard_covered = True
-        covered.update(ids - {"*"})
+        for job_id, outcomes in coverage:
+            covered.setdefault(job_id, set()).update(outcomes)
 
-    if not wildcard_covered and not covered:
+    if not covered:
         sys.exit(
             f"{workflow_path}: '{gate_job}' aggregates on `if: {reported}` but that "
             f"step {reason}.\n"
@@ -817,17 +823,20 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
             "continue-on-error."
         )
 
-    if not wildcard_covered:
-        unenforced = sorted(set(needs) - covered)
-        if unenforced:
-            sys.exit(
-                f"{workflow_path}: '{gate_job}' references "
-                f"{', '.join(sorted(covered))} from a step that can fail, but "
-                f"{', '.join(unenforced)} is referenced only by steps that cannot.\n"
-                "A dependency named in a condition whose step carries continue-on-error, "
-                "or whose body cannot exit non-zero, is not gated at all: it can fail "
-                "while the required context stays green."
-            )
+    wildcard = covered.get("*", set())
+    unenforced = sorted(
+        f"{job_id}:{outcome}"
+        for job_id in needs
+        for outcome in ("failure", "cancelled")
+        if outcome not in wildcard and outcome not in covered.get(job_id, set())
+    )
+    if unenforced:
+        sys.exit(
+            f"{workflow_path}: '{gate_job}' leaves {', '.join(unenforced)} referenced "
+            "only by steps that cannot fail.\n"
+            "A dependency outcome named in a condition whose step carries "
+            "continue-on-error, or whose body cannot exit non-zero, is not gated at all."
+        )
 
 
 def parse_jobs(workflow_path):

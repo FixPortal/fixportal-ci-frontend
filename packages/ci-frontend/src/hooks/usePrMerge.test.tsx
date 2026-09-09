@@ -140,3 +140,41 @@ test('a repeat click on the same PR while it is merging is a no-op', async () =>
   act(() => { void result.current.mergeOne('repo-a', 7) })
   expect(mergeFetcher).toHaveBeenCalledTimes(1)
 })
+
+test('an organisation change discards an old merge without disrupting a new one', async () => {
+  const resolvers: ((result: MergeResult) => void)[] = []
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(resolve => { resolvers.push(resolve) }))
+  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
+  const { result, rerender } = renderHook(
+    ({ org }) => usePrMerge(org),
+    { initialProps: { org: 'org-a' }, wrapper },
+  )
+
+  let oldMerge!: Promise<void>
+  act(() => { oldMerge = result.current.mergeOne('repo-a', 7) })
+  expect(result.current.merging.has('repo-a#7')).toBe(true)
+
+  rerender({ org: 'org-b' })
+  expect(result.current.merging.size).toBe(0)
+
+  let newMerge!: Promise<void>
+  act(() => { newMerge = result.current.mergeOne('repo-a', 7) })
+  expect(mergeFetcher).toHaveBeenCalledTimes(2)
+  expect(result.current.merging.has('repo-a#7')).toBe(true)
+
+  await act(async () => {
+    resolvers[0]({ ok: false, status: 409, message: 'old organisation' })
+    await oldMerge
+  })
+  expect(result.current.merging.has('repo-a#7')).toBe(true)
+  expect(result.current.errors.size).toBe(0)
+  expect(invalidateSpy).not.toHaveBeenCalled()
+
+  await act(async () => {
+    resolvers[1](ok)
+    await newMerge
+  })
+  expect(result.current.merging.size).toBe(0)
+  expect(result.current.merged.has('repo-a#7')).toBe(true)
+  expect(invalidateSpy).toHaveBeenCalledTimes(1)
+})

@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 GATE_CHECKER = ROOT / ".github" / "scripts" / "assert_gate_coverage.py"
 HYGIENE_CHECKER = ROOT / ".github" / "scripts" / "assert_workflow_hygiene.py"
+COMPLETE_CONDITION = "needs.build.result != 'success'"
 
 
 def run_gate(condition: str, run_header: str, body: str) -> subprocess.CompletedProcess[str]:
@@ -55,16 +56,16 @@ class GateCoverageTests(unittest.TestCase):
         )
         for body in bodies:
             with self.subTest(body=body):
-                result = run_gate("contains(needs.*.result, 'failure')", "|", body)
+                result = run_gate(COMPLETE_CONDITION, "|", body)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_escaped_quote_outside_a_string_does_not_hide_the_exit(self):
-        result = run_gate("contains(needs.*.result, 'failure')", "|", r'echo \"; exit 1')
+        result = run_gate(COMPLETE_CONDITION, "|", r'echo \"; exit 1')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_shell_parameter_length_is_not_stripped_as_a_comment(self):
         result = run_gate(
-            "contains(needs.*.result, 'failure')",
+            COMPLETE_CONDITION,
             "|",
             'if [ ${#x} -eq 0 ]; then exit 1; fi',
         )
@@ -88,18 +89,28 @@ class GateCoverageTests(unittest.TestCase):
                 result = run_gate(condition, "|", "exit 1")
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_each_dependency_must_cover_failure_and_cancellation(self):
+        conditions = (
+            "contains(needs.*.result, 'failure')",
+            "contains(needs.*.result, 'cancelled')",
+        )
+        for condition in conditions:
+            with self.subTest(condition=condition):
+                result = run_gate(condition, "|", "exit 1")
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_folded_run_body_is_rejected(self):
         result = run_gate(
-            "contains(needs.*.result, 'failure')",
+            COMPLETE_CONDITION,
             ">",
             "echo gate\nexit 1",
         )
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_exit_status_wrapping_to_zero_is_rejected(self):
-        accepted = run_gate("contains(needs.*.result, 'failure')", "|", "exit 255")
+        accepted = run_gate(COMPLETE_CONDITION, "|", "exit 255")
         self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
-        result = run_gate("contains(needs.*.result, 'failure')", "|", "exit 256")
+        result = run_gate(COMPLETE_CONDITION, "|", "exit 256")
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

@@ -30,6 +30,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   const [receipts, setReceipts] = useState<ReadonlySet<string>>(() => new Set())
   const receiptTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
   const previousSnapshotOrg = useRef(snapshotOrg)
+  const sourceGeneration = useRef(0)
   // The guard reads from a ref, not from `merging`: two clicks in the same tick
   // would both see the pre-render state and both start the same merge.
   const inFlight = useRef(new Set<string>())
@@ -41,8 +42,11 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   useEffect(() => {
     if (previousSnapshotOrg.current === snapshotOrg) return
     previousSnapshotOrg.current = snapshotOrg
+    sourceGeneration.current += 1
     for (const timer of receiptTimers.current) clearTimeout(timer)
     receiptTimers.current.clear()
+    inFlight.current.clear()
+    setMerging(new Set())
     setMerged(new Set())
     setReceipts(new Set())
     setErrors(new Map())
@@ -63,6 +67,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
       return next
     })
   }, [])
+
+  const endMergeIfCurrent = useCallback((key: string, generation: number) => {
+    if (generation === sourceGeneration.current) endMerge(key)
+  }, [endMerge])
 
   const dismissError = useCallback((repo: string) => {
     setErrors(current => {
@@ -114,6 +122,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   const mergeOne = useCallback(
     async (repo: string, pullNumber: number) => {
       const key = prMergeKey(repo, pullNumber)
+      const generation = sourceGeneration.current
       if (!startMerge(key)) return
       dismissError(repo)
       try {
@@ -121,9 +130,11 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
         try {
           result = await callMerge(repo, pullNumber)
         } catch (error) {
+          if (generation !== sourceGeneration.current) return
           setRepoError(repo, mergeErrorMessage(error))
           return
         }
+        if (generation !== sourceGeneration.current) return
         if (result.ok) {
           markMerged(repo, pullNumber)
           await refresh()
@@ -135,15 +146,16 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           setRepoError(repo, result.message)
         }
       } finally {
-        endMerge(key)
+        endMergeIfCurrent(key, generation)
       }
     },
-    [startMerge, endMerge, dismissError, setRepoError, callMerge, markMerged, refresh],
+    [startMerge, endMergeIfCurrent, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
   const mergeAll = useCallback(
     async (repo: string, pullNumbers: number[]) => {
       const allKey = prMergeKey(repo, 'all')
+      const generation = sourceGeneration.current
       if (!startMerge(allKey)) return
       dismissError(repo)
       let merged = 0
@@ -159,8 +171,9 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           } catch (error) {
             result = { ok: false, status: null, message: mergeErrorMessage(error) }
           } finally {
-            endMerge(key)
+            endMergeIfCurrent(key, generation)
           }
+          if (generation !== sourceGeneration.current) return
           if (!result.ok) {
             setRepoError(repo, `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}`)
             break
@@ -168,12 +181,12 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           merged += 1
           markMerged(repo, n)
         }
-        await refresh()
+        if (generation === sourceGeneration.current) await refresh()
       } finally {
-        endMerge(allKey)
+        endMergeIfCurrent(allKey, generation)
       }
     },
-    [startMerge, endMerge, dismissError, setRepoError, callMerge, markMerged, refresh],
+    [startMerge, endMergeIfCurrent, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
   return { merging, merged, receipts, errors, mergeOne, mergeAll, dismissError }
