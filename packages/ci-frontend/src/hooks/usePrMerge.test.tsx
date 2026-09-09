@@ -178,3 +178,29 @@ test('an organisation change discards an old merge without disrupting a new one'
   expect(result.current.merged.has('repo-a#7')).toBe(true)
   expect(invalidateSpy).toHaveBeenCalledTimes(1)
 })
+
+test('an organisation change during refresh discards the old merge error', async () => {
+  let finishRefresh!: () => void
+  const { wrapper, invalidateSpy } = wrapperWith(vi.fn().mockResolvedValue({
+    ok: false,
+    status: 409,
+    message: 'old organisation',
+  } satisfies MergeResult))
+  invalidateSpy.mockImplementation(() => new Promise<void>(resolve => { finishRefresh = resolve }))
+  const { result, rerender } = renderHook(
+    ({ org }) => usePrMerge(org),
+    { initialProps: { org: 'org-a' }, wrapper },
+  )
+
+  let merge!: Promise<void>
+  act(() => { merge = result.current.mergeOne('repo-a', 7) })
+  await act(() => Promise.resolve())
+  expect(invalidateSpy).toHaveBeenCalledTimes(1)
+
+  rerender({ org: 'org-b' })
+  await act(async () => {
+    finishRefresh()
+    await merge
+  })
+  expect(result.current.errors.size).toBe(0)
+})

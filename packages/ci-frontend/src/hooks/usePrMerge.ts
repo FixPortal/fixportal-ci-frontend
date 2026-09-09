@@ -143,6 +143,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           // poll) means our snapshot is out of date — refresh before surfacing
           // the error so the board catches up.
           await refresh()
+          if (generation !== sourceGeneration.current) return
           setRepoError(repo, result.message)
         }
       } finally {
