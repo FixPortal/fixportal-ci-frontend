@@ -43,6 +43,9 @@
   "version": 1,
 
   "high": [
+    ".github/scripts/test_policy_checkers.py",
+    ".github/scripts/assert_release_gate.py",
+    ".github/scripts/test_assert_release_gate.py",
     ".claude/review-policy.json",
     ".coderabbit.yaml",
     ".github/workflows/review-policy-guard.yml",
