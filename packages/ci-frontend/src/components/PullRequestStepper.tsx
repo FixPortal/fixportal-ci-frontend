@@ -117,7 +117,7 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
         <ReadyToMergePill
           ready={pr.readyToMerge}
           prNumber={pr.number}
-          onMerge={isAdmin && merge ? () => merge.mergeOne(pr.repo, pr.number, pr.headSha ?? '') : undefined}
+          onMerge={isAdmin && merge && pr.headSha ? () => merge.mergeOne(pr.repo, pr.number, pr.headSha!) : undefined}
           merging={merge?.merging.has(key) ?? false}
           merged={merge?.merged.has(key)}
           busy={merge ? isPrBusy(merge.merging, pr.repo, pr.number) : false}

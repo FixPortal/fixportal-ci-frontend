@@ -19,7 +19,8 @@ lists every published release.
   stale head; the board never sent it, so every "Ready to Merge" click failed with
   `Head SHA is required.`. `usePrMerge`'s `mergeOne`/`mergeAll` now take the PR's
   `headSha` and thread it through; `mergeFetcher`'s public `(repo, pullNumber)`
-  signature is unchanged.
+  signature is unchanged. A ready PR with no `headSha` recorded yet renders no merge
+  button (and is skipped by Merge all) rather than silently sending an empty one.
 
 ## [3.4.1] - 2026-09-09
 
