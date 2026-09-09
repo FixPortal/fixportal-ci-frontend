@@ -107,7 +107,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
 
   const callMerge = useCallback(
     (repo: string, pullNumber: number, headSha: string): Promise<MergeResult> => {
-      if (mergeFetcher) return mergeFetcher(repo, pullNumber)
+      if (mergeFetcher) return mergeFetcher(repo, pullNumber, headSha)
       const mergeUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/merge`
       return mergePullRequest(mergeUrl, repo, pullNumber, headSha)
     },

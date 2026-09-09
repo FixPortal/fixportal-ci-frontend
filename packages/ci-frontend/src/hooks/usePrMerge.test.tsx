@@ -24,7 +24,7 @@ test('mergeOne merges via the configured fetcher and invalidates the snapshot qu
   const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
   const { result } = renderHook(() => usePrMerge(), { wrapper })
   await act(() => result.current.mergeOne('repo-a', 7, 'sha-7'))
-  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
+  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7, 'sha-7')
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['dashboard-snapshot'] })
   expect(result.current.merging.size).toBe(0)
   expect(result.current.errors.size).toBe(0)

@@ -32,7 +32,9 @@ export interface CiConfig {
   // mergeFetcher: used for merge requests when the host needs to attach auth
   // headers (e.g. MSAL Bearer token). Falls back to a plain POST of
   // apiBase + /api/dashboard/merge when absent. Same pattern as snapshotFetcher.
-  mergeFetcher?: (repo: string, pullNumber: number) => Promise<MergeResult>
+  // headSha is passed since 3.4.3 - the backend requires it, so a host fetcher
+  // that proxies through its own backend must forward it too.
+  mergeFetcher?: (repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>
   storageNamespace?: string
   repositoryScope?: string
 }

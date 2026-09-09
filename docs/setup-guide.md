@@ -171,11 +171,11 @@ does not block the rest of the board:
   adminSignal={isSignedIn}
   apiBase="https://your-backend.example.com"
   adminSnapshotFetcher={fetchAdminSnapshot}
-  mergeFetcher={async (repo, pullNumber) => {
+  mergeFetcher={async (repo, pullNumber, headSha) => {
     const response = await fetch('/api/merge', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ repo, pullNumber }),
+      body: JSON.stringify({ repo, pullNumber, headSha }),
     })
     if (!response.ok) {
       return { ok: false, status: response.status, message: 'Merge failed' }

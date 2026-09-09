@@ -12,6 +12,18 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.4.3] - 2026-09-10
+
+### Fixed
+
+- `mergeFetcher` now receives `headSha` as a third argument. 3.4.2 threaded
+  `headSha` to the library's own default fetch path, but a host supplying its
+  own `mergeFetcher` (proxying merges through its own backend) had no way to
+  forward the field the CI backend requires, so the `Head SHA is required.`
+  error persisted for any host using a custom fetcher. Non-breaking: an
+  existing two-argument `mergeFetcher` implementation still satisfies the
+  type and keeps working, it just never sees the new argument.
+
 ## [3.4.2] - 2026-09-09
 
 ### Fixed
