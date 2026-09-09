@@ -46,7 +46,8 @@ describe('CiBoardContent filtering', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('reconciles a successful merge before the stale snapshot catches up', async () => {
-    const staleSnapshotFetcher = vi.fn().mockResolvedValue(readySnapshot)
+    const staleSnapshot = { ...readySnapshot, summary: [{ key: 'open-prs', count: 1 }] }
+    const staleSnapshotFetcher = vi.fn().mockResolvedValue(staleSnapshot)
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ merged: true, sha: 'abc123' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -55,7 +56,7 @@ describe('CiBoardContent filtering', () => {
       <CiBoard
         adminSignal={true}
         apiBase="https://ci.test"
-        snapshotFetcher={async () => readySnapshot}
+        snapshotFetcher={async () => staleSnapshot}
         adminSnapshotFetcher={staleSnapshotFetcher}
         storageNamespace="merge-receipt"
       />,
@@ -65,8 +66,43 @@ describe('CiBoardContent filtering', () => {
 
     expect(await screen.findByRole('button', { name: 'Merged PR #7' })).toHaveTextContent('Merged')
     await waitFor(() => expect(staleSnapshotFetcher).toHaveBeenCalledTimes(2))
-    await waitForElementToBeRemoved(() => screen.queryByText('Add widget'), { timeout: 2_000 })
-    expect(screen.queryByText('Add widget')).not.toBeInTheDocument()
+    await waitForElementToBeRemoved(
+      () => screen.queryByText('Add widget', { selector: '.repo-prs__title' }),
+      { timeout: 2_000 },
+    )
+    expect(screen.queryByText('Add widget', { selector: '.repo-prs__title' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '0Open PRs' })).toBeDisabled()
+  })
+
+  it('drops retained merge state when the snapshot source changes', async () => {
+    const firstSource = vi.fn().mockResolvedValue(readySnapshot)
+    const secondSource = vi.fn().mockResolvedValue({ ...readySnapshot, org: 'OtherOrg' })
+    const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc123' })
+    const { rerender } = render(
+      <CiBoard
+        adminSignal={true}
+        adminSnapshotFetcher={firstSource}
+        mergeFetcher={mergeFetcher}
+        storageNamespace="source-reset"
+      />,
+    )
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Rebase-merge PR #7' }))
+    await waitForElementToBeRemoved(
+      () => screen.queryByText('Add widget', { selector: '.repo-prs__title' }),
+      { timeout: 2_000 },
+    )
+
+    rerender(
+      <CiBoard
+        adminSignal={true}
+        adminSnapshotFetcher={secondSource}
+        mergeFetcher={mergeFetcher}
+        storageNamespace="source-reset"
+      />,
+    )
+
+    expect(await screen.findByText('Add widget', { selector: '.repo-prs__title' })).toBeInTheDocument()
   })
 
   it('shows the filtered empty state with a Clear filters action when nothing matches', async () => {

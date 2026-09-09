@@ -65,34 +65,42 @@ test('mergeAll stops on the first failure and reports progress', async () => {
   expect(invalidateSpy).toHaveBeenCalledTimes(1) // the one success still refreshes
 })
 
-test('mergeOne releases the re-entrancy guard when the configured fetcher throws', async () => {
+test('mergeAll refreshes when the first merge fails', async () => {
+  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  await act(() => result.current.mergeAll('repo-a', [3, 9]))
+  expect(result.current.errors.get('repo-a')).toBe('Merged 0 of 2; failed on #3: not mergeable')
+  expect(invalidateSpy).toHaveBeenCalledTimes(1)
+})
+
+test('mergeOne surfaces a configured fetcher rejection and releases the re-entrancy guard', async () => {
   let rejectMerge!: (error: Error) => void
-  const { wrapper } = wrapperWith(vi.fn().mockImplementation(() => new Promise<MergeResult>((_, reject) => { rejectMerge = reject })))
+  const { wrapper, invalidateSpy } = wrapperWith(vi.fn().mockImplementation(() => new Promise<MergeResult>((_, reject) => { rejectMerge = reject })))
   const { result } = renderHook(() => usePrMerge(), { wrapper })
   let merge!: Promise<void>
   act(() => { merge = result.current.mergeOne('repo-a', 7) })
   expect(result.current.merging.has('repo-a#7')).toBe(true)
-  const rejected = expect(merge).rejects.toThrow('network failed')
   await act(async () => {
     rejectMerge(new Error('network failed'))
-    await rejected
+    await merge
   })
   expect(result.current.merging.size).toBe(0)
+  expect(result.current.errors.get('repo-a')).toBe('network failed')
+  expect(invalidateSpy).not.toHaveBeenCalled()
 })
 
-test('mergeAll releases the re-entrancy guard when the configured fetcher throws', async () => {
-  let rejectMerge!: (error: Error) => void
-  const { wrapper } = wrapperWith(vi.fn().mockImplementation(() => new Promise<MergeResult>((_, reject) => { rejectMerge = reject })))
+test('mergeAll surfaces a configured fetcher rejection and refreshes earlier successes', async () => {
+  const mergeFetcher = vi.fn()
+    .mockResolvedValueOnce(ok)
+    .mockRejectedValueOnce(new Error('network failed'))
+  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
   const { result } = renderHook(() => usePrMerge(), { wrapper })
-  let merge!: Promise<void>
-  act(() => { merge = result.current.mergeAll('repo-a', [7, 8]) })
-  expect(result.current.merging.has('repo-a#all')).toBe(true)
-  const rejected = expect(merge).rejects.toThrow('network failed')
-  await act(async () => {
-    rejectMerge(new Error('network failed'))
-    await rejected
-  })
+  await act(() => result.current.mergeAll('repo-a', [7, 8]))
   expect(result.current.merging.size).toBe(0)
+  expect(result.current.merged.has('repo-a#7')).toBe(true)
+  expect(result.current.errors.get('repo-a')).toBe('Merged 1 of 2; failed on #8: network failed')
+  expect(invalidateSpy).toHaveBeenCalledTimes(1)
 })
 
 test('retains only the most recent 1,000 merged PR keys', async () => {
