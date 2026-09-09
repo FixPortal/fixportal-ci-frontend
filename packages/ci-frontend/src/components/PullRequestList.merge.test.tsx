@@ -38,7 +38,7 @@ test('admin can click a ready pill to merge that PR', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc' } satisfies MergeResult)
   renderList(mergeFetcher, true, [readyPr(7)])
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
-  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
+  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7, 'sha-7')
 })
 
 test('a ready PR with no headSha renders no merge button, rather than sending an empty one', () => {
@@ -150,7 +150,7 @@ test('an in-flight merge disables only its own pill, and a second merge can star
   expect(pillB).toBeEnabled() // one card merging must not lock the board
   await userEvent.click(pillB)
   expect(mergeFetcher).toHaveBeenCalledTimes(2)
-  expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8)
+  expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8, 'sha-8')
   resolvers.forEach(resolve => resolve({ ok: true, sha: 'abc' }))
   await within(repoBSection as HTMLElement).findByRole('button', { name: 'Merged PR #8' })
 })

@@ -112,7 +112,7 @@ describe('CiBoard admin source gating', () => {
     )
 
     expect(mergeFetcher).toHaveBeenCalledOnce()
-    expect(mergeFetcher).toHaveBeenCalledWith('ci-frontend', 42)
+    expect(mergeFetcher).toHaveBeenCalledWith('ci-frontend', 42, 'sha-42')
   })
 
   it('updates a controlled repository scope when the host rerenders', async () => {

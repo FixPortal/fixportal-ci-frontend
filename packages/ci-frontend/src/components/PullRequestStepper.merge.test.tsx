@@ -42,7 +42,7 @@ test('admin merges the displayed PR from the stepper', async () => {
   const mergeFetcher = vi.fn().mockResolvedValue({ ok: true, sha: 'abc' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
-  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
+  expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7, 'sha-7')
 })
 
 test('guest sees a display-only pill in the stepper', () => {
