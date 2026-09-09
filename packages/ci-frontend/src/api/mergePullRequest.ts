@@ -23,13 +23,14 @@ export async function mergePullRequest(
   mergeUrl: string,
   repo: string,
   pullNumber: number,
+  headSha: string,
 ): Promise<MergeResult> {
   let response: Response
   try {
     response = await fetch(mergeUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ repo, pullNumber }),
+      body: JSON.stringify({ repo, pullNumber, headSha }),
     })
   } catch {
     return { ok: false, status: null, message: 'Network error' }

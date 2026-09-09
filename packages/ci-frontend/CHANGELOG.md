@@ -12,6 +12,15 @@ lists every published release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The merge request sent to the default `/api/dashboard/merge` endpoint now includes
+  `headSha`. The backend has required it since 2026-08-24 to guard against merging a
+  stale head; the board never sent it, so every "Ready to Merge" click failed with
+  `Head SHA is required.`. `usePrMerge`'s `mergeOne`/`mergeAll` now take the PR's
+  `headSha` and thread it through; `mergeFetcher`'s public `(repo, pullNumber)`
+  signature is unchanged.
+
 ## [3.4.1] - 2026-09-09
 
 ### Fixed

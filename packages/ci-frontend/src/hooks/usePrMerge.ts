@@ -106,10 +106,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   }, [])
 
   const callMerge = useCallback(
-    (repo: string, pullNumber: number): Promise<MergeResult> => {
+    (repo: string, pullNumber: number, headSha: string): Promise<MergeResult> => {
       if (mergeFetcher) return mergeFetcher(repo, pullNumber)
       const mergeUrl = `${apiBase.replace(/\/$/, '')}/api/dashboard/merge`
-      return mergePullRequest(mergeUrl, repo, pullNumber)
+      return mergePullRequest(mergeUrl, repo, pullNumber, headSha)
     },
     [apiBase, mergeFetcher],
   )
@@ -120,7 +120,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   )
 
   const mergeOne = useCallback(
-    async (repo: string, pullNumber: number) => {
+    async (repo: string, pullNumber: number, headSha: string) => {
       const key = prMergeKey(repo, pullNumber)
       const generation = sourceGeneration.current
       if (!startMerge(key)) return
@@ -128,7 +128,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
       try {
         let result: MergeResult
         try {
-          result = await callMerge(repo, pullNumber)
+          result = await callMerge(repo, pullNumber, headSha)
         } catch (error) {
           if (generation !== sourceGeneration.current) return
           setRepoError(repo, mergeErrorMessage(error))
@@ -154,21 +154,21 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   )
 
   const mergeAll = useCallback(
-    async (repo: string, pullNumbers: number[]) => {
+    async (repo: string, prs: ReadonlyArray<{ number: number; headSha: string }>) => {
       const allKey = prMergeKey(repo, 'all')
       const generation = sourceGeneration.current
       if (!startMerge(allKey)) return
       dismissError(repo)
       let merged = 0
       try {
-        for (const n of pullNumbers) {
+        for (const { number: n, headSha } of prs) {
           // The PR being merged carries its own key too, so its pill reads
           // "Merging…" as the queue reaches it rather than just going flat.
           const key = prMergeKey(repo, n)
           startMerge(key)
           let result: MergeResult
           try {
-            result = await callMerge(repo, n)
+            result = await callMerge(repo, n, headSha)
           } catch (error) {
             result = { ok: false, status: null, message: mergeErrorMessage(error) }
           } finally {
@@ -176,7 +176,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           }
           if (generation !== sourceGeneration.current) return
           if (!result.ok) {
-            setRepoError(repo, `Merged ${merged} of ${pullNumbers.length}; failed on #${n}: ${result.message}`)
+            setRepoError(repo, `Merged ${merged} of ${prs.length}; failed on #${n}: ${result.message}`)
             break
           }
           merged += 1

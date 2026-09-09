@@ -16,8 +16,8 @@ export interface PrMerge {
   // doesn't paint the same alert across every repo section on the board — and with
   // merges able to run concurrently, a second failure must not evict the first.
   errors: ReadonlyMap<string, string>
-  mergeOne: (repo: string, pullNumber: number) => Promise<void>
-  mergeAll: (repo: string, pullNumbers: number[]) => Promise<void>
+  mergeOne: (repo: string, pullNumber: number, headSha: string) => Promise<void>
+  mergeAll: (repo: string, prs: ReadonlyArray<{ number: number; headSha: string }>) => Promise<void>
   dismissError: (repo: string) => void
 }
 
