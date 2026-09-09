@@ -24,7 +24,7 @@ const readySnapshot: DashboardSnapshot = {
     {
       ...snapshot.repositories[1],
       pullRequests: [
-        { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: '', isDraft: false, createdAt: '2026-06-20T00:00:00Z', readyToMerge: true },
+        { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: '', isDraft: false, createdAt: '2026-06-20T00:00:00Z', readyToMerge: true, headSha: 'sha-7' },
       ],
     },
   ],

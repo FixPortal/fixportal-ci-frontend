@@ -12,7 +12,7 @@ import type { MergeResult } from '../api/mergePullRequest'
 const readyPr = (n: number): PullRequest => ({
   number: n, title: `PR ${n}`, author: 'octocat',
   htmlUrl: `https://github.com/x/y/pull/${n}`, isDraft: false,
-  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true,
+  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, headSha: `sha-${n}`,
 })
 
 // The component is presentational now; merge state comes from the page-level
@@ -39,6 +39,21 @@ test('admin can click a ready pill to merge that PR', async () => {
   renderList(mergeFetcher, true, [readyPr(7)])
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(mergeFetcher).toHaveBeenCalledWith('repo-a', 7)
+})
+
+test('a ready PR with no headSha renders no merge button, rather than sending an empty one', () => {
+  const mergeFetcher = vi.fn()
+  renderList(mergeFetcher, true, [{ ...readyPr(7), headSha: null }])
+  expect(screen.queryByRole('button', { name: /rebase-merge/i })).toBeNull()
+})
+
+test('Merge all skips a ready PR with no headSha', async () => {
+  const calls: number[] = []
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
+  renderList(mergeFetcher, true, [readyPr(3), { ...readyPr(9), headSha: null }, readyPr(4)])
+  await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
+  await screen.findByRole('button', { name: 'Merged PR #4' })
+  expect(calls).toEqual([3, 4])
 })
 
 test('guest sees the pill but no button and no Merge all', () => {

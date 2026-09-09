@@ -13,7 +13,7 @@ import type { MergeResult } from '../api/mergePullRequest'
 const openPr: OpenPr = {
   number: 7, title: 'Add widget', author: 'octocat',
   htmlUrl: 'https://github.com/x/y/pull/7', isDraft: false,
-  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, repo: 'repo-a',
+  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, repo: 'repo-a', headSha: 'sha-7',
 }
 
 // The component is presentational now; merge state comes from the page-level

@@ -37,6 +37,7 @@ const readySnapshot: DashboardSnapshot = {
           isDraft: false,
           createdAt: '2026-07-16T10:00:00Z',
           readyToMerge: true,
+          headSha: 'sha-42',
         },
       ],
     },
