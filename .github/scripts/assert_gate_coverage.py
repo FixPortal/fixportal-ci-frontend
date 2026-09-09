@@ -43,20 +43,14 @@ from pathlib import Path
 
 ID = r"[A-Za-z_][A-Za-z0-9_-]*"
 COMMENT_OR_BLANK = re.compile(r"^\s*(?:\#.*)?$")
-# A reference to an upstream job's outcome, in either the `needs.*.result` wildcard
-# form or the per-job `needs.build.result` form. Requiring the literal wildcard would
-# red a workflow that aggregates job by job, which is equally correct. The job id is
-# CAPTURED rather than merely matched, because "some dependency is referenced" is not
-# the assertion that matters: a gate declaring `needs: [build, lint]` whose condition
-# names only `build` reports success while `lint` fails.
-NEEDS_RESULT = re.compile(r"needs\.([A-Za-z0-9_*-]+)\.result")
-# A `run:` command that ends the shell non-zero. `exit 0`, `true`, or no exit at all
-# leaves the step incapable of failing whatever its condition says.
-NONZERO_EXIT = re.compile(r"^(?:exit\s+0*[1-9][0-9]*|false)\b")
-# Where one shell command ends and the next begins. Matching NONZERO_EXIT only at the
-# start of a line rejected the ordinary one-liner `if [ -n "$x" ]; then exit 1; fi`,
-# which is a false RED on a correct gate.
-COMMAND_BOUNDARY = re.compile(r"(?:;|&&|\|\||\bthen\b|\belse\b|\bdo\b|\{)")
+# A complete positive predicate over an upstream job's failure/cancellation outcome.
+# Conditions are accepted only as `||`-joined instances of this shape below. Merely
+# finding `needs.*.result` inside a condition accepted `false && contains(...)`, which
+# can never reach the failing step and leaves the required gate green.
+FAILURE_CONDITION_ATOM = re.compile(
+    rf"(?:contains\(needs\.({ID}|\*)\.result,['\"](?:failure|cancelled)['\"]\)|"
+    rf"needs\.({ID})\.result(?:==['\"](?:failure|cancelled)['\"]|!=['\"]success['\"]))"
+)
 BACKSLASH = "\\"
 
 # The gate step's failing command, in the forms this checker will vouch for. Anything
@@ -79,7 +73,8 @@ _REDIR = r"(?:\s*[12]?>>?\s*(?:&[12]|[^\s;|&]+))*"
 # `echo "::error::..." >&2 && exit 1`, and an echo body that could swallow `>` or `&`
 # would either miss the separator that follows or run past it.
 _ECHO = rf"(?:echo|printf)\s+[^\n|&;<>]*{_REDIR}"
-_FAIL = rf"(?:exit\s+0*[1-9][0-9]*|false){_REDIR}"
+_EXIT = r"exit\s+0*(?:[1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
+_FAIL = rf"(?:{_EXIT}|false){_REDIR}"
 ACCEPTED_FAILING_FORMS = tuple(
     re.compile(pattern)
     for pattern in (
@@ -101,11 +96,11 @@ ACCEPTED_FAILING_FORMS = tuple(
         # change with its own rollout. (CodeRabbit, PR #135.)
         #
         # echo "..." ; exit 1     (message then failure, either separator style)
-        rf"{_ECHO}\s*(?:;|&&)\s*exit\s+0*[1-9][0-9]*",
+        rf"{_ECHO}\s*(?:;|&&)\s*{_FAIL}",
         # if <test>; then <echo>; exit 1; fi   -- the house one-liner
-        rf"if\s+.+?;\s*then\s+(?:{_ECHO};\s*)?exit\s+0*[1-9][0-9]*;\s*fi",
+        rf"if\s+.+?;\s*then\s+(?:{_ECHO};\s*)?{_FAIL};\s*fi",
         # if <test>; then exit 1; fi   with the echo inside on its own already covered
-        r"if\s+.+?;\s*then\s+exit\s+0*[1-9][0-9]*;\s*fi",
+        rf"if\s+.+?;\s*then\s+{_FAIL};\s*fi",
         # PowerShell. `shell: pwsh` gate steps are house style in the .NET repos and
         # `throw 'upstream failed'` is how one fails, so rejecting it was a false RED
         # on a correct gate - the direction that gets a working control deleted to make
@@ -429,7 +424,9 @@ def normalise_condition(value):
     correctly NOT equal to `always()` -- a gate that runs only sometimes is the defect
     being caught, not a spelling variant of the fix.
     """
-    value = strip_comment(value).strip().strip("'\"").strip()
+    value = strip_comment(value).strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1].strip()
     if value.startswith("${{") and value.endswith("}}"):
         value = value[3:-2]
     return value.replace(" ", "")
@@ -510,7 +507,7 @@ def mask_quoted(line):
     index = 0
     while index < len(line):
         char = line[index]
-        if quote == '"' and char == BACKSLASH and index + 1 < len(line):
+        if quote != "'" and char == BACKSLASH and index + 1 < len(line):
             out.append("  ")
             index += 2
             continue
@@ -537,8 +534,8 @@ def ends_non_zero(body):
 
       * `echo "\\n exit 1 \\n"` and a backslash-continued `echo \\ / exit 1` -- quote
         state was per physical line, so inert string content read as a command;
-      * `echo then exit 1` -- `then` is a COMMAND_BOUNDARY, so the argument split the
-        line and `exit 1` became a segment of its own;
+      * `echo then exit 1` -- treating `then` as a command boundary made the argument
+        `exit 1` look like a segment of its own;
       * `exit 1 | true` -- no single `|` in the boundary alternation, and the pattern
         matched on a prefix;
       * `false || true` -- same shape, opposite operator.
@@ -552,7 +549,7 @@ def ends_non_zero(body):
     """
     text = mask_quoted(body)
     # Drop comments AFTER masking, so a `#` inside a string is not treated as one.
-    text = re.sub(r"#[^\n]*", "", text)
+    text = re.sub(r"(?m)(?<!\S)#[^\n]*", "", text)
     # Normalise whitespace per logical line, then test each against the accepted forms.
     for logical in text.split("\n"):
         segment = " ".join(logical.split())
@@ -604,6 +601,8 @@ def step_can_fail(block, span, key_indent):
             body = [value]
         else:
             body, _ = continuation_lines(block, i, key_indent)
+        if value.startswith(">"):
+            return False, "uses a folded `run:` body, whose executed command cannot be verified line-by-line"
         # JOIN first, then fold backslash continuations, so quote state and continued
         # commands are carried across line boundaries. Evaluating each physical line
         # with its own quote state is what let `echo "\n exit 1 \n"` and a
@@ -740,11 +739,14 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
     referenced = set()
     failing = []
     for condition, index in step_conditions(block, step_indent):
-        ids = NEEDS_RESULT.findall(condition)
-        if not ids:
+        normalised = normalise_condition(condition)
+        atoms = normalised.split("||")
+        matches = [FAILURE_CONDITION_ATOM.fullmatch(atom) for atom in atoms]
+        if not matches or any(match is None for match in matches):
             continue
+        ids = [_first_group(match) for match in matches if match is not None]
         referenced.update(ids)
-        failing.append((condition, index))
+        failing.append((condition, index, ids))
 
     if not referenced:
         sys.exit(
@@ -785,7 +787,7 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
     covered = set()
     wildcard_covered = False
     step_if_value = step_key_pattern(step_indent, "if")
-    for condition, index in failing:
+    for condition, index, ids in failing:
         reported = condition
         match = step_if_value.match(block[index])
         # Guarded rather than assumed. `index` came from a line this very pattern
@@ -800,7 +802,7 @@ def assert_gate_semantics(workflow_path, lines, jobs, gate_job, needs):
         ok, reason = step_can_fail(block, span, len(match.group(1)))
         if not ok:
             continue
-        ids = set(NEEDS_RESULT.findall(condition))
+        ids = set(ids)
         if "*" in ids:
             wildcard_covered = True
         covered.update(ids - {"*"})

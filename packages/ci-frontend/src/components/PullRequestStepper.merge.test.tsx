@@ -71,6 +71,20 @@ test('paging to another PR drops the previous PR\'s merge error', async () => {
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
+test('paging between PRs in the same repo keeps the repo merge error', async () => {
+  const prs: OpenPr[] = [
+    openPr,
+    { ...openPr, number: 8, title: 'Add sprocket' },
+  ]
+  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  render(<Harness prs={prs} admin={true} />, { wrapper: wrapperWith(mergeFetcher) })
+  await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
+  await userEvent.keyboard('{ArrowRight}')
+  expect(screen.getByText('2 / 2')).toBeInTheDocument()
+  expect(screen.getByRole('alert')).toHaveTextContent('not mergeable')
+})
+
 test('a merge error from another repo does not bleed into the displayed PR', async () => {
   const prs: OpenPr[] = [
     openPr, // repo-a #7, displayed

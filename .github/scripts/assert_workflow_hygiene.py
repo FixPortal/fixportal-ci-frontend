@@ -502,8 +502,11 @@ def check_ref(job, ref, origin, unpinned):
 
 
 def check_local_action(job, ref, origin, unpinned, visited):
-    """Pin-check one local composite action's own `uses:` refs, and recursively the
-    local composites IT calls. Returns (failed, unpinned).
+    """Pin-check one local action's external refs, recursively for composites.
+
+    Docker actions can name an external `docker://` image in `runs.image`; that image
+    executes just like a workflow container and needs the same immutable digest.
+    Returns (failed, unpinned).
 
     A local composite is this repository's own reviewed code, but the actions it calls
     are not -- and they are invisible to a scan that stops at .github/workflows.
@@ -555,7 +558,14 @@ def check_local_action(job, ref, origin, unpinned, visited):
         )
         return True, unpinned
 
-    for inner_ref in composite_step_refs(inner):
+    inner_refs = composite_step_refs(inner)
+    runs = inner.get("runs")
+    if isinstance(runs, dict):
+        image = runs.get("image")
+        if runs.get("using") == "docker" and isinstance(image, str) and image.lower().startswith("docker://"):
+            inner_refs.append(image)
+
+    for inner_ref in inner_refs:
         bad, unpinned = check_ref(f"{job} -> {ref}", inner_ref, manifest, unpinned)
         failed = failed or bad
         if not inner_ref.startswith("./") or is_reusable_workflow_ref(inner_ref):

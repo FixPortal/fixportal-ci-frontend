@@ -146,7 +146,7 @@ export function CiBoardContent() {
   const isAdmin = useCiAdmin()
   // Merge state is hoisted here (pages own stateful wiring; components stay
   // presentational) and handed to RepoBoard/PullRequestStepper as props.
-  const merge = usePrMerge()
+  const merge = usePrMerge(snapshot.data?.org)
   const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope, storageNamespace } = useCiConfig()
   // Same derivation as the skip link in CiBoard — namespaced so co-hosted
   // boards on one page don't duplicate the anchor id.
@@ -185,14 +185,18 @@ export function CiBoardContent() {
     () => applyRepoFilters(noCiFiltered, effectiveFilters),
     [noCiFiltered, effectiveFilters],
   )
+  const openPrs = flattenOpenPrs(visibleRepos)
+  const openPrCount = openPrs.length
   const summary = useMemo(() => {
     if (isAdmin && !hasRepositoryScope && !hideNoCi.hidden && !filters.isActive) {
       // The server's summary is plain key/count — re-derive the nloc no-value
       // state from the repo list so a failed scan can't render as a measured 0.
-      return withNlocAvailability(snapshot.data?.summary ?? [], visibleRepos)
+      return withNlocAvailability(snapshot.data?.summary ?? [], visibleRepos).map(item =>
+        item.key === 'open-prs' ? { ...item, count: openPrCount } : item,
+      )
     }
     return computeSummary(visibleRepos)
-  }, [hasRepositoryScope, isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos])
+  }, [hasRepositoryScope, isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos, openPrCount])
   const lastMergedPr = useMemo(() => {
     const raw = snapshot.data?.lastMergedPr ?? null
     if (raw && visibleRepos.some(r => r.name === raw.repo)) return raw
@@ -208,10 +212,6 @@ export function CiBoardContent() {
     }
     return latest
   }, [snapshot.data, visibleRepos])
-
-  // Computed before the early returns so nextPr and the stepper guard are
-  // available regardless of snapshot state.
-  const openPrs = flattenOpenPrs(visibleRepos)
 
   useEffect(() => {
     if (openPrs.length === 0 && stepperOpen) {

@@ -52,3 +52,12 @@ test('a non-JSON 200 body maps to a failure result instead of throwing', async (
   const result = await mergePullRequest('/api/dashboard/merge', 'x', 1)
   expect(result).toEqual({ ok: false, status: 200, message: 'Invalid merge response' })
 })
+
+test.each([null, {}, { merged: false }])(
+  'a 200 body without positive merge confirmation maps to a failure result (%j)',
+  async body => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(200, body)))
+    const result = await mergePullRequest('/api/dashboard/merge', 'x', 1)
+    expect(result).toEqual({ ok: false, status: 200, message: 'Invalid merge response' })
+  },
+)

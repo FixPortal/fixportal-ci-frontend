@@ -46,8 +46,8 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
     if (prs.length === 0) onClose()
   }, [prs.length, onClose])
 
-  // A merge error belongs to the PR it failed on — clear it when paging to a
-  // different PR, but never on a same-PR re-render (that would wipe the error
+  // A merge error belongs to the repo it failed in — clear it when paging to a
+  // different repo, but never on a same-repo re-render (that would wipe the error
   // the moment a failed merge sets it). dismissError is read through a ref so
   // the paging effect always calls the current callback without listing it as
   // a dependency (a fresh identity would retrigger a dismiss on every merge
@@ -57,8 +57,7 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
   useEffect(() => {
     dismissRef.current = dismissError
   }, [dismissError])
-  // Errors are keyed by repo, so paging clears the repo we just left — the one
-  // whose error the departing PR owned.
+  // Errors are keyed by repo, so paging within that repo keeps the alert relevant.
   // Seeded undefined, not with the first PR's repo: the effect also runs on
   // mount, and dismissing there would wipe an error the opening PR's repo
   // already earned — the stepper reopened on the PR whose merge just failed.
@@ -66,7 +65,7 @@ export function PullRequestStepper({ prs, onClose, isAdmin, merge }: {
   useEffect(() => {
     const departing = shownRepo.current
     shownRepo.current = pr?.repo
-    if (departing !== undefined) dismissRef.current?.(departing)
+    if (departing !== undefined && departing !== pr?.repo) dismissRef.current?.(departing)
   }, [pr?.repo, pr?.number])
 
   if (!pr) return null

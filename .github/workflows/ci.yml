@@ -83,6 +83,9 @@ jobs:
       - name: Test repository scripts
         run: npm run test:scripts
 
+      - name: Test CI policy checkers
+        run: python3 .github/scripts/test_policy_checkers.py
+
       - name: Test release workflow policy
         run: |
           python3 .github/scripts/test_assert_release_gate.py
