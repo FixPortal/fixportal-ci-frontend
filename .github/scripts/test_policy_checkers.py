@@ -8,6 +8,7 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,7 +36,7 @@ def run_gate(condition: str, run_header: str, body: str) -> subprocess.Completed
         path = Path(directory) / "ci.yml"
         path.write_text(workflow, encoding="utf-8")
         env = os.environ.copy()
-        for name in ("GATE_EXEMPT", "GATE_CONDITIONAL_EXEMPT", "GATE_FILE_EXEMPT"):
+        for name in ("GATE_JOB", "GATE_EXEMPT", "GATE_CONDITIONAL_EXEMPT", "GATE_FILE_EXEMPT"):
             env.pop(name, None)
         return subprocess.run(
             [sys.executable, str(GATE_CHECKER), str(path)],
@@ -48,6 +49,11 @@ def run_gate(condition: str, run_header: str, body: str) -> subprocess.Completed
 
 
 class GateCoverageTests(unittest.TestCase):
+    def test_fixture_ignores_ambient_gate_job(self):
+        with patch.dict(os.environ, {"GATE_JOB": "wrong-gate"}):
+            result = run_gate(COMPLETE_CONDITION, "|", "exit 1")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_documented_compound_failures_allow_redirection(self):
         bodies = (
             'echo "bad"; exit 1 >&2',
@@ -116,46 +122,49 @@ class GateCoverageTests(unittest.TestCase):
 
 class WorkflowHygieneTests(unittest.TestCase):
     def test_local_docker_action_image_must_be_pinned(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            workflows = root / ".github" / "workflows"
-            action = root / ".github" / "actions" / "local"
-            workflows.mkdir(parents=True)
-            action.mkdir(parents=True)
-            (workflows / "ci.yml").write_text(
-                textwrap.dedent(
-                    """\
-                    on: push
-                    permissions: {}
-                    jobs:
-                      test:
-                        runs-on: ubuntu-latest
-                        steps:
-                          - uses: ./.github/actions/local
-                    """
-                ),
-                encoding="utf-8",
-            )
-            (action / "action.yml").write_text(
-                textwrap.dedent(
-                    """\
-                    name: Local Docker action
-                    runs:
-                      using: docker
-                      image: docker://alpine:latest
-                    """
-                ),
-                encoding="utf-8",
-            )
-            result = subprocess.run(
-                [sys.executable, str(HYGIENE_CHECKER)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-            self.assertIn("docker://alpine:latest", result.stdout)
+        cases = (("docker://alpine:latest", 1), ("alpine:latest", 1), ("Dockerfile", 0))
+        for image, expected_code in cases:
+            with self.subTest(image=image), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                workflows = root / ".github" / "workflows"
+                action = root / ".github" / "actions" / "local"
+                workflows.mkdir(parents=True)
+                action.mkdir(parents=True)
+                (workflows / "ci.yml").write_text(
+                    textwrap.dedent(
+                        """\
+                        on: push
+                        permissions: {}
+                        jobs:
+                          test:
+                            runs-on: ubuntu-latest
+                            steps:
+                              - uses: ./.github/actions/local
+                        """
+                    ),
+                    encoding="utf-8",
+                )
+                (action / "action.yml").write_text(
+                    textwrap.dedent(
+                        f"""\
+                        name: Local Docker action
+                        runs:
+                          using: docker
+                          image: {image}
+                        """
+                    ),
+                    encoding="utf-8",
+                )
+                result = subprocess.run(
+                    [sys.executable, str(HYGIENE_CHECKER)],
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, expected_code, result.stdout + result.stderr)
+                if expected_code:
+                    self.assertIn(image, result.stdout)
 
 
 if __name__ == "__main__":
