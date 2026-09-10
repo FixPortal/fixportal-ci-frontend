@@ -17,7 +17,7 @@ HYGIENE_CHECKER = ROOT / ".github" / "scripts" / "assert_workflow_hygiene.py"
 COMPLETE_CONDITION = "needs.build.result != 'success'"
 
 
-def run_gate(condition: str, run_header: str, body: str) -> subprocess.CompletedProcess[str]:
+def run_gate(condition: str, run_header: str, body: str, tolerance: str = "") -> subprocess.CompletedProcess[str]:
     workflow = textwrap.dedent(
         f"""\
         jobs:
@@ -31,7 +31,7 @@ def run_gate(condition: str, run_header: str, body: str) -> subprocess.Completed
               - if: {condition}
                 run: {run_header}
         """
-    ) + textwrap.indent(textwrap.dedent(body), " " * 10)
+    ) + textwrap.indent(textwrap.dedent(body), " " * 10) + tolerance
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "ci.yml"
         path.write_text(workflow, encoding="utf-8")
@@ -89,11 +89,26 @@ class GateCoverageTests(unittest.TestCase):
         conditions = (
             "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')",
             "needs.build.result != 'success'",
+            "needs['build'].result != 'success'",
+            "needs.build.result != 'success' && needs.build.result != 'skipped'",
+            "TRUE && needs.build.result != 'success'",
         )
         for condition in conditions:
             with self.subTest(condition=condition):
                 result = run_gate(condition, "|", "exit 1")
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_multiline_continue_on_error_cannot_hide_a_non_failing_gate(self):
+        for header in ("", ">-", "|-"):
+            for value, expected in (("true", 1), ("false", 0), ("FALSE", 0)):
+                with self.subTest(header=header, value=value):
+                    result = run_gate(
+                        COMPLETE_CONDITION,
+                        "exit 1",
+                        "",
+                        f"        continue-on-error: {header}\n          {value}\n",
+                    )
+                    self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
 
     def test_each_dependency_must_cover_failure_and_cancellation(self):
         conditions = (
