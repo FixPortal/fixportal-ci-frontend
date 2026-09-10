@@ -320,17 +320,18 @@ def is_local_docker_build(image, action_dir):
     directory rather than pulling a registry image.
 
     GitHub's metadata syntax accepts exactly one filename for that local build --
-    `Dockerfile`, at a path relative to the action's own directory -- so a basename
-    match alone is not enough: `myregistry.example.com/Dockerfile` has no `://` and
-    a basename of `Dockerfile` too, and would wrongly exempt a real registry pull
-    from the pin check (a mutable, unpinned tag reads as clean). Requiring the path
-    to resolve to an actual file under `action_dir` is what tells the two apart --
-    a registry host has no such file checked out, and a genuine local build does.
-    Raised by CodeRabbit on the upstream review.
+    `Dockerfile`, case-sensitive (a capital `D`, no capital `f`), at a path relative
+    to the action's own directory. Basename matching alone is not enough either:
+    `myregistry.example.com/Dockerfile` has no `://` and that exact basename too,
+    and would wrongly exempt a real registry pull from the pin check (a mutable,
+    unpinned tag reads as clean). Requiring the path to resolve to an actual file
+    under `action_dir` is what tells the two apart -- a registry host has no such
+    file checked out, and a genuine local build does. Both points raised by
+    CodeRabbit on the upstream review.
     """
     if "://" in image:
         return False
-    if image.rsplit("/", 1)[-1].lower() != "dockerfile":
+    if image.rsplit("/", 1)[-1] != "Dockerfile":
         return False
     return (action_dir / image).is_file()
 
