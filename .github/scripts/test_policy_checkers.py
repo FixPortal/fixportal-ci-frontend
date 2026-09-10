@@ -18,6 +18,9 @@ COMPLETE_CONDITION = "needs.build.result != 'success'"
 
 
 def run_gate(condition: str, run_header: str, body: str, tolerance: str = "") -> subprocess.CompletedProcess[str]:
+    body = textwrap.indent(textwrap.dedent(body), " " * 10)
+    if body and not body.endswith("\n"):
+        body += "\n"
     workflow = textwrap.dedent(
         f"""\
         jobs:
@@ -31,7 +34,7 @@ def run_gate(condition: str, run_header: str, body: str, tolerance: str = "") ->
               - if: {condition}
                 run: {run_header}
         """
-    ) + textwrap.indent(textwrap.dedent(body), " " * 10) + tolerance
+    ) + body + tolerance
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "ci.yml"
         path.write_text(workflow, encoding="utf-8")
@@ -107,6 +110,16 @@ class GateCoverageTests(unittest.TestCase):
                         "exit 1",
                         "",
                         f"        continue-on-error: {header}\n          {value}\n",
+                    )
+                    self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+
+    def test_tolerance_follows_a_nonempty_run_body(self):
+        for body in ("exit 1", "exit 1\n"):
+            for value, expected in (("true", 1), ("false", 0)):
+                with self.subTest(body=body, value=value):
+                    result = run_gate(
+                        COMPLETE_CONDITION, "|", body,
+                        f"        continue-on-error: {value}\n",
                     )
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
 
