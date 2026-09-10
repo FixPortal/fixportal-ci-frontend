@@ -122,8 +122,18 @@ class GateCoverageTests(unittest.TestCase):
 
 class WorkflowHygieneTests(unittest.TestCase):
     def test_local_docker_action_image_must_be_pinned(self):
-        cases = (("docker://alpine:latest", 1), ("alpine:latest", 1), ("Dockerfile", 0))
-        for image, expected_code in cases:
+        # "Dockerfile" is only exempt when it resolves to an actual file next to
+        # action.yml -- otherwise a registry reference sharing that basename
+        # (e.g. myregistry.example.com/Dockerfile) would wrongly read as a local
+        # build. A registry-lookalike case proves that: same basename as the
+        # exempt case, no local Dockerfile on disk, still must be pin-checked.
+        cases = (
+            ("docker://alpine:latest", 1, False),
+            ("alpine:latest", 1, False),
+            ("myregistry.example.com/Dockerfile", 1, False),
+            ("Dockerfile", 0, True),
+        )
+        for image, expected_code, write_dockerfile in cases:
             with self.subTest(image=image), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 workflows = root / ".github" / "workflows"
@@ -155,6 +165,8 @@ class WorkflowHygieneTests(unittest.TestCase):
                     ),
                     encoding="utf-8",
                 )
+                if write_dockerfile:
+                    (action / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
                 result = subprocess.run(
                     [sys.executable, str(HYGIENE_CHECKER)],
                     cwd=root,
