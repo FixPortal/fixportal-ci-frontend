@@ -60,23 +60,43 @@ class GateCoverageTests(unittest.TestCase):
     def test_documented_compound_failures_allow_redirection(self):
         bodies = (
             'echo "bad"; exit 1 >&2',
-            'if [ -n "$x" ]; then echo "bad"; exit 1 >&2; fi',
-            'if [ -n "$x" ]; then exit 1 >&2; fi',
+            'echo "bad" && exit 1 2>/dev/null',
         )
         for body in bodies:
             with self.subTest(body=body):
                 result = run_gate(COMPLETE_CONDITION, "|", body)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_a_test_guarding_the_exit_is_refused(self):
+        """The `if <test>; then exit 1; fi` spellings EXIT ZERO when their test fails.
+
+        They were carried as a stated residual in the checker until the estate was
+        measured and no gate used them; canonical then removed them, so the two forms
+        that used to sit in the tuple above are now refused. Pinned as a refusal rather
+        than deleted, because a silent deletion looks identical to a test that was
+        dropped for being inconvenient.
+        """
+        bodies = (
+            'if [ -n "$x" ]; then echo "bad"; exit 1 >&2; fi',
+            'if [ -n "$x" ]; then exit 1 >&2; fi',
+        )
+        for body in bodies:
+            with self.subTest(body=body):
+                result = run_gate(COMPLETE_CONDITION, "|", body)
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_escaped_quote_outside_a_string_does_not_hide_the_exit(self):
         result = run_gate(COMPLETE_CONDITION, "|", r'echo \"; exit 1')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_shell_parameter_length_is_not_stripped_as_a_comment(self):
+        # The vehicle changed, not the assertion: this pins comment stripping, and it
+        # used to ride on an `if ... fi` body that the checker no longer accepts. The
+        # unquoted `${#x}` is the part under test and is unchanged.
         result = run_gate(
             COMPLETE_CONDITION,
             "|",
-            'if [ ${#x} -eq 0 ]; then exit 1; fi',
+            'echo len=${#x} && exit 1',
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
