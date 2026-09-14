@@ -89,6 +89,18 @@ test('Merge all reads Merging while a merge in its repo is in flight', async () 
   resolvers[1]({ ok: true, sha: 'y' })
   await screen.findByRole('button', { name: 'Merged PR #4' })
 })
+test('Merge all merges oldest first, whatever order the board lists them in', async () => {
+  const calls: number[] = []
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
+  renderList(mergeFetcher, true, [
+    { ...readyPr(9), createdAt: '2026-05-30T00:00:00Z' },
+    { ...readyPr(4), createdAt: '2026-05-28T00:00:00Z' },
+    { ...readyPr(7), createdAt: '2026-05-29T00:00:00Z' },
+  ])
+  await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
+  await screen.findByRole('button', { name: 'Merged PR #9' })
+  expect(calls).toEqual([4, 7, 9])
+})
 test('Merge all button is hidden when fewer than two PRs are ready', () => {
   renderList(vi.fn(), true, [readyPr(7), { ...readyPr(8), readyToMerge: false }])
   expect(screen.queryByRole('button', { name: /Merge all/i })).toBeNull()

@@ -12,6 +12,13 @@ lists every published release.
 
 ## [Unreleased]
 
+### Changed
+
+- `Merge all` now merges the oldest ready PR first. The board still lists newest
+  first, but merging in that order rebases every older PR underneath each merge,
+  so each subsequent merge is the one most likely to have gone stale. The button
+  reads `Merge all (oldest first)` so the order is visible before the click.
+
 ## [3.4.3] - 2026-09-10
 
 ### Fixed
