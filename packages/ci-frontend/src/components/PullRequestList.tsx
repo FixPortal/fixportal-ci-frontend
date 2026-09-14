@@ -21,7 +21,11 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
   // A PR can be ready-to-merge with no headSha yet recorded (validated independently
   // of readyToMerge). Merging it would only trade "Head SHA is required." for a
   // silently-empty one, so it is excluded here rather than coerced to ''.
-  const mergeablePrs = readyPrs.filter((pr): pr is typeof pr & { headSha: string } => Boolean(pr.headSha))
+  // Oldest first: a merge queue that starts at the newest PR rebases every older
+  // one under it, so each subsequent merge is the one most likely to go stale.
+  const mergeablePrs = readyPrs
+    .filter((pr): pr is typeof pr & { headSha: string } => Boolean(pr.headSha))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.number - b.number)
   const openPrCount = pullRequests.filter(pr => !merge?.merged.has(prMergeKey(repoName, pr.number))).length
   const merging = merge?.merging
   const repoMerging = merging ? isRepoMerging(merging, repoName) : false
@@ -35,7 +39,7 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
         <button
           type="button"
           className="chip chip--ready chip--actionable repo-prs__merge-all"
-          title={repoMerging ? 'Merge in progress' : 'Rebase-merge every ready PR'}
+          title={repoMerging ? 'Merge in progress' : 'Rebase-merge every ready PR, oldest first'}
           // Same in-flight wording and announcement as ReadyToMergePill: the two
           // sit on the same card in the same livery, so a merge that says nothing
           // on one of them reads as a dead button. The condition is the repo, not
@@ -46,7 +50,7 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
           onClick={() => merge.mergeAll(repoName, mergeablePrs.map(pr => ({ number: pr.number, headSha: pr.headSha })))}
         >
           <span className="chip__dot" aria-hidden="true" />
-          <span className="chip__label">{repoMerging ? 'Merging…' : 'Merge all'}</span>
+          <span className="chip__label">{repoMerging ? 'Merging…' : 'Merge all (oldest first)'}</span>
         </button>
       )}
       {isAdmin && merge?.errors.has(repoName) && (
