@@ -42,6 +42,25 @@ export default defineConfig([
     },
   },
   {
+    // Context modules pair a Provider with the hook that reads it. Since
+    // eslint-plugin-react-refresh 0.5.6 recognises `export const P = Ctx.Provider`
+    // as a component export, which turns the paired hook into a violation. Splitting
+    // the hook out does not help: it needs the context object, so the context file
+    // would then export a non-component instead. Name the hooks rather than move them.
+    files: [
+      'packages/ci-frontend/src/CiAdminContext.tsx',
+      'packages/ci-frontend/src/CiConfigContext.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': [
+        'error',
+        // allowConstantExport is restated because this entry replaces the one
+        // reactRefresh.configs.vite sets, rather than merging with it.
+        { allowConstantExport: true, allowExportNames: ['useCiAdmin', 'useCiConfig'] },
+      ],
+    },
+  },
+  {
     // Test files have different conventions from library code: repeated literals
     // are readable fixtures, passing `undefined` exercises missing-prop paths,
     // and render-helper components trip name rules that only fit shipped code.
