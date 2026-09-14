@@ -163,8 +163,10 @@ Three things people trip over, all covered in the
 
 **Letting admins merge from the board.** Pass a `mergeFetcher` and every ready
 pull request's verdict pill becomes a rebase-merge button (plus a per-repository
-`Merge all` once two are ready). Merges run per pull request, so one in progress
-does not block the rest of the board:
+`Merge all (oldest first)` once two are ready). Merges run per pull request, so one
+in progress does not block the rest of the board. `Merge all` works through the
+repository's ready pull requests oldest first, whatever order the board lists them
+in, so each merge rebases the newer ones rather than the other way round:
 
 ```tsx
 <CiBoard

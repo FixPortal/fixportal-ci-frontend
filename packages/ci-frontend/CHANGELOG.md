@@ -12,6 +12,8 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-09-14
+
 ### Changed
 
 - `Merge all` now merges the oldest ready PR first. The board still lists newest
