@@ -12,6 +12,20 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-09-14
+
+**No library change.** Nothing under `packages/ci-frontend/src` that reaches the
+published bundle differs from 3.5.0; the diff is the dev toolchain (Vitest 5,
+Playwright 1.63, ESLint 10.10 and the plugins that moved with them) plus the two
+static-analysis fixes those bumps required — a `Matchers` type augmentation for
+Vitest 5, which tsup does not emit into `dist`, and an ESLint override.
+
+Cut deliberately rather than left to ride on the next feature release: the release
+workflow's own gate — `npm run verify`, the package and container smokes, and the
+backend contract test — runs only on a `v*` tag, so 3.5.0 was the last commit that
+exercised it and it had never run on the new toolchain. Publishing is the only way
+to find that out before a release that matters.
+
 ## [3.5.0] - 2026-09-14
 
 ### Changed
