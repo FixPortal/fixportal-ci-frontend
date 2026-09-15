@@ -56,6 +56,14 @@
   --fs-14: 14px;
   --fs-24: 24px;
 
+  /* The board's content measure. One number for the body column AND for the
+     header/footer bars, which stay full-bleed - their background and border
+     span the frame - but inset their CONTENTS to this same column. Before this
+     existed the bars used a flat --space-6 while .dashboard-page centred itself
+     at 1100px, so at 1860px wide the header lockup sat 373px left of the
+     content beneath it. */
+  --ci-measure: 1100px;
+
   /* AA text inks (A11Y-CIF-001/002). The universal status tokens (--brand,
      --ok-border, --bad-solid) are fills/borders — UI chrome, fine at 3:1 — but
      fall short of 4.5:1 as 11-14px text on light surfaces, so small text reads
@@ -171,6 +179,39 @@
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
 }
+
+/* Inset the full-bleed bars' CONTENTS to the same column as .dashboard-page, so
+   the header lockup and the footer line up with the cards beneath them. The bars
+   keep spanning the frame - only the padding grows - so the sticky header's
+   background and bottom border still run edge to edge.
+     (100% - measure) / 2   is the gutter .dashboard-page's `margin: 0 auto` makes
+     + var(--space-6)       matches .dashboard-page's own inline padding
+     max(var(--space-6), …) floors it so it never goes below the flat 24px
+   Above 720px only: below that, .dashboard-page drops to --space-4 and the
+   existing max-width:720px block already matches the header to it. Applying this
+   there would reintroduce an 8px mismatch in the other direction.
+   .site-footer is scoped under .ci-page on purpose - board.css ships a GLOBAL
+   .site-footer used by hosts, and --space-* is only defined inside .ci-page, so
+   an unscoped rule collapses max() to 0 on a host's own footer. */
+@media (min-width: 721px) {
+  .ci-embed__header,
+  .ci-page .site-footer {
+    padding-inline: max(var(--space-6), calc((100% - var(--ci-measure)) / 2 + var(--space-6)));
+  }
+}
+
+/* Narrow: the in-board footer follows the body down to --space-4. It previously
+   kept --space-6 while .dashboard-page and .ci-embed__header both dropped, so
+   its content sat 8px inside theirs on every phone. Top-level on purpose - the
+   existing max-width:720px block is nested inside `.ci-embed {`, and the footer
+   is a SIBLING of .ci-embed inside .ci-page, so a rule written in there resolves
+   to `.ci-embed .ci-page .site-footer` and matches nothing. */
+@media (max-width: 720px) {
+  .ci-page .site-footer {
+    padding-inline: var(--space-4);
+  }
+}
+
 .ci-embed__lockup {
   display: flex;
   align-items: flex-end;
@@ -212,7 +253,16 @@
 
   .dashboard-page {
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--ci-measure);
+    /* Unconditional, and load-bearing for the bar alignment below: without it
+       the box model depends on the HOST's reset. A host with a global
+       border-box reset (Tailwind preflight, as in the FixPortal simulator)
+       makes max-width include the 24px padding, so the box is 1100 wide; a host
+       without one makes it content-box, so the box is 1148. The header/footer
+       gutter calc can only match one of those. The narrow block below already
+       set border-box for its own reasons; this hoists it so the board measures
+       the same everywhere. */
+    box-sizing: border-box;
     margin: 0 auto;
     /* No top padding: the sticky toolbar+summary block must sit flush under the
        header so it freezes immediately. Any top padding here scrolls away first,
@@ -720,7 +770,6 @@
   /* On narrow widths the name + metrics line stop competing for one row and stack. */
   @media (max-width: 720px) {
     .dashboard-page {
-      box-sizing: border-box;
       padding-inline: var(--space-4);
     }
     .ci-embed__header {
