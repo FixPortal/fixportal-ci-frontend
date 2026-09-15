@@ -12,6 +12,22 @@ lists every published release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The board's header and footer now inset their contents to the same column as
+  `.dashboard-page` instead of a flat `--space-6`, so the header lockup lines up
+  with the cards beneath it. The bars stay full-bleed; only their padding grows.
+  The two previously drifted apart as the viewport widened — measured 373px out at
+  1860px standalone, 124px embedded in a host. Driven by one new `--ci-measure`
+  token on `.ci-page`.
+- `.dashboard-page` now sets `box-sizing: border-box` unconditionally. It was set
+  only below 720px, so above that the box model followed the HOST's reset: 1100px
+  wide in a host with a global border-box reset, 1148px in one without. The board
+  now measures the same in any host.
+- The in-board footer follows the body down to `--space-4` below 720px. It had
+  kept `--space-6` while the body and header both dropped, leaving its content 8px
+  inside theirs on phone widths.
+
 ## [3.5.1] - 2026-09-14
 
 **No library change.** Nothing under `packages/ci-frontend/src` that reaches the
