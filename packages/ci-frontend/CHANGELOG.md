@@ -12,6 +12,12 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-09-16
+
+Minor rather than patch: the `box-sizing` change below alters the board's rendered
+width in any host that does not apply a global border-box reset (1148px → 1100px).
+That is a visible change on a consumer's page, so it is not a silent fix.
+
 ### Fixed
 
 - The board's header and footer now inset their contents to the same column as
