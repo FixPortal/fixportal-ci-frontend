@@ -3,7 +3,7 @@ import { dedupeJobLabel } from './dedupeJobLabel'
 
 describe('dedupeJobLabel', () => {
   it('collapses consecutive identical segments', () => {
-    expect(dedupeJobLabel('Deploy (centerprise-dev) / Deploy (centerprise-dev)')).toBe('Deploy (centerprise-dev)')
+    expect(dedupeJobLabel('Deploy (platform-dev) / Deploy (platform-dev)')).toBe('Deploy (platform-dev)')
   })
   it('keeps genuinely different caller / called names', () => {
     expect(dedupeJobLabel('build / deploy')).toBe('build / deploy')

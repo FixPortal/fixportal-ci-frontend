@@ -44,7 +44,7 @@
 
 ### Task 1: Add the simulator's authenticated merge proxy
 
-**Repository:** `D:/fix-portal/fixportal-simulator-backend`
+**Repository:** `<repos>/fixportal-simulator-backend`
 
 **Files:**
 - Modify: `tests/FixPortal.Simulator.Tests/Integration/CiController_HttpTests.cs`
@@ -57,7 +57,7 @@
 
 - [ ] **Step 1: Create an isolated backend worktree**
 
-Use `superpowers:using-git-worktrees` from `D:/fix-portal/fixportal-simulator-backend`, branch from `origin/main`, and name the branch `feat/ci-admin-merge-proxy`. Do not use the primary checkout, which currently carries unrelated feature work.
+Use `superpowers:using-git-worktrees` from `<repos>/fixportal-simulator-backend`, branch from `origin/main`, and name the branch `feat/ci-admin-merge-proxy`. Do not use the primary checkout, which currently carries unrelated feature work.
 
 - [ ] **Step 2: Write failing proxy tests**
 
@@ -265,7 +265,7 @@ Do not push yet; the final branch gate performs the single allowed push.
 
 ### Task 2: Expose `mergeFetcher` from the component library
 
-**Repository:** `D:/fix-portal/fixportal-ci-frontend`
+**Repository:** `<repos>/fixportal-ci-frontend`
 
 **Files:**
 - Modify: `packages/ci-frontend/src/CiBoard.test.tsx`
@@ -279,7 +279,7 @@ Do not push yet; the final branch gate performs the single allowed push.
 
 - [ ] **Step 1: Create an isolated frontend worktree**
 
-Use `superpowers:using-git-worktrees` from `D:/fix-portal/fixportal-ci-frontend`. Branch `feat/ci-admin-merge-controls` from commit `c9192e8` so the approved spec and this plan travel with the implementation; leave the primary checkout's unrelated image moves untouched.
+Use `superpowers:using-git-worktrees` from `<repos>/fixportal-ci-frontend`. Branch `feat/ci-admin-merge-controls` from commit `c9192e8` so the approved spec and this plan travel with the implementation; leave the primary checkout's unrelated image moves untouched.
 
 - [ ] **Step 2: Write the failing component integration test**
 
@@ -433,7 +433,7 @@ gh pr merge $prNumber -R FixPortal/fixportal-simulator-backend --rebase --delete
 Dispatch only the simulator backend production target:
 
 ```powershell
-pwsh D:/fix-portal/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-backend-prod
+pwsh <repos>/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-backend-prod
 ```
 
 Watch the exact run ID printed by the helper. After it succeeds, verify an anonymous POST is rejected and the public snapshot remains readable:
@@ -502,7 +502,7 @@ npm run verify
 ```
 
 ```powershell
-npm run test:backend-contract -- D:/fix-portal/fixportal-ci-backend/contracts/dashboard-snapshot.v1.json
+npm run test:backend-contract -- <repos>/fixportal-ci-backend/contracts/dashboard-snapshot.v1.json
 ```
 
 ```powershell
@@ -555,7 +555,7 @@ Pack/install the published artifact or inspect its bundle and confirm it contain
 
 ### Task 5: Wire the FixPortal host to the published package
 
-**Repository:** `D:/fix-portal/fixportal-simulator-frontend`
+**Repository:** `<repos>/fixportal-simulator-frontend`
 
 **Files:**
 - Modify: `src/features/ci/CiBoard.contract.test.tsx`
@@ -728,7 +728,7 @@ Push `feat/ci-admin-merge-controls` once, open one PR, follow `.claude/review-po
 Dispatch:
 
 ```powershell
-pwsh D:/fix-portal/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-frontend-prod
+pwsh <repos>/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-frontend-prod
 ```
 
 Retain and watch the exact run ID printed by the helper. Do not dispatch YJC, dev, ThemeLab, or the full estate.
