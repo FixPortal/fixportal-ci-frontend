@@ -218,4 +218,20 @@ describe('CiBoard controlled theme', () => {
     // The matchMedia stub reports no dark preference, so 'system' resolves light.
     expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'light')
   })
+
+  it('keeps a saved theme when the initial read throws, and persists the next user choice', async () => {
+    const key = 'ci:theme:theme-denied'
+    localStorage.setItem(key, 'dark')
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    render(
+      <CiBoard adminSignal={false} snapshotFetcher={async () => snapshot} storageNamespace="theme-denied" />,
+    )
+    getItem.mockRestore()
+
+    const select = await screen.findByRole('combobox', { name: 'Select theme' })
+    expect(localStorage.getItem(key)).toBe('dark')
+
+    await userEvent.selectOptions(select, 'light')
+    expect(localStorage.getItem(key)).toBe('light')
+  })
 })

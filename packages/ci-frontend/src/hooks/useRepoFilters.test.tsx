@@ -77,11 +77,15 @@ describe('useRepoFilters', () => {
     expect(result.current.isActive).toBe(false)
   })
 
-  it('uses defaults when localStorage reads throw', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+  it('uses defaults when localStorage reads throw, without overwriting the stored filters', () => {
+    const stored = JSON.stringify({ search: 'kept', visibility: [], ciStatus: [], hasOpenPrs: false })
+    localStorage.setItem(KEY, stored)
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
     const { result } = renderHook(() => useRepoFilters())
     expect(result.current.isActive).toBe(false)
     expect(result.current.filters.search).toBe('')
+    getItem.mockRestore()
+    expect(localStorage.getItem(KEY)).toBe(stored)
   })
 
   it('keeps in-memory filter state when localStorage writes throw', () => {

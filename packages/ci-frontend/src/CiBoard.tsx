@@ -107,11 +107,6 @@ function ThemeSwitcher({ pageRef }: { pageRef: RefObject<HTMLDivElement | null> 
       }
     }
     applyTheme()
-    try {
-      localStorage.setItem(themeKey, theme)
-    } catch {
-      // ignore (private mode / quota) — theme persistence is best-effort
-    }
 
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -119,13 +114,24 @@ function ThemeSwitcher({ pageRef }: { pageRef: RefObject<HTMLDivElement | null> 
       return () => mediaQuery.removeEventListener('change', applyTheme)
     }
     return undefined
-  }, [theme, themeKey, pageRef])
+  }, [theme, pageRef])
+
+  // Persist on the user's change only: writing from the effect would store the
+  // 'system' fallback over a saved preference whenever the initial read failed.
+  const changeTheme = (next: Theme) => {
+    setTheme(next)
+    try {
+      localStorage.setItem(themeKey, next)
+    } catch {
+      // ignore (private mode / quota) — theme persistence is best-effort
+    }
+  }
 
   return (
     <div className="ci-theme-select-container">
       <select
         value={theme}
-        onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+        onChange={(e) => changeTheme(e.target.value as Theme)}
         className="ci-theme-select"
         aria-label="Select theme"
       >

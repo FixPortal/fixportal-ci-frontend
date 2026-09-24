@@ -77,10 +77,14 @@ export function useRepoFilters() {
   // old filters under the new key without re-reading it. Every host sets it once.
   const key = storageNamespace ? `${DEFAULT_KEY}:${storageNamespace}` : DEFAULT_KEY
   const [filters, setFilters] = useState<RepoFilters>(() => load(key))
+  // Persist only after a change. Saving the mount-time state would write defaults
+  // over the stored filters whenever the initial read failed (storage denied).
+  const [loaded] = useState(filters)
 
   useEffect(() => {
+    if (filters === loaded) return
     save(key, filters)
-  }, [key, filters])
+  }, [key, filters, loaded])
 
   const setSearch = useCallback((search: string) => setFilters(f => ({ ...f, search })), [])
   const toggleVisibility = useCallback(

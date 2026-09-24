@@ -32,10 +32,13 @@ export function useCollapseState() {
   const { storageNamespace } = useCiConfig()
   const key = storageNamespace ? `${DEFAULT_KEY}:${storageNamespace}` : DEFAULT_KEY
   const [collapsed, setCollapsed] = useState<Set<string>>(() => load(key))
+  // Persist only after a change, so a failed initial read never overwrites storage.
+  const [loaded] = useState(collapsed)
 
   useEffect(() => {
+    if (collapsed === loaded) return
     save(key, collapsed)
-  }, [key, collapsed])
+  }, [key, collapsed, loaded])
 
   const mutate = useCallback((fn: (next: Set<string>) => void) => {
     setCollapsed(prev => {
