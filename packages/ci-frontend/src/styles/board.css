@@ -884,11 +884,11 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Unknown reads as absence, never as alarm: hollow dot, dashed, dimmed. */
+  /* Unknown reads as absence, never as alarm: hollow dot and dashed outline.
+     Keep text opacity at full strength so small status labels retain AA contrast. */
   .chip--unknown {
     background: transparent;
     border-style: dashed;
-    opacity: 0.72;
   }
   .chip--unknown .chip__dot {
     width: 8px;
@@ -987,7 +987,6 @@
   .chip--review-pending {
     background: transparent;
     border-style: dashed;
-    opacity: 0.85;
   }
   .chip--review-pending .chip__dot {
     width: 8px;
@@ -1000,8 +999,7 @@
     font-weight: 500;
   }
 
-  /* Not required on this PR. Distinguished from pending by shape, not brightness:
-     opacity alone converged the two at wall-board distance / in greyscale, and
+  /* Not required on this PR. Distinguished from pending by shape:
      they mean opposite things for merging. The status light is dropped entirely
      -- "not applicable" reads as a bare label with no indicator, rather than a
      dimmer version of "nobody has looked yet". The .sr-only label still carries
@@ -1009,7 +1007,6 @@
   .chip--review-disabled {
     background: transparent;
     border-style: dashed;
-    opacity: 0.70;
   }
   .chip--review-disabled .chip__dot {
     display: none;
@@ -1026,7 +1023,6 @@
   .chip--review-unknown {
     background: transparent;
     border-style: dashed;
-    opacity: 0.85;
   }
   .chip--review-unknown .chip__dot {
     width: 8px;
