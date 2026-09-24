@@ -29,6 +29,12 @@ describe('board.css review pill selectors', () => {
   it.each(['clean', 'outstanding', 'pending', 'disabled', 'unknown'])('defines .chip--review-%s', state => {
     expect(css).toContain(`.chip--review-${state}`)
   })
+
+  it.each(['.chip--unknown', '.chip--review-pending', '.chip--review-disabled', '.chip--review-unknown'])('%s preserves text contrast', selector => {
+    const match = css.match(new RegExp(`\\.${selector.slice(1)}\\s*\\{([^}]*)\\}`))
+    expect(match).not.toBeNull()
+    expect(match![1]).not.toMatch(/opacity\s*:/)
+  })
 })
 
 // Same reasoning as the pill-state block above: a render test only asserts the
