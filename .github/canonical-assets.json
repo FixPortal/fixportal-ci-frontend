@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "canonical": {
+    "repository": "FixPortal/fixportal-agents-skills",
+    "commit": "dccaf16a9b811f4a647098b7956eb882c425b287",
+    "syncedAt": "2026-09-24"
+  },
+  "assets": [
+    {
+      "path": ".github/scripts/assert_gate_coverage.py",
+      "sha256": "4cc98d00407e43eea4a64633bb79d6baa0165d9cb3ca8318ecda0cc3108bd96a",
+      "verbatim": true
+    },
+    {
+      "path": ".github/scripts/assert_workflow_hygiene.py",
+      "sha256": "0739463ff00ef0e86221136c9061e80ab81f87aa0e5e18707da0f56c14a68ca1",
+      "verbatim": true
+    },
+    {
+      "path": ".github/workflows/review-policy-guard.yml",
+      "sha256": "88159b30fb751d5eea67e052a2669bf2580f0ba011053cd4c86965a90b7351f1",
+      "verbatim": false
+    },
+    {
+      "path": ".github/workflows/review-tier.yml",
+      "sha256": "9a78e35ac127d2ff0bf80dbfbf1f6023d2eaee3c32278001de20606371992c88",
+      "verbatim": false
+    }
+  ]
+}
