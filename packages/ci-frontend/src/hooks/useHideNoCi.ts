@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCiConfig } from '../CiConfigContext'
 
 const DEFAULT_KEY = 'ci-dashboard:hide-no-ci'
@@ -17,8 +17,12 @@ export function useHideNoCi() {
   const { storageNamespace } = useCiConfig()
   const key = storageNamespace ? `${DEFAULT_KEY}:${storageNamespace}` : DEFAULT_KEY
   const [hidden, setHidden] = useState<boolean>(() => load(key))
+  // Persist only after the user changes it, so a failed initial read never
+  // overwrites storage with the default.
+  const changed = useRef(false)
 
   useEffect(() => {
+    if (!changed.current) return
     try {
       localStorage.setItem(key, String(hidden))
     } catch {
@@ -27,6 +31,7 @@ export function useHideNoCi() {
   }, [key, hidden])
 
   const toggle = useCallback(() => {
+    changed.current = true
     setHidden(prev => !prev)
   }, [])
 

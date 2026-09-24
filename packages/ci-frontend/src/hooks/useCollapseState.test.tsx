@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useCollapseState } from './useCollapseState'
 
@@ -37,6 +37,15 @@ describe('useCollapseState', () => {
     const { result } = renderHook(() => useCollapseState())
     expect(result.current.isCollapsed('a')).toBe(false)
     expect(result.current.allCollapsed(['a'])).toBe(false)
+  })
+
+  it('does not overwrite storage when the initial read throws', () => {
+    localStorage.setItem('ci-dashboard:collapsed', JSON.stringify(['x']))
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const { result } = renderHook(() => useCollapseState())
+    getItem.mockRestore()
+    expect(result.current.isCollapsed('x')).toBe(false)
+    expect(localStorage.getItem('ci-dashboard:collapsed')).toBe(JSON.stringify(['x']))
   })
 
   it('drops non-string elements from a corrupt array (untrusted localStorage)', () => {
