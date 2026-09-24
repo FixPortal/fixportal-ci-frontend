@@ -190,6 +190,10 @@ try {
   const rootResponse = await waitFor(`${origin}/`, Date.now() + 20_000)
   const rootHtml = await rootResponse.text()
   assert.match(rootHtml, /<div id="root"><\/div>/, 'built SPA entry point is missing')
+  assert.match(rootResponse.headers.get('content-security-policy') ?? '', /default-src 'self'/)
+  assert.equal(rootResponse.headers.get('x-content-type-options'), 'nosniff')
+  assert.equal(rootResponse.headers.get('referrer-policy'), 'strict-origin-when-cross-origin')
+  assert.match(rootResponse.headers.get('permissions-policy') ?? '', /camera=\(\)/)
 
   const nestedResponse = await fetch(`${origin}/nested/route`, { signal: AbortSignal.timeout(2_000) })
   assert.equal(nestedResponse.status, 200)

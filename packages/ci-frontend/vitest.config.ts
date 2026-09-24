@@ -16,15 +16,14 @@ export default defineConfig({
       include: ['src/**'],
       reporter: ['text', 'html'],
       // Floors measured over ALL of src (the include glob above), so they are
-      // honest. Set just under the current actuals (63/51/66/61) so a regression
-      // trips CI; ratchet up as the presentational shell (CiBoard, pages/*,
-      // useDashboardSnapshot) gains tests. NB: the old 70% floors passed only
-      // because, without `include`, v8 counted just the files a test imported.
+      // honest. Rebased below the 2026-09-24 actuals (93/89/92/94) to retain
+      // regression headroom while preventing the old, now-stale 60% floors from
+      // allowing coverage to fall back toward the original baseline.
       thresholds: {
-        statements: 60,
-        branches: 50,
-        functions: 65,
-        lines: 60,
+        statements: 90,
+        branches: 85,
+        functions: 90,
+        lines: 90,
       },
     },
   },
