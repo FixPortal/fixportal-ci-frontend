@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DashboardSnapshot } from './api/types'
@@ -140,6 +140,31 @@ describe('CiBoard admin source gating', () => {
     )
 
     expect(await screen.findByText('No repositories found.')).toBeInTheDocument()
+  })
+})
+
+describe('CiBoard snapshot retry integration', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('surfaces a persistent fetch failure and recovers through the Retry now action', async () => {
+    const snapshotFetcher = vi.fn()
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValue(snapshot)
+    render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={snapshotFetcher}
+        storageNamespace="retry-integration"
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument(), { timeout: 5_000 })
+    expect(snapshotFetcher).toHaveBeenCalledTimes(2)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry now' }))
+    expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
+    expect(snapshotFetcher).toHaveBeenCalledTimes(3)
   })
 })
 

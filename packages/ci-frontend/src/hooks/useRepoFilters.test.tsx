@@ -1,5 +1,5 @@
 // src/hooks/useRepoFilters.test.tsx
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { CiConfigProvider } from '../CiConfigContext'
@@ -19,6 +19,7 @@ function nsWrapper(namespace: string) {
 
 describe('useRepoFilters', () => {
   beforeEach(() => localStorage.clear())
+  afterEach(() => vi.restoreAllMocks())
 
   it('defaults to empty, inactive filters', () => {
     const { result } = renderHook(() => useRepoFilters())
@@ -74,6 +75,21 @@ describe('useRepoFilters', () => {
     localStorage.setItem(KEY, '{not json')
     const { result } = renderHook(() => useRepoFilters())
     expect(result.current.isActive).toBe(false)
+  })
+
+  it('uses defaults when localStorage reads throw', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const { result } = renderHook(() => useRepoFilters())
+    expect(result.current.isActive).toBe(false)
+    expect(result.current.filters.search).toBe('')
+  })
+
+  it('keeps in-memory filter state when localStorage writes throw', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('storage full') })
+    const { result } = renderHook(() => useRepoFilters())
+    act(() => result.current.setSearch('engine'))
+    expect(result.current.filters.search).toBe('engine')
+    expect(result.current.isActive).toBe(true)
   })
 
   it('persists to and seeds from the namespaced key when storageNamespace is set', () => {
