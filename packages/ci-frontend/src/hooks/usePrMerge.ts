@@ -165,7 +165,9 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           // The PR being merged carries its own key too, so its pill reads
           // "Merging…" as the queue reaches it rather than just going flat.
           const key = prMergeKey(repo, n)
-          startMerge(key)
+          // A PR already merging through another entry point (e.g. mergeOne) is
+          // left alone rather than issuing a second backend request for it.
+          if (!startMerge(key)) continue
           let result: MergeResult
           try {
             result = await callMerge(repo, n, headSha)

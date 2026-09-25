@@ -179,6 +179,16 @@ test('an organisation change discards an old merge without disrupting a new one'
   expect(invalidateSpy).toHaveBeenCalledTimes(1)
 })
 
+test('mergeAll for a PR already merging via mergeOne does not issue a second request', async () => {
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(() => {}))
+  const { wrapper } = wrapperWith(mergeFetcher)
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  act(() => { void result.current.mergeOne('repo-a', 7, 'sha-7') })
+  expect(mergeFetcher).toHaveBeenCalledTimes(1)
+  act(() => { void result.current.mergeAll('repo-a', [{ number: 7, headSha: 'sha-7' }]) })
+  expect(mergeFetcher).toHaveBeenCalledTimes(1)
+})
+
 test('an organisation change during refresh discards the old merge error', async () => {
   let finishRefresh!: () => void
   const { wrapper, invalidateSpy } = wrapperWith(vi.fn().mockResolvedValue({

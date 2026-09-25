@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 vi.mock('@fix-portal/ci-frontend', () => ({
-  CiBoard: ({ adminSignal }: { adminSignal: boolean }) => <output>{String(adminSignal)}</output>,
+  CiBoard: ({ adminSignal, apiBase }: { adminSignal: boolean; apiBase: string }) => (
+    <output>
+      {String(adminSignal)}
+      <span data-testid="api-base">{apiBase}</span>
+    </output>
+  ),
 }))
 
 afterEach(() => {
@@ -26,5 +31,29 @@ describe('App admin state startup', () => {
     arrange()
     render(<App />)
     expect(screen.getByText(String(expected))).toBeTruthy()
+  })
+})
+
+describe('App API base URL wiring', () => {
+  // apiBase is read from import.meta.env at module scope, so each case must
+  // re-import the module after stubbing the env var to observe its effect.
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('passes the configured VITE_CI_API_BASE through to CiBoard', async () => {
+    vi.stubEnv('VITE_CI_API_BASE', 'https://ci-backend.example.com')
+    vi.resetModules()
+    const { App: StubbedApp } = await import('./App')
+    render(<StubbedApp />)
+    expect(screen.getByTestId('api-base').textContent).toBe('https://ci-backend.example.com')
+  })
+
+  it('defaults to the same-origin empty string when VITE_CI_API_BASE is unset', async () => {
+    vi.stubEnv('VITE_CI_API_BASE', undefined)
+    vi.resetModules()
+    const { App: StubbedApp } = await import('./App')
+    render(<StubbedApp />)
+    expect(screen.getByTestId('api-base').textContent).toBe('')
   })
 })

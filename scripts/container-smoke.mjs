@@ -187,6 +187,9 @@ try {
   assert.ok(containerPort, `could not parse published port from ${binding}`)
   const origin = `http://127.0.0.1:${containerPort}`
 
+  const whoami = await mustRun('docker', ['exec', name, 'whoami'], { timeout: 10_000 })
+  assert.equal(whoami, 'nginx', `production container must run as the unprivileged nginx user, got ${JSON.stringify(whoami)}`)
+
   const rootResponse = await waitFor(`${origin}/`, Date.now() + 20_000)
   const rootHtml = await rootResponse.text()
   assert.match(rootHtml, /<div id="root"><\/div>/, 'built SPA entry point is missing')
