@@ -160,6 +160,9 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
       if (!startMerge(allKey)) return
       dismissError(repo)
       let merged = 0
+      // Excludes PRs skipped because another entry point already owns them, so
+      // the reported total only counts PRs this call actually attempted.
+      let attempted = prs.length
       try {
         for (const { number: n, headSha } of prs) {
           // The PR being merged carries its own key too, so its pill reads
@@ -167,7 +170,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           const key = prMergeKey(repo, n)
           // A PR already merging through another entry point (e.g. mergeOne) is
           // left alone rather than issuing a second backend request for it.
-          if (!startMerge(key)) continue
+          if (!startMerge(key)) {
+            attempted -= 1
+            continue
+          }
           let result: MergeResult
           try {
             result = await callMerge(repo, n, headSha)
@@ -178,7 +184,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           }
           if (generation !== sourceGeneration.current) return
           if (!result.ok) {
-            setRepoError(repo, `Merged ${merged} of ${prs.length}; failed on #${n}: ${result.message}`)
+            setRepoError(repo, `Merged ${merged} of ${attempted}; failed on #${n}: ${result.message}`)
             break
           }
           merged += 1

@@ -189,6 +189,19 @@ test('mergeAll for a PR already merging via mergeOne does not issue a second req
   expect(mergeFetcher).toHaveBeenCalledTimes(1)
 })
 
+test('mergeAll excludes a skipped PR from the reported total when a later PR fails', async () => {
+  const mergeFetcher = vi.fn().mockImplementation(async (_repo: string, n: number) => {
+    if (n === 7) return new Promise<MergeResult>(() => {}) // owned by mergeOne, never resolves
+    return { ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult
+  })
+  const { wrapper } = wrapperWith(mergeFetcher)
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  act(() => { void result.current.mergeOne('repo-a', 7, 'sha-7') })
+  await act(() => result.current.mergeAll('repo-a', [7, 9].map(n => ({ number: n, headSha: `sha-${n}` }))))
+  // #7 was skipped (owned by mergeOne), so the total counts only the one PR this call attempted.
+  expect(result.current.errors.get('repo-a')).toBe('Merged 0 of 1; failed on #9: not mergeable')
+})
+
 test('an organisation change during refresh discards the old merge error', async () => {
   let finishRefresh!: () => void
   const { wrapper, invalidateSpy } = wrapperWith(vi.fn().mockResolvedValue({
