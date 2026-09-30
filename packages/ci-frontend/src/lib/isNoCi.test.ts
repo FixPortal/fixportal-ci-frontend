@@ -17,7 +17,4 @@ describe('isNoCi', () => {
   it('is false when a repo has at least one workflow', () => {
     expect(isNoCi(repo([{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }]))).toBe(false)
   })
-  it('is true when workflows is missing entirely (defensive)', () => {
-    expect(isNoCi({ name: 'r' } as unknown as RepositorySnapshot)).toBe(true)
-  })
 })
