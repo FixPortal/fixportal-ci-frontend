@@ -44,7 +44,7 @@ export function hasReadyPr(repo: RepositorySnapshot): boolean {
 // one failing and one running workflow buckets as failing, not running.
 function ciStatusOf(repo: RepositorySnapshot): CiStatus | null {
   if (isNoCi(repo)) return 'no-ci'
-  const state = worstState((repo.workflows ?? []).map(w => w.state))
+  const state = worstState(repo.workflows.map(w => w.state))
   if (state === 'failure') return 'failing'
   if (state === 'running') return 'running'
   if (state === 'success') return 'passing'
