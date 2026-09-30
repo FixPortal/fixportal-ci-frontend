@@ -6,6 +6,6 @@ export type OpenPr = PullRequest & { repo: string }
 // (the most stale surface first for triage).
 export function flattenOpenPrs(repositories: RepositorySnapshot[]): OpenPr[] {
   return repositories
-    .flatMap(r => (r.pullRequests ?? []).map(pr => ({ ...pr, repo: r.name })))
+    .flatMap(r => r.pullRequests.map(pr => ({ ...pr, repo: r.name })))
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 }
