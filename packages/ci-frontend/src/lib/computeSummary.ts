@@ -23,9 +23,8 @@ const ALWAYS_VISIBLE_KEYS = new Set([
 ])
 
 // An nloc bucket has "no value" when it has contributing repos but none of them
-// produced metrics — e.g. the metrics scanner failed host-wide, which used to
-// render as a healthy 0 (CIF-002). Zero contributing repos is a true zero, not
-// a missing measurement.
+// produced metrics — e.g. the metrics scanner failed host-wide. Zero
+// contributing repos is a true zero, not a missing measurement.
 function nlocUnavailable(repos: RepositorySnapshot[]): boolean {
   return repos.length > 0 && repos.every(r => r.metrics === null)
 }
