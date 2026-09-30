@@ -12,6 +12,13 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-09-30
+
+### Fixed
+
+- Removed parent opacity from muted status chips so their small labels retain AA
+  contrast. Shape and outline continue to distinguish unknown and pending states.
+
 ## [3.6.0] - 2026-09-16
 
 Minor rather than patch: the `box-sizing` change below alters the board's rendered
