@@ -2,7 +2,7 @@ import type { RepositorySnapshot } from '../api/types'
 import { worstState } from '../lib/worstState'
 
 export function RepoActivityIndicator({ repository }: { repository: RepositorySnapshot }) {
-  const prCount = (repository.pullRequests ?? []).length
+  const prCount = repository.pullRequests.length
   const ci = worstState((repository.workflows ?? []).map(w => w.state))
   const cd = worstState([...(repository.deploys ?? []), ...(repository.packages ?? [])].map(s => s.state))
   return (
