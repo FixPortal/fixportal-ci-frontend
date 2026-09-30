@@ -8,9 +8,9 @@ import { CiConfigProvider } from '../CiConfigContext'
 import * as snapshotHook from '../hooks/useDashboardSnapshot'
 import { CiBoardContent } from './CiBoardContent'
 
-// Belt-and-suspenders confidentiality filter at CiBoardContent.tsx:129 — repos.filter(r
-// => !r.private) for a non-admin viewer. The server is the primary enforcement point;
-// this is the client-side backstop, and it was previously untested (CIF-H1).
+// Confidentiality filter at CiBoardContent.tsx:129 — repos.filter(r => !r.private)
+// for a non-admin viewer. The server is the primary enforcement point; this is the
+// client-side backstop.
 const snapshot: DashboardSnapshot = {
   refreshedAt: '2026-07-16T10:00:00Z',
   org: 'FixPortal',
