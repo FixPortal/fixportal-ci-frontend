@@ -55,7 +55,7 @@ export function computeSummary(
   const workflows = repos.flatMap(r => r.workflows)
   const deploys = repos.flatMap(r => r.deploys ?? [])
   const packages = repos.flatMap(r => r.packages ?? [])
-  const openPrs = repos.flatMap(r => r.pullRequests ?? [])
+  const openPrs = repos.flatMap(r => r.pullRequests)
 
   const nlocFixportal = repos
     .filter(r => r.name !== nlocSplitRepo)
