@@ -81,7 +81,7 @@ export function applyRepoFilters(
       const bucket = ciStatusOf(repo)
       if (bucket === null || !filters.ciStatus.has(bucket)) return false
     }
-    if (filters.hasOpenPrs && (repo.pullRequests?.length ?? 0) === 0) return false
+    if (filters.hasOpenPrs && repo.pullRequests.length === 0) return false
     if (filters.readyToMerge && !hasReadyPr(repo)) return false
     return true
   })
