@@ -57,7 +57,7 @@ function ciStatusOf(repo: RepositorySnapshot): CiStatus | null {
 function matchesQuery(repo: RepositorySnapshot, query: string): boolean {
   if (repo.name.toLowerCase().includes(query)) return true
   const prQuery = query.startsWith('#') ? query.slice(1) : query
-  return (repo.pullRequests ?? []).some(
+  return repo.pullRequests.some(
     pr =>
       pr.title.toLowerCase().includes(query) ||
       (prQuery !== '' && String(pr.number).includes(prQuery)),
