@@ -52,7 +52,7 @@ export function computeSummary(
   repos: RepositorySnapshot[],
   nlocSplitRepo: string = DEFAULT_NLOC_SPLIT_REPO,
 ): SummaryCount[] {
-  const workflows = repos.flatMap(r => r.workflows ?? [])
+  const workflows = repos.flatMap(r => r.workflows)
   const deploys = repos.flatMap(r => r.deploys ?? [])
   const packages = repos.flatMap(r => r.packages ?? [])
   const openPrs = repos.flatMap(r => r.pullRequests ?? [])
