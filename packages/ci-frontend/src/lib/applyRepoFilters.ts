@@ -35,7 +35,7 @@ export function emptyFilters(): RepoFilters {
 // ready") and null/undefined ("not yet determined", or an older backend that does not
 // send it at all) must fail the test rather than be coerced.
 export function hasReadyPr(repo: RepositorySnapshot): boolean {
-  return (repo.pullRequests ?? []).some(pr => pr.readyToMerge === true)
+  return repo.pullRequests.some(pr => pr.readyToMerge === true)
 }
 
 // The CI bucket a repo belongs to, or null when it sits outside all buckets
