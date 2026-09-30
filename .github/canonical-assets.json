@@ -102,6 +102,11 @@
       "verbatim": true
     },
     {
+      "path": ".github/scripts/assert_canonical_assets.py",
+      "sha256": "4ceb9b3d9645a9bc93b0500e47d4edd1ea19843ddc89b0b81ac8fb68183db185",
+      "verbatim": true
+    },
+    {
       "path": ".github/scripts/assert_gate_coverage.py",
       "sha256": "e4604219c6c3148454b8b3a458ccc2af25767c22431dfb9dd5c44cafbbd75979",
       "verbatim": true
