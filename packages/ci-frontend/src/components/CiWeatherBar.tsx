@@ -19,8 +19,7 @@ export function CiWeatherBar({ trend }: { trend: CiTrendBucket[] }) {
     <>
       <figure role="img" className="ci-weather" aria-label={label}>
         {trend.map(b => (
-          // Per-block hover reveals which hour a block is and its state — the
-          // data was previously exposed only to screen readers via aria-label.
+          // Per-block hover reveals which hour a block is and its state.
           <span
             key={b.bucketStart}
             className="ci-weather__block"
