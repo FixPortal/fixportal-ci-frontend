@@ -1,0 +1,75 @@
+import { after, before, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join, relative, resolve } from 'node:path';
+
+const workspaceRequire = createRequire(new URL('../packages/ci-frontend/package.json', import.meta.url));
+const consumerRequire = createRequire(workspaceRequire.resolve('archunit/package.json'));
+// Exercise ArchUnit's installed CommonJS consumer, not a second direct copy.
+const parser = consumerRequire('plantuml-parser');
+const roots = [];
+let absoluteRoot;
+let relativeRoot;
+const slash = value => value.replaceAll('\\', '/');
+
+before(() => {
+  absoluteRoot = mkdtempSync(join(tmpdir(), 'cfe-plantuml-glob-'));
+  relativeRoot = mkdtempSync(join(process.cwd(), '.tmp-plantuml-glob-'));
+  roots.push(absoluteRoot, relativeRoot);
+  for (const root of roots) {
+    mkdirSync(join(root, 'nested'));
+    for (const file of ['one.puml', 'two.puml', 'nested/three.puml', '.hidden.puml']) {
+      writeFileSync(join(root, file), '@startuml\nclass Example\n@enduml\n');
+    }
+  }
+});
+
+after(() => {
+  for (const root of roots) {
+    const target = resolve(root);
+    const allowed = [join(tmpdir(), 'cfe-plantuml-glob-'), join(process.cwd(), '.tmp-plantuml-glob-')];
+    if (!allowed.some(prefix => target.startsWith(resolve(prefix)))) {
+      throw new Error('Refusing to remove a fixture outside its generated root');
+    }
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+const scenarios = [
+  ['absolute file (including Windows cross-drive paths)',
+    () => slash(join(absoluteRoot, 'one.puml')), () => [join(absoluteRoot, 'one.puml')]],
+  ['relative wildcard', () => slash(relative(process.cwd(), relativeRoot)) + '/*.puml',
+    () => ['one.puml', 'two.puml'].map(file => join(relativeRoot, file))],
+  ['absolute wildcard', () => slash(absoluteRoot) + '/*.puml',
+    () => ['one.puml', 'two.puml'].map(file => join(absoluteRoot, file))],
+  ['brace alternatives', () => slash(absoluteRoot) + '/{one,two}.puml',
+    () => ['one.puml', 'two.puml'].map(file => join(absoluteRoot, file))],
+  ['array of absolute and relative files',
+    () => [slash(join(absoluteRoot, 'one.puml')), slash(relative(process.cwd(), join(relativeRoot, 'nested/three.puml')))],
+    () => [join(absoluteRoot, 'one.puml'), join(relativeRoot, 'nested/three.puml')]],
+  ['recursive wildcard with exclusion',
+    () => [slash(absoluteRoot) + '/**/*.puml', '!' + slash(absoluteRoot) + '/nested/**'],
+    () => ['one.puml', 'two.puml'].map(file => join(absoluteRoot, file))],
+  ['directory does not expand into its children', () => slash(absoluteRoot), () => []],
+  ['missing file', () => slash(join(absoluteRoot, 'missing.puml')), () => []],
+];
+
+describe('installed PlantUML file parser glob compatibility', () => {
+  for (const [label, patterns, expected] of scenarios) {
+    it(label, () => {
+      const files = parser.parseFile(patterns());
+      assert.deepEqual(files.map(file => file.name).sort(), expected().map(file => relative(process.cwd(), file)).sort());
+      for (const file of files) assert.equal(file.diagrams.length, 1);
+    });
+  }
+  it('retains its asynchronous callback API', async () => {
+    const files = await new Promise((fulfil, reject) => {
+      parser.parseFile(slash(join(absoluteRoot, 'one.puml')), {},
+        (error, values) => error ? reject(error) : fulfil(values));
+    });
+    assert.deepEqual(files.map(file => file.name), [relative(process.cwd(), join(absoluteRoot, 'one.puml'))]);
+    assert.equal(files[0].diagrams.length, 1);
+  });
+});

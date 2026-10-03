@@ -60,11 +60,13 @@ for (const status of [403, 409]) {
 
 test('submits one merge, displays its receipt and refreshes the snapshot', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-03T12:00:00Z') })
-  await page.clock.pauseAt(new Date('2026-10-04T12:00:00Z'))
   let calls = 0
   let snapshots = 0
-  await page.route('**/fixture/admin-snapshot', route => {
+  let releaseSnapshot!: () => void
+  const initialSnapshot = new Promise<void>(resolve => { releaseSnapshot = resolve })
+  await page.route('**/fixture/admin-snapshot', async route => {
     snapshots++
+    if (snapshots === 1) await initialSnapshot
     return route.fulfill({ json: snapshot() })
   })
   let release!: () => void
@@ -76,7 +78,14 @@ test('submits one merge, displays its receipt and refreshes the snapshot', async
     await route.fulfill({ json: { sha: 'b'.repeat(40) } })
   })
   await openConsumer(page)
-  await page.getByRole('button', { name: 'Rebase-merge PR #101', exact: true }).click()
+  await expect(page.getByText('Loading dashboard…', { exact: true })).toBeVisible()
+  releaseSnapshot()
+  const merge = page.getByRole('button', { name: 'Rebase-merge PR #101', exact: true })
+  // Allow query notifications to render the initial snapshot before freezing
+  // timers for the receipt check. A paused startup can strand its zero-delay task.
+  await expect(merge).toBeVisible()
+  await page.clock.pauseAt(new Date('2026-10-04T12:00:00Z'))
+  await merge.click()
   await expect(page.getByRole('button', { name: 'Merging PR #101', exact: true })).toBeDisabled()
   release()
   await expect(page.getByRole('button', { name: 'Merged PR #101', exact: true })).toBeVisible()

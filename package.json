@@ -22,7 +22,10 @@
   },
   "overrides": {
     "esbuild": "^0.28.1",
-    "qs": "^6.15.2"
+    "qs": "^6.15.2",
+    "plantuml-parser": {
+      "fast-glob": "$fast-glob"
+    }
   },
   "engines": {
     "npm": ">=11.10"
@@ -36,6 +39,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "eslint-plugin-sonarjs": "^4.2.1",
+    "fast-glob": "file:tools/plantuml-glob",
     "globals": "^17.12.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.0"
