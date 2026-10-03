@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://127.0.0.1:5364',
     viewport: { width: 1280, height: 800 },
     trace: 'on-first-retry',
   },
@@ -17,9 +17,16 @@ export default defineConfig({
       use: { browserName: 'chromium' },
     },
   ],
-  webServer: {
-    command: 'npm run build:lib && npm run dev -w dashboard -- --host 127.0.0.1',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: 'npm run build:lib && npm run dev -w dashboard -- --host 127.0.0.1 --port 5364 --strictPort',
+      url: 'http://127.0.0.1:5364',
+      reuseExistingServer: false,
+    },
+    {
+      command: 'npx vite build --config e2e/host/vite.config.ts && npx vite preview --config e2e/host/vite.config.ts --host 127.0.0.1 --port 5365 --strictPort',
+      url: 'http://127.0.0.1:5365',
+      reuseExistingServer: false,
+    },
+  ],
 })
