@@ -70,9 +70,12 @@ const snapshot = {
   ciTrend: [],
 }
 
-async function openDashboard(page: Page, responseDelay = 0, refreshedAt = new Date().toISOString()) {
+async function openDashboard(page: Page, holdResponse = false, refreshedAt = new Date().toISOString()) {
+  let release!: () => void
+  const responseReady = new Promise<void>(resolve => { release = resolve })
+  if (!holdResponse) release()
   await page.route('**/api/dashboard/snapshot', async route => {
-    if (responseDelay > 0) await new Promise(resolve => setTimeout(resolve, responseDelay))
+    await responseReady
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -90,12 +93,23 @@ async function openDashboard(page: Page, responseDelay = 0, refreshedAt = new Da
   })
   await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
   await page.goto('/')
+  if (holdResponse) {
+    await expect(page.getByText('Loading dashboard…')).toBeVisible()
+    await paintedFrames(page)
+    release()
+  }
   await expect(page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true })).toBeVisible()
+}
+
+async function paintedFrames(page: Page) {
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
 }
 
 async function installClsObserver(page: Page) {
   await page.addInitScript(() => {
-    const state = window as Window & { __cls: number; __clsObserver: PerformanceObserver }
+    const state = window
     state.__cls = 0
     state.__clsObserver = new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
@@ -121,14 +135,24 @@ test('fits the dashboard within a phone viewport', async ({ page }) => {
 test('keeps cold-load CLS within the good threshold', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await installClsObserver(page)
-  await openDashboard(page, 750)
-  const cls = await page.evaluate(() => (window as Window & { __cls: number }).__cls)
+  await openDashboard(page, true)
+  await paintedFrames(page)
+  const cls = await page.evaluate(() => {
+    const state = window
+    for (const entry of state.__clsObserver.takeRecords()) {
+      const shift = entry as PerformanceEntry & { value: number; hadRecentInput: boolean }
+      if (!shift.hadRecentInput) state.__cls += shift.value
+    }
+    return state.__cls
+  })
   expect(cls).toBeLessThanOrEqual(0.10)
 })
 
 test('reserves the first viewport while the dashboard loads', async ({ page }) => {
+  let release!: () => void
+  const responseReady = new Promise<void>(resolve => { release = resolve })
   await page.route('**/api/dashboard/snapshot', async route => {
-    await new Promise(resolve => setTimeout(resolve, 750))
+    await responseReady
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ ...snapshot, refreshedAt: new Date().toISOString() }),
@@ -138,13 +162,15 @@ test('reserves the first viewport while the dashboard loads', async ({ page }) =
   await page.goto('/')
   await expect(page.getByText('Loading dashboard…')).toBeVisible()
   const loadingHeight = await page.locator('main').evaluate(element => element.getBoundingClientRect().height)
+  release()
+  await expect(page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true })).toBeVisible()
   expect(loadingHeight).toBeGreaterThanOrEqual(720)
 })
 
 test('preserves the desktop dashboard', async ({ page }) => {
   const now = new Date('2026-07-16T10:00:00Z')
   await page.clock.install({ time: now })
-  await openDashboard(page, 0, now.toISOString())
+  await openDashboard(page, false, now.toISOString())
   await expect(page.getByTitle('CodeRabbit: clean')).toBeVisible()
   await expect(page.getByTitle('Gitar: clean')).toBeVisible()
   await expect(page.getByTitle('Ready to merge')).toBeVisible()
