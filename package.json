@@ -15,7 +15,7 @@
     "test:container": "node scripts/container-smoke.mjs",
     "test:package": "node scripts/package-smoke.mjs",
     "design:tokens:check": "node scripts/design-tokens-sync.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build:lib && tsc -p e2e/tsconfig.json && playwright test",
     "lint": "eslint .",
     "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
     "dev": "npm run build:lib && npm run dev -w dashboard"
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.63.0",
+    "@types/node": "^24.19.0",
     "@vitest/coverage-v8": "5.0.1",
     "eslint": "^10.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",

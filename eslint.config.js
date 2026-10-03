@@ -64,7 +64,7 @@ export default defineConfig([
     // Test files have different conventions from library code: repeated literals
     // are readable fixtures, passing `undefined` exercises missing-prop paths,
     // and render-helper components trip name rules that only fit shipped code.
-    files: ['**/*.{test,spec}.{ts,tsx}'],
+    files: ['**/*.{test,spec}.{ts,tsx}', 'e2e/host/**/*.{ts,tsx}'],
     rules: {
       'sonarjs/no-duplicate-string': 'off',
       'sonarjs/no-undefined-assignment': 'off',
