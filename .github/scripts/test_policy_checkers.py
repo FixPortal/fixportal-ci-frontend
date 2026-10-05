@@ -14,7 +14,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 GATE_CHECKER = ROOT / ".github" / "scripts" / "assert_gate_coverage.py"
 HYGIENE_CHECKER = ROOT / ".github" / "scripts" / "assert_workflow_hygiene.py"
-COMPLETE_CONDITION = "needs.build.result != 'success'"
+COMPLETE_CONDITION = "always() && (needs.build.result != 'success')"
 
 
 def run_gate(condition: str, run_header: str, body: str, tolerance: str = "") -> subprocess.CompletedProcess[str]:
@@ -118,8 +118,12 @@ class GateCoverageTests(unittest.TestCase):
         )
         for condition in conditions:
             with self.subTest(condition=condition):
-                result = run_gate(condition, "|", "exit 1")
+                result = run_gate(f"always() && ({condition})", "|", "exit 1")
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_gate_contract_requires_explicit_status_override(self):
+        result = run_gate("needs.build.result != 'success'", "|", "exit 1")
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_multiline_continue_on_error_cannot_hide_a_non_failing_gate(self):
         for header in ("", ">-", "|-"):
