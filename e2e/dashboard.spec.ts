@@ -91,6 +91,8 @@ async function openDashboard(
           ...repository,
           workflows: repository.workflows.map((workflow) => ({
             ...workflow,
+            // The snapshot fixture is parsed JSON; a workflow with no run carries null.
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             lastRun: workflow.lastRun ? { ...workflow.lastRun, updatedAt: refreshedAt } : null,
           })),
         })),

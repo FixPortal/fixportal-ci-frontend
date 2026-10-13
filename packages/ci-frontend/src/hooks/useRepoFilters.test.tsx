@@ -37,7 +37,7 @@ describe('useRepoFilters', () => {
     })
     expect(result.current.filters.search).toBe('engine')
     expect(result.current.isActive).toBe(true)
-    expect(JSON.parse(localStorage.getItem(KEY)!).search).toBe('engine')
+    expect((JSON.parse(localStorage.getItem(KEY)!) as { search: string }).search).toBe('engine')
   })
 
   it('toggleVisibility adds then removes a member', () => {
@@ -152,7 +152,7 @@ describe('useRepoFilters', () => {
     act(() => {
       result.current.setSearch('changed')
     })
-    expect(JSON.parse(localStorage.getItem(NS_KEY)!).search).toBe('changed')
+    expect((JSON.parse(localStorage.getItem(NS_KEY)!) as { search: string }).search).toBe('changed')
     expect(localStorage.getItem(KEY)).toBeNull()
   })
 

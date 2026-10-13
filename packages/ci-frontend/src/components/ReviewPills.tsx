@@ -37,6 +37,8 @@ export const ReviewPills = memo(function ReviewPills({
   const wellFormed = signals.filter(
     (s): s is ReviewSignal =>
       typeof s === 'object' &&
+      // Untrusted snapshot JSON: a null entry is possible although the type forbids it.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       s !== null &&
       typeof s.name === 'string' &&
       typeof s.state === 'string',

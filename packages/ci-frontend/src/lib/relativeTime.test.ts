@@ -6,6 +6,8 @@ import { formatRelativeTime } from './relativeTime'
 // own Date.now() call can't cross a threshold boundary (values below are well
 // clear of 1m / 60m / 24h boundaries).
 function isoMinutesAgo(minutes: number): string {
+  // The formatter under test reads the real clock, so fixtures are derived from it too.
+  // eslint-disable-next-line no-restricted-properties
   return new Date(Date.now() - minutes * 60_000).toISOString()
 }
 

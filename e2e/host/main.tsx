@@ -55,4 +55,6 @@ export function Consumer() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(<Consumer />)
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Missing #root element')
+createRoot(rootElement).render(<Consumer />)

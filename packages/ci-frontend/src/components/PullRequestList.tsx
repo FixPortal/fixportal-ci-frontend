@@ -56,12 +56,12 @@ export function PullRequestList({
           // too, and a disabled button with an idle label is the same dead read.
           aria-live="polite"
           disabled={repoMerging}
-          onClick={() =>
-            merge.mergeAll(
+          onClick={() => {
+            void merge.mergeAll(
               repoName,
               mergeablePrs.map((pr) => ({ number: pr.number, headSha: pr.headSha })),
             )
-          }
+          }}
         >
           <span className="chip__dot" aria-hidden="true" />
           <span className="chip__label">
@@ -88,6 +88,7 @@ export function PullRequestList({
           const href = isAllowedHref(pr.htmlUrl)
           const key = prMergeKey(repoName, pr.number)
           const locallyMerged = merge?.merged.has(key) ?? false
+          const headSha = pr.headSha
           return (
             <li
               key={pr.number}
@@ -117,8 +118,10 @@ export function PullRequestList({
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
                     onMerge={
-                      isAdmin && merge && pr.headSha
-                        ? () => merge.mergeOne(repoName, pr.number, pr.headSha!)
+                      isAdmin && merge && headSha
+                        ? () => {
+                            void merge.mergeOne(repoName, pr.number, headSha)
+                          }
                         : undefined
                     }
                     merging={merging?.has(key) ?? false}
