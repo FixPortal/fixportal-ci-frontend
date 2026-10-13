@@ -34,9 +34,12 @@ updates:
         patterns:
           - '*'
     ignore:
-      # typescript-eslint 8.x peers on typescript <6.1.0; drop once it supports TS 7
+      # typescript-eslint 8.x peers on typescript >=4.8.4 <6.1.0, so a TypeScript minor
+      # (6.1) or major (7) bump fails npm install with ERESOLVE and would poison the
+      # grouped PR; drop once it widens its peer range (see scaffold-typescript).
       - dependency-name: typescript
         update-types:
+          - version-update:semver-minor
           - version-update:semver-major
       # vitest 4.1.10 regressed `.rejects.toThrow(<message>)`: the matcher cannot
       # read the rejected Error's message, so the regex form reports `got ''` and
