@@ -46,7 +46,7 @@ test('renders one review pill per signal on the PR row', () => {
     { name: 'CodeRabbit', state: 'outstanding', count: 2 },
     { name: 'Gitar', state: 'clean' },
   ]
-  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const withSignals: PullRequest[] = [{ ...prs[0]!, reviewSignals }]
   const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   expect(container.querySelectorAll('.review-pills .chip')).toHaveLength(2)
   expect(screen.getByText('CodeRabbit')).toBeInTheDocument()
@@ -66,7 +66,7 @@ test('renders no pills when the PR carries no review signals', () => {
 // invalid HTML, and a click that resolves to whichever the browser prefers.
 test('renders the pills outside the PR anchor, not nested within it', () => {
   const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
-  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const withSignals: PullRequest[] = [{ ...prs[0]!, reviewSignals }]
   const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   const pills = container.querySelector('.review-pills')
   expect(pills).not.toBeNull()
@@ -76,7 +76,7 @@ test('renders the pills outside the PR anchor, not nested within it', () => {
 // The point of the whole feature: the verdict is legible from the board without
 // opening the PR.
 test('renders a Ready to merge pill when the backend has judged the PR ready', () => {
-  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />)
+  render(<PullRequestList pullRequests={[{ ...prs[0]!, readyToMerge: true }]} repoName="x/y" />)
   expect(screen.getByText('Ready to merge')).toBeInTheDocument()
 })
 
@@ -87,7 +87,7 @@ test('renders a Ready to merge pill when the backend has judged the PR ready', (
 test.each([[false], [null], [undefined]])(
   'renders no Ready to merge pill when readyToMerge is %s',
   (ready) => {
-    render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} repoName="x/y" />)
+    render(<PullRequestList pullRequests={[{ ...prs[0]!, readyToMerge: ready }]} repoName="x/y" />)
     expect(screen.queryByText('Ready to merge')).toBeNull()
   },
 )
@@ -96,7 +96,7 @@ test.each([[false], [null], [undefined]])(
 // anchor -- inside it, it would be inert content inside a link target.
 test('renders the ready pill outside the PR anchor', () => {
   const { container } = render(
-    <PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />,
+    <PullRequestList pullRequests={[{ ...prs[0]!, readyToMerge: true }]} repoName="x/y" />,
   )
   const pill = container.querySelector('.chip--ready')
   expect(pill).not.toBeNull()
@@ -107,7 +107,7 @@ test('renders the ready pill outside the PR anchor', () => {
 // responsive wrap off .repo-prs__line, so losing it silently un-styles the row.
 test('wraps the PR link and its pills in a shared line element', () => {
   const reviewSignals: ReviewSignal[] = [{ name: 'CodeRabbit', state: 'clean' }]
-  const withSignals: PullRequest[] = [{ ...prs[0], reviewSignals }]
+  const withSignals: PullRequest[] = [{ ...prs[0]!, reviewSignals }]
   const { container } = render(<PullRequestList pullRequests={withSignals} repoName="x/y" />)
   const line = container.querySelector('.repo-prs__line')
   expect(line).not.toBeNull()

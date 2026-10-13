@@ -53,6 +53,6 @@ describe('DashboardSnapshot wire contract', () => {
       ],
     } satisfies DashboardSnapshot
 
-    expect(contract.repositories[0].deploys).toBeNull()
+    expect(contract.repositories[0]!.deploys).toBeNull()
   })
 })

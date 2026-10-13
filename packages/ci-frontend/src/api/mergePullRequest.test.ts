@@ -25,7 +25,7 @@ test('POSTs repo, pullNumber and headSha to the merge URL and returns the merge 
     '/api/dashboard/merge',
     expect.objectContaining({ method: 'POST' }),
   )
-  const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+  const body = JSON.parse(fetchMock.mock.calls[0]![1]!.body)
   expect(body).toEqual({ repo: 'fixportal-ci-frontend', pullNumber: 42, headSha: 'deadbeef' })
   expect(result).toEqual({ ok: true, sha: 'abc123' })
 })

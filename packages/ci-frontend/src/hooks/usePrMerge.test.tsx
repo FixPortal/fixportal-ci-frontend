@@ -187,8 +187,8 @@ test('two merges run concurrently and each failure keeps its own repo scope', as
   expect(result.current.merging.has('repo-a#7')).toBe(true)
   expect(result.current.merging.has('repo-b#8')).toBe(true)
   await act(async () => {
-    resolvers[0]({ ok: false, status: 409, message: 'a is stale' })
-    resolvers[1]({ ok: false, status: 409, message: 'b is stale' })
+    resolvers[0]!({ ok: false, status: 409, message: 'a is stale' })
+    resolvers[1]!({ ok: false, status: 409, message: 'b is stale' })
     await Promise.all([first, second])
   })
   expect(result.current.errors.get('repo-a')).toBe('a is stale')
@@ -239,7 +239,7 @@ test('an organisation change discards an old merge without disrupting a new one'
   expect(result.current.merging.has('repo-a#7')).toBe(true)
 
   await act(async () => {
-    resolvers[0]({ ok: false, status: 409, message: 'old organisation' })
+    resolvers[0]!({ ok: false, status: 409, message: 'old organisation' })
     await oldMerge
   })
   expect(result.current.merging.has('repo-a#7')).toBe(true)
@@ -247,7 +247,7 @@ test('an organisation change discards an old merge without disrupting a new one'
   expect(invalidateSpy).not.toHaveBeenCalled()
 
   await act(async () => {
-    resolvers[1](ok)
+    resolvers[1]!(ok)
     await newMerge
   })
   expect(result.current.merging.size).toBe(0)

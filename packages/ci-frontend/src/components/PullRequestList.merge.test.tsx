@@ -101,12 +101,12 @@ test('Merge all reads Merging while a merge in its repo is in flight', async () 
   const inFlight = await screen.findByRole('button', { name: 'Merging…' })
   expect(inFlight).toBeDisabled()
   expect(inFlight).toHaveAttribute('aria-live', 'polite')
-  resolvers[0]({ ok: true, sha: 'x' })
+  resolvers[0]!({ ok: true, sha: 'x' })
   await screen.findByRole('button', { name: 'Merged PR #3' })
   await waitFor(() => {
     expect(resolvers).toHaveLength(2)
   })
-  resolvers[1]({ ok: true, sha: 'y' })
+  resolvers[1]!({ ok: true, sha: 'y' })
   await screen.findByRole('button', { name: 'Merged PR #4' })
 })
 test('Merge all merges oldest first, whatever order the board lists them in', async () => {
@@ -167,14 +167,14 @@ test('a merge error renders only in the failing repo, not board-wide', async () 
     .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   const { container } = renderTwoRepos(mergeFetcher)
   // Merge repo-b's PR; the alert must land in repo-b's section only.
-  const repoBSection = container.querySelectorAll('.repo-prs')[1]
+  const repoBSection = container.querySelectorAll('.repo-prs')[1]!
   await userEvent.click(
     within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i }),
   )
   const alerts = await screen.findAllByRole('alert')
   expect(alerts).toHaveLength(1)
   expect(alerts[0]).toHaveTextContent('not mergeable')
-  expect(repoBSection.contains(alerts[0])).toBe(true)
+  expect(repoBSection.contains(alerts[0]!)).toBe(true)
 })
 
 test('an in-flight merge disables only its own pill, and a second merge can start', async () => {

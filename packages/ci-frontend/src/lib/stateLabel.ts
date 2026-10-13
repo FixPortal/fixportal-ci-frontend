@@ -22,5 +22,5 @@ export function stateModifier(state: SignalState): SignalState {
 
 export function stateLabel(state: SignalState): string {
   // Fallback keeps the chip's accessible name non-empty for an unrecognised state.
-  return STATE_LABELS[stateModifier(state)]
+  return STATE_LABELS[stateModifier(state)] ?? 'status unknown'
 }

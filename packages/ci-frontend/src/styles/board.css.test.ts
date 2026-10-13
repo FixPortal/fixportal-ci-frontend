@@ -57,14 +57,14 @@ describe('board.css PR-row layout', () => {
   it('right-aligns the pills against the PR link', () => {
     const match = /\.repo-prs__line\s*\{([^}]*)\}/.exec(css)
     expect(match).not.toBeNull()
-    const body = match![1].replace(/\s+/g, ' ')
+    const body = match![1]!.replace(/\s+/g, ' ')
     expect(body).toContain('justify-content: space-between')
   })
 
   it('zeroes the review-pills margin inside a PR row', () => {
     const match = /\.repo-prs__line \.review-pills\s*\{([^}]*)\}/.exec(css)
     expect(match).not.toBeNull()
-    const body = match![1].replace(/\s+/g, ' ')
+    const body = match![1]!.replace(/\s+/g, ' ')
     expect(body).toContain('margin: 0')
   })
 })
@@ -78,7 +78,7 @@ describe('board.css unknown summary count', () => {
     const match =
       /\.summary__item\[data-tone=["']unknown["']\] \.summary__count\s*\{([^}]*)\}/.exec(css)
     expect(match).not.toBeNull()
-    const body = match![1].replace(/\s+/g, ' ')
+    const body = match![1]!.replace(/\s+/g, ' ')
     expect(body).toContain('color: var(--text-muted)')
     expect(body).not.toContain('var(--unknown)')
   })
@@ -92,7 +92,7 @@ describe('board.css skip link', () => {
   it('hides via clip-path, not an off-screen transform', () => {
     const match = /\.ci-skip-link\s*\{([^}]*)\}/.exec(css)
     expect(match).not.toBeNull()
-    const body = match![1].replace(/\s+/g, ' ')
+    const body = match![1]!.replace(/\s+/g, ' ')
     expect(body).toContain('clip-path: inset(50%)')
     expect(body).not.toContain('transform')
   })

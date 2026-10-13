@@ -38,9 +38,9 @@ const snapshot: DashboardSnapshot = {
 const readySnapshot: DashboardSnapshot = {
   ...snapshot,
   repositories: [
-    snapshot.repositories[0],
+    snapshot.repositories[0]!,
     {
-      ...snapshot.repositories[1],
+      ...snapshot.repositories[1]!,
       pullRequests: [
         {
           number: 7,
