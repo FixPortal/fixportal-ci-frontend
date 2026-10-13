@@ -121,11 +121,30 @@ const expectedCsp = [
 const expectedPermissionsPolicy = 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
 
 function assertSecurityHeaders(response, route) {
-  const csp = response.headers.get('content-security-policy')?.split(';').map((part) => part.trim())
-  assert.deepEqual(csp, expectedCsp, `${route}: Content-Security-Policy differs from the intended policy`)
-  assert.equal(response.headers.get('x-content-type-options'), 'nosniff', `${route}: x-content-type-options`)
-  assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin', `${route}: referrer-policy`)
-  assert.equal(response.headers.get('permissions-policy'), expectedPermissionsPolicy, `${route}: permissions-policy`)
+  const csp = response.headers
+    .get('content-security-policy')
+    ?.split(';')
+    .map((part) => part.trim())
+  assert.deepEqual(
+    csp,
+    expectedCsp,
+    `${route}: Content-Security-Policy differs from the intended policy`,
+  )
+  assert.equal(
+    response.headers.get('x-content-type-options'),
+    'nosniff',
+    `${route}: x-content-type-options`,
+  )
+  assert.equal(
+    response.headers.get('referrer-policy'),
+    'strict-origin-when-cross-origin',
+    `${route}: referrer-policy`,
+  )
+  assert.equal(
+    response.headers.get('permissions-policy'),
+    expectedPermissionsPolicy,
+    `${route}: permissions-policy`,
+  )
 }
 
 async function waitFor(url, deadline) {
