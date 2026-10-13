@@ -3,6 +3,8 @@ export function formatRelativeTime(iso: string): string {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return ''
 
+  // Public formatter with no clock parameter; threading a Clock through would change its signature.
+  // eslint-disable-next-line no-restricted-properties
   const minutes = Math.round((Date.now() - then) / 60_000)
   if (minutes < 1) return 'just now'
   if (minutes < 60) return `${minutes}m ago`

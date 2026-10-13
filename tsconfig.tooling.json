@@ -1,0 +1,16 @@
+{
+  "$comment": "Not a build project: typescript-eslint's projectService uses it as defaultProject for tool config files (vite, vitest, tsup, playwright) that sit outside every package tsconfig. Without it those files get compiler defaults, imports do not resolve, and every call on them reports no-unsafe-*.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true
+  }
+}

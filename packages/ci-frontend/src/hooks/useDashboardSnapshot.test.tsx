@@ -141,7 +141,7 @@ describe('useDashboardSnapshot URL branches', () => {
     expect(result.current.data?.org).toBe('admin-org')
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://admin.example/snapshot',
-      expect.objectContaining({ signal: expect.anything() }),
+      expect.objectContaining({ signal: expect.anything() as unknown }),
     )
   })
 
@@ -161,7 +161,7 @@ describe('useDashboardSnapshot URL branches', () => {
     expect(result.current.data?.org).toBe('default-org')
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://ci.example/api/dashboard/snapshot',
-      expect.objectContaining({ signal: expect.anything() }),
+      expect.objectContaining({ signal: expect.anything() as unknown }),
     )
   })
 })

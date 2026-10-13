@@ -26,6 +26,8 @@ export const RepoBoard = memo(function RepoBoard({
   isAdmin?: boolean
   merge?: PrMerge
 }) {
+  // Snapshots from an older backend omit pullRequests; the type says it is always present.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const pullRequests = repository.pullRequests ?? []
   const noCi = isNoCi(repository)
   const ghHref = isAllowedHref(repository.htmlUrl)

@@ -62,7 +62,7 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
       title={title}
       aria-label={accessibleLabel}
       aria-live="polite"
-      disabled={busy || merged}
+      disabled={Boolean(busy) || merged}
       onClick={onMerge}
     >
       <span className="chip__dot" aria-hidden="true" />

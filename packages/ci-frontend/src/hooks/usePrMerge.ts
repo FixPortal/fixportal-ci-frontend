@@ -96,7 +96,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
     setMerged((current) => {
       const next = new Set(current).add(key)
       // ponytail: cap merged keys; prune against snapshots if 1,000 merges between polls becomes realistic.
-      if (next.size > MAX_MERGED_KEYS) next.delete(next.values().next().value!)
+      if (next.size > MAX_MERGED_KEYS) {
+        const oldest = next.values().next().value
+        if (oldest !== undefined) next.delete(oldest)
+      }
       return next
     })
     setReceipts((current) => new Set(current).add(key))

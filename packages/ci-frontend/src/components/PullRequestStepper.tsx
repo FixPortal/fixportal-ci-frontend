@@ -42,7 +42,7 @@ export function PullRequestStepper({
       ) {
         el.focus()
       } else {
-        ;(document.querySelector('.dashboard-page') as HTMLElement | null)?.focus({
+        document.querySelector<HTMLElement>('.dashboard-page')?.focus({
           preventScroll: true,
         })
       }
@@ -82,6 +82,7 @@ export function PullRequestStepper({
   if (!pr) return null
   const prHref = isAllowedHref(pr.htmlUrl)
   const key = prMergeKey(pr.repo, pr.number)
+  const headSha = pr.headSha
 
   return (
     <dialog
@@ -139,8 +140,10 @@ export function PullRequestStepper({
           ready={pr.readyToMerge}
           prNumber={pr.number}
           onMerge={
-            isAdmin && merge && pr.headSha
-              ? () => merge.mergeOne(pr.repo, pr.number, pr.headSha!)
+            isAdmin && merge && headSha
+              ? () => {
+                  void merge.mergeOne(pr.repo, pr.number, headSha)
+                }
               : undefined
           }
           merging={merge?.merging.has(key) ?? false}

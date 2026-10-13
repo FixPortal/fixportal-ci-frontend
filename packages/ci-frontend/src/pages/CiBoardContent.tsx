@@ -154,7 +154,7 @@ export function CiBoardContent() {
   // Same derivation as the skip link in CiBoard — namespaced so co-hosted
   // boards on one page don't duplicate the anchor id.
   const mainId = storageNamespace ? `ci-main-${storageNamespace}` : 'ci-main'
-  const hasAdminSource = Boolean(adminSnapshotUrl || adminSnapshotFetcher)
+  const hasAdminSource = Boolean(adminSnapshotUrl) || Boolean(adminSnapshotFetcher)
   // Empty/whitespace scope is absent, not a scope that matches nothing (which
   // would blank the board with "No repositories found.").
   const scope = repositoryScope?.trim().toLowerCase()
@@ -168,7 +168,7 @@ export function CiBoardContent() {
     const repos = snapshot.data?.repositories ?? []
     const authorised = isAdmin ? repos : repos.filter((r) => !r.private)
     const reconciled = reconcileMergedPrs(authorised, merge.merged, merge.receipts)
-    if (!hasRepositoryScope || scope === undefined) return reconciled
+    if (!hasRepositoryScope) return reconciled
     return reconciled.filter(
       (repository) => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope,
     )
@@ -273,8 +273,8 @@ export function CiBoardContent() {
           <button
             type="button"
             className="state-msg__action"
-            onClick={async () => {
-              await snapshot.refetch()
+            onClick={() => {
+              void snapshot.refetch()
             }}
           >
             Retry now
@@ -392,7 +392,8 @@ export function CiBoardContent() {
               type="button"
               className="dashboard__collapse-all"
               onClick={() => {
-                allCollapsed ? collapse.expandAll() : collapse.collapseAll(allCollapsibleKeys)
+                if (allCollapsed) collapse.expandAll()
+                else collapse.collapseAll(allCollapsibleKeys)
               }}
             >
               {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
