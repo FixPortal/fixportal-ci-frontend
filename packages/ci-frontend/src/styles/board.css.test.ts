@@ -31,9 +31,11 @@ describe('board.css review pill selectors', () => {
   })
 
   it.each(['.chip--unknown', '.chip--review-pending', '.chip--review-disabled', '.chip--review-unknown'])('%s preserves text contrast', selector => {
-    const match = css.match(new RegExp(`\\.${selector.slice(1)}\\s*\\{([^}]*)\\}`))
-    expect(match).not.toBeNull()
-    expect(match![1]).not.toMatch(/opacity\s*:/)
+    // Every rule naming the class (later, compound, pseudo-class or inside @media), not
+    // just the first block: a later `.chip--unknown:hover { opacity }` must also fail.
+    const rules = [...css.matchAll(new RegExp(`([^{}]*\\${selector}(?![\\w-])[^{}]*)\\{([^}]*)\\}`, 'g'))]
+    expect(rules.length).toBeGreaterThan(0)
+    for (const [, rule, body] of rules) expect(body, rule).not.toMatch(/opacity\s*:/)
   })
 })
 
