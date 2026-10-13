@@ -328,23 +328,35 @@ test('mergeAll abandons the rest of the queue when the organisation changes afte
   const resolvers = new Map<number, (result: MergeResult) => void>()
   // #10 resolves at once so a missing abandon check fails an assertion instead of hanging the queue.
   const mergeFetcher = vi.fn().mockImplementation((_repo: string, n: number) =>
-    n === 10 ? Promise.resolve(ok) : new Promise<MergeResult>(resolve => { resolvers.set(n, resolve) }))
-  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
-  const { result, rerender } = renderHook(
-    ({ org }) => usePrMerge(org),
-    { initialProps: { org: 'org-a' }, wrapper },
+    n === 10
+      ? Promise.resolve(ok)
+      : new Promise<MergeResult>((resolve) => {
+          resolvers.set(n, resolve)
+        }),
   )
-  act(() => { void result.current.mergeOne('repo-a', 7, 'sha-7') }) // owns #7, so mergeAll skips it
+  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
+  const { result, rerender } = renderHook(({ org }) => usePrMerge(org), {
+    initialProps: { org: 'org-a' },
+    wrapper,
+  })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  }) // owns #7, so mergeAll skips it
   let queue!: Promise<void>
-  act(() => { queue = result.current.mergeAll('repo-a', [7, 9, 10].map(n => ({ number: n, headSha: `sha-${n}` }))) })
-  expect(mergeFetcher.mock.calls.map(call => call[1])).toEqual([7, 9]) // 7 from mergeOne, 9 from the queue
+  act(() => {
+    queue = result.current.mergeAll(
+      'repo-a',
+      [7, 9, 10].map((n) => ({ number: n, headSha: `sha-${n}` })),
+    )
+  })
+  expect(mergeFetcher.mock.calls.map((call) => call[1] as number)).toEqual([7, 9]) // 7 from mergeOne, 9 from the queue
 
   rerender({ org: 'org-b' })
   await act(async () => {
     resolvers.get(9)!(ok)
     await queue
   })
-  expect(mergeFetcher.mock.calls.map(call => call[1])).toEqual([7, 9]) // #10 never requested
+  expect(mergeFetcher.mock.calls.map((call) => call[1] as number)).toEqual([7, 9]) // #10 never requested
   expect(result.current.merged.size).toBe(0)
   expect(invalidateSpy).not.toHaveBeenCalled()
 })
@@ -353,7 +365,9 @@ test('mergeAll over only skipped PRs still refreshes the snapshot and reports no
   const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(() => {}))
   const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
   const { result } = renderHook(() => usePrMerge(), { wrapper })
-  act(() => { void result.current.mergeOne('repo-a', 7, 'sha-7') })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
   await act(() => result.current.mergeAll('repo-a', [{ number: 7, headSha: 'sha-7' }]))
   expect(mergeFetcher).toHaveBeenCalledTimes(1)
   expect(invalidateSpy).toHaveBeenCalledTimes(1)
