@@ -107,7 +107,9 @@ function ThemeSwitcher({ pageRef }: { pageRef: RefObject<HTMLDivElement | null> 
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
       mediaQuery.addEventListener('change', applyTheme)
-      return () => mediaQuery.removeEventListener('change', applyTheme)
+      return () => {
+        mediaQuery.removeEventListener('change', applyTheme)
+      }
     }
     return undefined
   }, [theme, pageRef])
@@ -127,7 +129,9 @@ function ThemeSwitcher({ pageRef }: { pageRef: RefObject<HTMLDivElement | null> 
     <div className="ci-theme-select-container">
       <select
         value={theme}
-        onChange={(e) => changeTheme(e.target.value as Theme)}
+        onChange={(e) => {
+          changeTheme(e.target.value as Theme)
+        }}
         className="ci-theme-select"
         aria-label="Select theme"
       >
@@ -188,7 +192,9 @@ export function CiBoard({
     publishHeight()
     const observer = new ResizeObserver(publishHeight)
     observer.observe(header)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+    }
   }, [])
 
   return (

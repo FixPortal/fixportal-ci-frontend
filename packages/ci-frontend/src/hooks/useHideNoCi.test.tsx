@@ -3,7 +3,9 @@ import { renderHook, act } from '@testing-library/react'
 import { useHideNoCi } from './useHideNoCi'
 
 describe('useHideNoCi', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('defaults to not hidden', () => {
     const { result } = renderHook(() => useHideNoCi())
@@ -12,10 +14,14 @@ describe('useHideNoCi', () => {
 
   it('toggles and persists to localStorage', () => {
     const { result } = renderHook(() => useHideNoCi())
-    act(() => result.current.toggle())
+    act(() => {
+      result.current.toggle()
+    })
     expect(result.current.hidden).toBe(true)
     expect(localStorage.getItem('ci-dashboard:hide-no-ci')).toBe('true')
-    act(() => result.current.toggle())
+    act(() => {
+      result.current.toggle()
+    })
     expect(result.current.hidden).toBe(false)
     expect(localStorage.getItem('ci-dashboard:hide-no-ci')).toBe('false')
   })
@@ -35,8 +41,12 @@ describe('useHideNoCi', () => {
     getItem.mockRestore()
     expect(result.current.hidden).toBe(false)
     expect(localStorage.getItem('ci-dashboard:hide-no-ci')).toBe('true')
-    act(() => result.current.toggle())
-    act(() => result.current.toggle())
+    act(() => {
+      result.current.toggle()
+    })
+    act(() => {
+      result.current.toggle()
+    })
     expect(localStorage.getItem('ci-dashboard:hide-no-ci')).toBe('false')
   })
 })

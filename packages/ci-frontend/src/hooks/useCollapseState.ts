@@ -55,13 +55,23 @@ export function useCollapseState() {
       [collapsed],
     ),
     toggle: useCallback(
-      (name: string) => mutate((s) => (s.has(name) ? s.delete(name) : s.add(name))),
+      (name: string) => {
+        mutate((s) => (s.has(name) ? s.delete(name) : s.add(name)))
+      },
       [mutate],
     ),
     collapseAll: useCallback(
-      (names: string[]) => mutate((s) => names.forEach((n) => s.add(n))),
+      (names: string[]) => {
+        mutate((s) => {
+          names.forEach((n) => s.add(n))
+        })
+      },
       [mutate],
     ),
-    expandAll: useCallback(() => mutate((s) => s.clear()), [mutate]),
+    expandAll: useCallback(() => {
+      mutate((s) => {
+        s.clear()
+      })
+    }, [mutate]),
   }
 }

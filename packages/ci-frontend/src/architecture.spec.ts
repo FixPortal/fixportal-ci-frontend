@@ -48,12 +48,12 @@ const EXCEPT_TESTS = { except: { withName: '*.test.*' } }
 
 // Each row asserts: nothing in `from` may depend on `to`. Data-driven so the
 // matrix of invariants stays readable and easy to extend.
-const FORBIDDEN_EDGES: ReadonlyArray<{
+const FORBIDDEN_EDGES: readonly {
   from: string
   fromGlob: string
   to: string
   toGlob: string
-}> = [
+}[] = [
   // api is the bottom layer: it knows nothing above it.
   { from: 'api', fromGlob: '**/api/**', to: 'lib', toGlob: '**/lib/**' },
   { from: 'api', fromGlob: '**/api/**', to: 'hooks', toGlob: '**/hooks/**' },

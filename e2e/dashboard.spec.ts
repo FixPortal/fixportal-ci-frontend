@@ -97,7 +97,9 @@ async function openDashboard(
       }),
     })
   })
-  await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
+  await page.addInitScript(() => {
+    localStorage.setItem('ci:theme', 'light')
+  })
   await page.goto('/')
   if (holdResponse) {
     await expect(page.getByText('Loading dashboard…')).toBeVisible()
@@ -113,7 +115,11 @@ async function paintedFrames(page: Page) {
   await page.evaluate(
     () =>
       new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve()
+          }),
+        )
       }),
   )
 }
@@ -171,7 +177,9 @@ test('reserves the first viewport while the dashboard loads', async ({ page }) =
       body: JSON.stringify({ ...snapshot, refreshedAt: new Date().toISOString() }),
     })
   })
-  await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
+  await page.addInitScript(() => {
+    localStorage.setItem('ci:theme', 'light')
+  })
   await page.goto('/')
   await expect(page.getByText('Loading dashboard…')).toBeVisible()
   const loadingHeight = await page

@@ -18,7 +18,9 @@ function nsWrapper(namespace: string) {
 }
 
 describe('useRepoFilters', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
   afterEach(() => vi.restoreAllMocks())
 
   it('defaults to empty, inactive filters', () => {
@@ -30,7 +32,9 @@ describe('useRepoFilters', () => {
 
   it('setSearch updates state, marks active, and persists', () => {
     const { result } = renderHook(() => useRepoFilters())
-    act(() => result.current.setSearch('engine'))
+    act(() => {
+      result.current.setSearch('engine')
+    })
     expect(result.current.filters.search).toBe('engine')
     expect(result.current.isActive).toBe(true)
     expect(JSON.parse(localStorage.getItem(KEY)!).search).toBe('engine')
@@ -38,16 +42,24 @@ describe('useRepoFilters', () => {
 
   it('toggleVisibility adds then removes a member', () => {
     const { result } = renderHook(() => useRepoFilters())
-    act(() => result.current.toggleVisibility('private'))
+    act(() => {
+      result.current.toggleVisibility('private')
+    })
     expect(result.current.filters.visibility.has('private')).toBe(true)
-    act(() => result.current.toggleVisibility('private'))
+    act(() => {
+      result.current.toggleVisibility('private')
+    })
     expect(result.current.filters.visibility.has('private')).toBe(false)
   })
 
   it('toggleCiStatus and toggleHasOpenPrs work and set isActive', () => {
     const { result } = renderHook(() => useRepoFilters())
-    act(() => result.current.toggleCiStatus('failing'))
-    act(() => result.current.toggleHasOpenPrs())
+    act(() => {
+      result.current.toggleCiStatus('failing')
+    })
+    act(() => {
+      result.current.toggleHasOpenPrs()
+    })
     expect(result.current.filters.ciStatus.has('failing')).toBe(true)
     expect(result.current.filters.hasOpenPrs).toBe(true)
     expect(result.current.isActive).toBe(true)
@@ -55,9 +67,15 @@ describe('useRepoFilters', () => {
 
   it('clear resets every filter to default', () => {
     const { result } = renderHook(() => useRepoFilters())
-    act(() => result.current.setSearch('x'))
-    act(() => result.current.toggleCiStatus('passing'))
-    act(() => result.current.clear())
+    act(() => {
+      result.current.setSearch('x')
+    })
+    act(() => {
+      result.current.toggleCiStatus('passing')
+    })
+    act(() => {
+      result.current.clear()
+    })
     expect(result.current.isActive).toBe(false)
     expect(result.current.filters.ciStatus.size).toBe(0)
   })
@@ -108,7 +126,9 @@ describe('useRepoFilters', () => {
       throw new Error('storage full')
     })
     const { result } = renderHook(() => useRepoFilters())
-    act(() => result.current.setSearch('engine'))
+    act(() => {
+      result.current.setSearch('engine')
+    })
     expect(result.current.filters.search).toBe('engine')
     expect(result.current.isActive).toBe(true)
   })
@@ -129,7 +149,9 @@ describe('useRepoFilters', () => {
     expect(result.current.filters.search).toBe('ns-seed')
     expect(result.current.filters.visibility.has('private')).toBe(true)
     // Writes back under the namespaced key.
-    act(() => result.current.setSearch('changed'))
+    act(() => {
+      result.current.setSearch('changed')
+    })
     expect(JSON.parse(localStorage.getItem(NS_KEY)!).search).toBe('changed')
     expect(localStorage.getItem(KEY)).toBeNull()
   })

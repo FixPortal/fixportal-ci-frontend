@@ -54,8 +54,12 @@ describe('useDashboardSnapshot cache-key isolation', () => {
       }),
     })
 
-    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
-    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(boardA.current.data).not.toBeUndefined()
+    })
+    await waitFor(() => {
+      expect(boardB.current.data).not.toBeUndefined()
+    })
 
     expect(boardA.current.data?.org).toBe('org-a')
     expect(boardB.current.data?.org).toBe('org-b')
@@ -82,8 +86,12 @@ describe('useDashboardSnapshot cache-key isolation', () => {
       }),
     })
 
-    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
-    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(boardA.current.data).not.toBeUndefined()
+    })
+    await waitFor(() => {
+      expect(boardB.current.data).not.toBeUndefined()
+    })
 
     expect(boardA.current.data?.org).toBe('org-a')
     expect(boardB.current.data?.org).toBe('org-b')
@@ -108,7 +116,9 @@ describe('useDashboardSnapshot URL branches', () => {
       ),
     })
 
-    await waitFor(() => expect(result.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(result.current.data).not.toBeUndefined()
+    })
     expect(result.current.data?.org).toBe('fetcher')
     expect(fetchSpy).not.toHaveBeenCalled()
   })
@@ -125,7 +135,9 @@ describe('useDashboardSnapshot URL branches', () => {
       ),
     })
 
-    await waitFor(() => expect(result.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(result.current.data).not.toBeUndefined()
+    })
     expect(result.current.data?.org).toBe('admin-org')
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://admin.example/snapshot',
@@ -143,7 +155,9 @@ describe('useDashboardSnapshot URL branches', () => {
       wrapper: wrapperFor(client, { apiBase: 'https://ci.example/' }, false),
     })
 
-    await waitFor(() => expect(result.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(result.current.data).not.toBeUndefined()
+    })
     expect(result.current.data?.org).toBe('default-org')
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://ci.example/api/dashboard/snapshot',
@@ -170,8 +184,12 @@ describe('useDashboardSnapshot admin cache-key isolation', () => {
       ),
     })
 
-    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
-    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(boardA.current.data).not.toBeUndefined()
+    })
+    await waitFor(() => {
+      expect(boardB.current.data).not.toBeUndefined()
+    })
 
     expect(boardA.current.data?.org).toBe('org-a')
     expect(boardB.current.data?.org).toBe('org-b')
@@ -202,8 +220,12 @@ describe('useDashboardSnapshot admin cache-key isolation', () => {
       ),
     })
 
-    await waitFor(() => expect(boardA.current.data).not.toBeUndefined())
-    await waitFor(() => expect(boardB.current.data).not.toBeUndefined())
+    await waitFor(() => {
+      expect(boardA.current.data).not.toBeUndefined()
+    })
+    await waitFor(() => {
+      expect(boardB.current.data).not.toBeUndefined()
+    })
 
     expect(boardA.current.data?.org).toBe('org-a')
     expect(boardB.current.data?.org).toBe('org-b')
@@ -223,7 +245,9 @@ describe('useDashboardSnapshot custom-fetcher validation', () => {
       wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => malformed }, false),
     })
 
-    await waitFor(() => expect(result.current.status).toBe('error'))
+    await waitFor(() => {
+      expect(result.current.status).toBe('error')
+    })
     expect(result.current.error).toBeInstanceOf(Error)
     expect(result.current.data).toBeUndefined()
   })
@@ -238,7 +262,9 @@ describe('useDashboardSnapshot custom-fetcher validation', () => {
       ),
     })
 
-    await waitFor(() => expect(result.current.status).toBe('error'))
+    await waitFor(() => {
+      expect(result.current.status).toBe('error')
+    })
     expect(result.current.error).toBeInstanceOf(Error)
     expect(result.current.data).toBeUndefined()
   })
@@ -249,7 +275,9 @@ describe('useDashboardSnapshot custom-fetcher validation', () => {
       wrapper: wrapperFor(client, { apiBase: '', snapshotFetcher: async () => null }, false),
     })
 
-    await waitFor(() => expect(result.current.status).toBe('success'))
+    await waitFor(() => {
+      expect(result.current.status).toBe('success')
+    })
     expect(result.current.data).toBeNull()
   })
 })
@@ -270,11 +298,15 @@ describe('useDashboardSnapshot polling', () => {
       wrapper: wrapperFor(client, { apiBase: 'https://ci.example' }, false),
     })
 
-    await vi.waitFor(() => expect(result.current.data).not.toBeUndefined())
+    await vi.waitFor(() => {
+      expect(result.current.data).not.toBeUndefined()
+    })
     expect(calls).toBe(1)
 
     await vi.advanceTimersByTimeAsync(30_000)
-    await vi.waitFor(() => expect(calls).toBe(2))
+    await vi.waitFor(() => {
+      expect(calls).toBe(2)
+    })
     expect(result.current.data?.org).toBe('org-2')
   })
 })

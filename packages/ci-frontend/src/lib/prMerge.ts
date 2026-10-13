@@ -17,7 +17,7 @@ export interface PrMerge {
   // merges able to run concurrently, a second failure must not evict the first.
   errors: ReadonlyMap<string, string>
   mergeOne: (repo: string, pullNumber: number, headSha: string) => Promise<void>
-  mergeAll: (repo: string, prs: ReadonlyArray<{ number: number; headSha: string }>) => Promise<void>
+  mergeAll: (repo: string, prs: readonly { number: number; headSha: string }[]) => Promise<void>
   dismissError: (repo: string) => void
 }
 

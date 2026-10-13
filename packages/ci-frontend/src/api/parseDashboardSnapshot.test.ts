@@ -99,7 +99,7 @@ test('reports the failing path without exposing payload values', () => {
   expect(() => parseDashboardSnapshot(malformed)).not.toThrow('secret-marker')
 })
 
-const invalidSnapshotCases: Array<[string, (value: typeof snapshot) => void, string]> = [
+const invalidSnapshotCases: [string, (value: typeof snapshot) => void, string][] = [
   [
     'workflow signal state',
     (value) => {
@@ -110,7 +110,7 @@ const invalidSnapshotCases: Array<[string, (value: typeof snapshot) => void, str
   [
     'workflow run number',
     (value) => {
-      value.repositories[0].workflows[0].lastRun!.runNumber = Number.NaN
+      value.repositories[0].workflows[0].lastRun.runNumber = Number.NaN
     },
     '$.repositories[0].workflows[0].lastRun.runNumber',
   ],
@@ -140,35 +140,35 @@ const invalidSnapshotCases: Array<[string, (value: typeof snapshot) => void, str
   [
     'review signal state',
     (value) => {
-      value.repositories[0].pullRequests[0].reviewSignals![0].state = 'commented'
+      value.repositories[0].pullRequests[0].reviewSignals[0].state = 'commented'
     },
     '$.repositories[0].pullRequests[0].reviewSignals[0].state',
   ],
   [
     'job signal state',
     (value) => {
-      value.repositories[0].deploys![0].state = 'queued'
+      value.repositories[0].deploys[0].state = 'queued'
     },
     '$.repositories[0].deploys[0].state',
   ],
   [
     'metric value',
     (value) => {
-      value.repositories[0].metrics!.nloc = Number.POSITIVE_INFINITY
+      value.repositories[0].metrics.nloc = Number.POSITIVE_INFINITY
     },
     '$.repositories[0].metrics.nloc',
   ],
   [
     'repository merged-PR field',
     (value) => {
-      value.repositories[0].lastMergedPr!.repo = 42 as unknown as string
+      value.repositories[0].lastMergedPr.repo = 42 as unknown as string
     },
     '$.repositories[0].lastMergedPr.repo',
   ],
   [
     'trend state',
     (value) => {
-      value.ciTrend![0].state = 'unknown'
+      value.ciTrend[0].state = 'unknown'
     },
     '$.ciTrend[0].state',
   ],

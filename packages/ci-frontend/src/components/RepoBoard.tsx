@@ -40,7 +40,9 @@ export const RepoBoard = memo(function RepoBoard({
           <button
             type="button"
             className="repo-board__toggle"
-            onClick={() => onToggle(repository.name)}
+            onClick={() => {
+              onToggle(repository.name)
+            }}
             aria-expanded={!collapsed}
           >
             <span className="repo-board__chev" aria-hidden="true">

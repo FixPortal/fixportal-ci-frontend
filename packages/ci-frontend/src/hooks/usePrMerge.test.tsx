@@ -42,7 +42,9 @@ test('mergeOne surfaces a scoped failure and refreshes the snapshot on 409', asy
   expect(result.current.errors.get('repo-a')).toBe('Pull request is not mergeable')
   expect(result.current.merging.size).toBe(0)
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['dashboard-snapshot'] })
-  act(() => result.current.dismissError('repo-a'))
+  act(() => {
+    result.current.dismissError('repo-a')
+  })
   expect(result.current.errors.size).toBe(0)
 })
 

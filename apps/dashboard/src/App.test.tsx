@@ -20,8 +20,20 @@ afterEach(() => {
 
 describe('App admin state startup', () => {
   it.each([
-    ['stored admin state', true, () => localStorage.setItem('ci:admin', 'true')],
-    ['admin URL parameter', true, () => window.history.pushState({}, '', '/?admin=true')],
+    [
+      'stored admin state',
+      true,
+      () => {
+        localStorage.setItem('ci:admin', 'true')
+      },
+    ],
+    [
+      'admin URL parameter',
+      true,
+      () => {
+        window.history.pushState({}, '', '/?admin=true')
+      },
+    ],
     [
       'denied localStorage read',
       false,

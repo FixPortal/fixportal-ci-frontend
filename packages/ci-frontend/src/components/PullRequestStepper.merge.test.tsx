@@ -117,7 +117,9 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   // And the alert does appear once the failing repo's PR is displayed... but
   // paging dismisses stale errors, so instead verify repo-a's own failure shows.
-  await act(async () => mergeRef.current!.dismissError('repo-b'))
+  await act(async () => {
+    mergeRef.current!.dismissError('repo-b')
+  })
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })

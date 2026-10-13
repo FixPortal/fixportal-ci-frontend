@@ -103,7 +103,9 @@ test('Merge all reads Merging while a merge in its repo is in flight', async () 
   expect(inFlight).toHaveAttribute('aria-live', 'polite')
   resolvers[0]({ ok: true, sha: 'x' })
   await screen.findByRole('button', { name: 'Merged PR #3' })
-  await waitFor(() => expect(resolvers).toHaveLength(2))
+  await waitFor(() => {
+    expect(resolvers).toHaveLength(2)
+  })
   resolvers[1]({ ok: true, sha: 'y' })
   await screen.findByRole('button', { name: 'Merged PR #4' })
 })
@@ -193,7 +195,9 @@ test('an in-flight merge disables only its own pill, and a second merge can star
   await userEvent.click(pillB)
   expect(mergeFetcher).toHaveBeenCalledTimes(2)
   expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8, 'sha-8')
-  resolvers.forEach((resolve) => resolve({ ok: true, sha: 'abc' }))
+  resolvers.forEach((resolve) => {
+    resolve({ ok: true, sha: 'abc' })
+  })
   await within(repoBSection as HTMLElement).findByRole('button', { name: 'Merged PR #8' })
 })
 

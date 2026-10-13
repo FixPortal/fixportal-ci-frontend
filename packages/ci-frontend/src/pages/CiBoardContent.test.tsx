@@ -69,7 +69,9 @@ function renderBoard() {
 }
 
 describe('CiBoardContent filtering', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
   afterEach(() => vi.unstubAllGlobals())
 
   it('reconciles a successful merge before the stale snapshot catches up', async () => {
@@ -97,7 +99,9 @@ describe('CiBoardContent filtering', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Rebase-merge PR #7' }))
 
     expect(await screen.findByRole('button', { name: 'Merged PR #7' })).toHaveTextContent('Merged')
-    await waitFor(() => expect(staleSnapshotFetcher).toHaveBeenCalledTimes(2))
+    await waitFor(() => {
+      expect(staleSnapshotFetcher).toHaveBeenCalledTimes(2)
+    })
     await waitForElementToBeRemoved(
       () => screen.queryByText('Add widget', { selector: '.repo-prs__title' }),
       { timeout: 2_000 },
@@ -182,7 +186,9 @@ describe('CiBoardContent filtering', () => {
 })
 
 describe('CiBoardContent scope text', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('shows static "all repositories" scope when no filters are active', async () => {
     renderBoard()
@@ -239,7 +245,9 @@ describe('CiBoardContent scope text', () => {
 })
 
 describe('CiBoardContent controlled repository scope', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   const scopedSnapshot: DashboardSnapshot = {
     ...snapshot,
@@ -406,7 +414,9 @@ describe('CiBoardContent controlled repository scope', () => {
 })
 
 describe('CiBoardContent public snapshot fallbacks', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('renders the public CI trend when the full trend is unavailable', async () => {
     const publicSnapshot: DashboardSnapshot = {

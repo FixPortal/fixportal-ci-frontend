@@ -19,7 +19,12 @@ export function Consumer() {
   const [admin, setAdmin] = useState(true)
   return (
     <QueryClientProvider client={client}>
-      <button type="button" onClick={() => setAdmin((value) => !value)}>
+      <button
+        type="button"
+        onClick={() => {
+          setAdmin((value) => !value)
+        }}
+      >
         {admin ? 'Switch to guest' : 'Switch to admin'}
       </button>
       <button
