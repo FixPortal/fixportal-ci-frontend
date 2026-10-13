@@ -89,6 +89,30 @@ async function assertValidStartup(label, value, extraHosts) {
   }
 }
 
+// Exact policy values, mirrored from nginx.conf.template: a loose /default-src/ match
+// lets a dropped directive or an added 'unsafe-inline' pass. Every route must carry them
+// (a location-level add_header silently discards the server-level set).
+const expectedCsp = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+]
+const expectedPermissionsPolicy = 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+
+function assertSecurityHeaders(response, route) {
+  const csp = response.headers.get('content-security-policy')?.split(';').map((part) => part.trim())
+  assert.deepEqual(csp, expectedCsp, `${route}: Content-Security-Policy differs from the intended policy`)
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff', `${route}: x-content-type-options`)
+  assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin', `${route}: referrer-policy`)
+  assert.equal(response.headers.get('permissions-policy'), expectedPermissionsPolicy, `${route}: permissions-policy`)
+}
+
 async function waitFor(url, deadline) {
   let lastError
   while (Date.now() < deadline) {
@@ -193,17 +217,16 @@ try {
   const rootResponse = await waitFor(`${origin}/`, Date.now() + 20_000)
   const rootHtml = await rootResponse.text()
   assert.match(rootHtml, /<div id="root"><\/div>/, 'built SPA entry point is missing')
-  assert.match(rootResponse.headers.get('content-security-policy') ?? '', /default-src 'self'/)
-  assert.equal(rootResponse.headers.get('x-content-type-options'), 'nosniff')
-  assert.equal(rootResponse.headers.get('referrer-policy'), 'strict-origin-when-cross-origin')
-  assert.match(rootResponse.headers.get('permissions-policy') ?? '', /camera=\(\)/)
+  assertSecurityHeaders(rootResponse, '/')
 
   const nestedResponse = await fetch(`${origin}/nested/route`, { signal: AbortSignal.timeout(2_000) })
   assert.equal(nestedResponse.status, 200)
+  assertSecurityHeaders(nestedResponse, '/nested/route')
   assert.equal(await nestedResponse.text(), rootHtml, 'nested route did not use SPA fallback')
 
   const apiResponse = await fetch(`${origin}/api/probe?value=1`, { signal: AbortSignal.timeout(2_000) })
   assert.equal(apiResponse.status, 200)
+  assertSecurityHeaders(apiResponse, '/api/probe')
   assert.deepEqual(await apiResponse.json(), { ok: true })
   assert.equal(upstreamRequest?.url, '/api/probe?value=1')
   assert.equal(upstreamRequest?.servername, 'host.docker.internal', 'TLS SNI is missing or incorrect')
