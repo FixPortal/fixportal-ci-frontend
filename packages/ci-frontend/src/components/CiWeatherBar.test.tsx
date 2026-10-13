@@ -14,9 +14,9 @@ describe('CiWeatherBar', () => {
     const { container, getByRole } = render(<CiWeatherBar trend={trend} />)
     const blocks = container.querySelectorAll('.ci-weather__block')
     expect(blocks).toHaveLength(3)
-    expect(blocks[0].getAttribute('data-state')).toBe('passing')
-    expect(blocks[1].getAttribute('data-state')).toBe('failing')
-    expect(blocks[2].getAttribute('data-state')).toBe('noData')
+    expect(blocks[0]!.getAttribute('data-state')).toBe('passing')
+    expect(blocks[1]!.getAttribute('data-state')).toBe('failing')
+    expect(blocks[2]!.getAttribute('data-state')).toBe('noData')
     expect(getByRole('img')).toBeInTheDocument()
   })
 

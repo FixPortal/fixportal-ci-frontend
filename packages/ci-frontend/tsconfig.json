@@ -12,7 +12,17 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "ignoreDeprecations": "6.0",
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "erasableSyntaxOnly": true
+    // Held back: "exactOptionalPropertyTypes" reports 13 errors here (measured). Every site is
+    // an optional prop of this PUBLISHED package receiving `T | undefined` from a caller, so the
+    // fix is `| undefined` on the public prop types (RepositoryBoard, ReviewPills,
+    // ReadyToMergePill, PullRequestList/Stepper props and the summary strip). That widens the
+    // emitted .d.ts, so it belongs in its own release, not in a tooling change.
   },
   "include": ["src"]
 }

@@ -9,7 +9,12 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "ignoreDeprecations": "6.0",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "erasableSyntaxOnly": true
   },
   "include": ["index.tsx"]
 }

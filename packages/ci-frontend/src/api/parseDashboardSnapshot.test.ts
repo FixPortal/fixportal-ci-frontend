@@ -103,22 +103,22 @@ const invalidSnapshotCases: [string, (value: typeof snapshot) => void, string][]
   [
     'workflow signal state',
     (value) => {
-      value.repositories[0].workflows[0].state = 'queued'
+      value.repositories[0]!.workflows[0]!.state = 'queued'
     },
     '$.repositories[0].workflows[0].state',
   ],
   [
     'workflow run number',
     (value) => {
-      value.repositories[0].workflows[0].lastRun.runNumber = Number.NaN
+      value.repositories[0]!.workflows[0]!.lastRun.runNumber = Number.NaN
     },
     '$.repositories[0].workflows[0].lastRun.runNumber',
   ],
   [
     'recent workflow run number',
     (value) => {
-      Object.assign(value.repositories[0].workflows[0], {
-        recentRuns: [{ ...value.repositories[0].workflows[0].lastRun, runNumber: Number.NaN }],
+      Object.assign(value.repositories[0]!.workflows[0]!, {
+        recentRuns: [{ ...value.repositories[0]!.workflows[0]!.lastRun, runNumber: Number.NaN }],
       })
     },
     '$.repositories[0].workflows[0].recentRuns[0].runNumber',
@@ -126,56 +126,56 @@ const invalidSnapshotCases: [string, (value: typeof snapshot) => void, string][]
   [
     'repository visibility type',
     (value) => {
-      value.repositories[0].private = 1 as unknown as boolean
+      value.repositories[0]!.private = 1 as unknown as boolean
     },
     '$.repositories[0].private',
   ],
   [
     'pull request draft type',
     (value) => {
-      value.repositories[0].pullRequests[0].isDraft = 0 as unknown as boolean
+      value.repositories[0]!.pullRequests[0]!.isDraft = 0 as unknown as boolean
     },
     '$.repositories[0].pullRequests[0].isDraft',
   ],
   [
     'review signal state',
     (value) => {
-      value.repositories[0].pullRequests[0].reviewSignals[0].state = 'commented'
+      value.repositories[0]!.pullRequests[0]!.reviewSignals[0]!.state = 'commented'
     },
     '$.repositories[0].pullRequests[0].reviewSignals[0].state',
   ],
   [
     'job signal state',
     (value) => {
-      value.repositories[0].deploys[0].state = 'queued'
+      value.repositories[0]!.deploys[0]!.state = 'queued'
     },
     '$.repositories[0].deploys[0].state',
   ],
   [
     'metric value',
     (value) => {
-      value.repositories[0].metrics.nloc = Number.POSITIVE_INFINITY
+      value.repositories[0]!.metrics.nloc = Number.POSITIVE_INFINITY
     },
     '$.repositories[0].metrics.nloc',
   ],
   [
     'repository merged-PR field',
     (value) => {
-      value.repositories[0].lastMergedPr.repo = 42 as unknown as string
+      value.repositories[0]!.lastMergedPr.repo = 42 as unknown as string
     },
     '$.repositories[0].lastMergedPr.repo',
   ],
   [
     'trend state',
     (value) => {
-      value.ciTrend[0].state = 'unknown'
+      value.ciTrend[0]!.state = 'unknown'
     },
     '$.ciTrend[0].state',
   ],
   [
     'summary count',
     (value) => {
-      value.summary[0].count = Number.NaN
+      value.summary[0]!.count = Number.NaN
     },
     '$.summary[0].count',
   ],
