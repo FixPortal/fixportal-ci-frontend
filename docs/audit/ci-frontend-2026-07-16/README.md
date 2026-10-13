@@ -24,26 +24,26 @@ builds, four Chromium regressions, actionlint, and a production dependency
 audit. The production container also passes `nginx -t`, serves the agreed
 security headers, and proxies the live public snapshot successfully.
 
-| Severity | Count | Release implication |
-|---|---:|---|
-| Critical | 0 | None |
-| High | 0 | None |
-| Medium | 0 open / 4 closed | Remediated and regression-tested |
-| Low | 0 open / 3 closed | Remediated and regression-tested |
+| Severity  |                 Count | Release implication                |
+| --------- | --------------------: | ---------------------------------- |
+| Critical  |                     0 | None                               |
+| High      |                     0 | None                               |
+| Medium    |     0 open / 4 closed | Remediated and regression-tested   |
+| Low       |     0 open / 3 closed | Remediated and regression-tested   |
 | **Total** | **0 open / 7 closed** | **Ready for normal review and CI** |
 
 ## What is working well
 
-| Area | Evidence |
-|---|---|
-| Automated quality | 32 test files and 137 tests pass; library/app typechecks and builds pass |
-| Browser regression | Phone containment, cold-load CLS, loading geometry and desktop rendering pass in Chromium |
-| Dependency baseline | `npm audit --omit=dev` reports zero production vulnerabilities |
-| Public confidentiality | The backend serves a distinct public snapshot and strips private repositories server-side |
-| Guest workflows | Search, status/PR filters, clear-filter recovery, collapse, legend and theme controls work |
-| State persistence | Search/filter and theme state survive reload without breaking guest visibility |
+| Area                       | Evidence                                                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Automated quality          | 32 test files and 137 tests pass; library/app typechecks and builds pass                                          |
+| Browser regression         | Phone containment, cold-load CLS, loading geometry and desktop rendering pass in Chromium                         |
+| Dependency baseline        | `npm audit --omit=dev` reports zero production vulnerabilities                                                    |
+| Public confidentiality     | The backend serves a distinct public snapshot and strips private repositories server-side                         |
+| Guest workflows            | Search, status/PR filters, clear-filter recovery, collapse, legend and theme controls work                        |
+| State persistence          | Search/filter and theme state survive reload without breaking guest visibility                                    |
 | Accessibility fundamentals | Native controls, labelled status images, pressed states, native modal focus trapping and focus return are present |
-| Visual craft | Desktop hierarchy is clear and consistent in both light and dark themes |
+| Visual craft               | Desktop hierarchy is clear and consistent in both light and dark themes                                           |
 
 ## Product flow
 
@@ -63,11 +63,11 @@ graph LR
 
 ### CI-UI-001 — Mobile toolbar forces horizontal scrolling
 
-| Field | Value |
-|---|---|
-| Severity | Medium |
-| Category | Responsive layout / usability |
-| Surface | Guest dashboard at 390 × 844 CSS pixels |
+| Field    | Value                                                       |
+| -------- | ----------------------------------------------------------- |
+| Severity | Medium                                                      |
+| Category | Responsive layout / usability                               |
+| Surface  | Guest dashboard at 390 × 844 CSS pixels                     |
 | Evidence | [Annotated mobile screenshot](screenshots/guest-mobile.png) |
 
 The standalone app does not establish `border-box`, so `.dashboard-page` is
@@ -102,11 +102,11 @@ has no horizontal document scroll.
 
 ### CI-UI-002 — Snapshot failure state gives operators no recovery cue
 
-| Field | Value |
-|---|---|
-| Severity | Low |
-| Category | Error-state UX |
-| Surface | Guest dashboard when the snapshot request fails |
+| Field    | Value                                                          |
+| -------- | -------------------------------------------------------------- |
+| Severity | Low                                                            |
+| Category | Error-state UX                                                 |
+| Surface  | Guest dashboard when the snapshot request fails                |
 | Evidence | [Annotated failure screenshot](screenshots/snapshot-error.png) |
 
 After the built-in query retry is exhausted, the entire operational surface is
@@ -138,11 +138,11 @@ recovery behaviour, with an explicit retry control for immediate recovery.
 
 ### CI-UI-003 — Standalone `admin=true` enables controls without an admin data source
 
-| Field | Value |
-|---|---|
-| Severity | Medium |
-| Category | Functional / role-state consistency |
-| Surface | Standalone dashboard at `?admin=true` |
+| Field    | Value                                                                                 |
+| -------- | ------------------------------------------------------------------------------------- |
+| Severity | Medium                                                                                |
+| Category | Functional / role-state consistency                                                   |
+| Surface  | Standalone dashboard at `?admin=true`                                                 |
 | Evidence | [Annotated role mismatch screenshot](screenshots/standalone-admin-guest-mismatch.png) |
 
 The standalone app persists `?admin=true` as `adminSignal`, which exposes the
@@ -178,11 +178,11 @@ the admin key; the browser must never receive the key itself.
 
 ### CI-ARCH-004 — Exported snapshot type has drifted from the backend contract
 
-| Field | Value |
-|---|---|
-| Severity | Low |
-| Category | Contract correctness / maintainability |
-| Surface | Published `DashboardSnapshot` TypeScript API |
+| Field    | Value                                                         |
+| -------- | ------------------------------------------------------------- |
+| Severity | Low                                                           |
+| Category | Contract correctness / maintainability                        |
+| Surface  | Published `DashboardSnapshot` TypeScript API                  |
 | Evidence | Live endpoint keys and backend records compared on 2026-07-16 |
 
 The exported TypeScript types omit fields that the backend record and live
@@ -211,11 +211,11 @@ publish a named frontend projection rather than presenting it as the wire shape.
 
 ### CI-PERF-005 — Initial snapshot render produces a very poor layout-shift score
 
-| Field | Value |
-|---|---|
-| Severity | Medium |
-| Category | Performance / visual stability |
-| Surface | Initial guest dashboard load |
+| Field    | Value                                               |
+| -------- | --------------------------------------------------- |
+| Severity | Medium                                              |
+| Category | Performance / visual stability                      |
+| Surface  | Initial guest dashboard load                        |
 | Evidence | Two clean page-load profiles: CLS `0.82` and `0.82` |
 
 The dashboard's initial loading branch is a short message, followed by the full
@@ -243,11 +243,11 @@ awkward.
 
 ### CI-SEC-006 — Default container omits browser hardening headers
 
-| Field | Value |
-|---|---|
-| Severity | Low |
-| Category | Deployment security hardening |
-| Surface | Standalone nginx image |
+| Field    | Value                              |
+| -------- | ---------------------------------- |
+| Severity | Low                                |
+| Category | Deployment security hardening      |
+| Surface  | Standalone nginx image             |
 | Evidence | `nginx.conf.template` at `4553f10` |
 
 The shipped nginx configuration proxies `/api/` and serves the SPA, but adds no
@@ -273,12 +273,12 @@ plain HTTP container.
 
 ### CI-CI-007 — Publish-capable workflows execute mutable tool/action versions
 
-| Field | Value |
-|---|---|
-| Severity | Medium |
-| Category | CI supply chain / reproducibility |
-| Surface | `.github/workflows/ci.yml`, `release.yml`, `mutation.yml` |
-| Evidence | Workflow definitions at `4553f10` |
+| Field    | Value                                                     |
+| -------- | --------------------------------------------------------- |
+| Severity | Medium                                                    |
+| Category | CI supply chain / reproducibility                         |
+| Surface  | `.github/workflows/ci.yml`, `release.yml`, `mutation.yml` |
+| Evidence | Workflow definitions at `4553f10`                         |
 
 The workflows reference actions by mutable major tags, including third-party
 Blacksmith build actions in the job with `packages: write`. The npm release job
@@ -301,63 +301,63 @@ Use Dependabot or Renovate to make upgrades explicit and reviewable.
 
 ## Symptom → cause
 
-| Symptom | Underlying cause |
-|---|---|
-| Phone view scrolls sideways | Content-box `width: 100%` plus padding, compounded by a non-wrapping filter/control row |
-| `[Guest]` header shows a Private filter | `adminSignal` controls body features, while the header alone checks whether an admin source exists |
-| Selecting Private gives zero results | The standalone app never supplies the protected admin endpoint/fetcher; it still consumes the public snapshot |
-| Initial page visibly rearranges | A compact loading branch is replaced by the full board without reserving first-view geometry |
-| Library consumers cannot type fields present on the wire | Hand-maintained frontend DTOs have no parity gate against the backend record |
-| Outage screen gives no next step | The error branch discards board context and does not expose React Query's retry/refetch state |
-| Identical release tags can run different tooling | Workflow action tags and `npm@latest` are mutable inputs |
+| Symptom                                                  | Underlying cause                                                                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Phone view scrolls sideways                              | Content-box `width: 100%` plus padding, compounded by a non-wrapping filter/control row                       |
+| `[Guest]` header shows a Private filter                  | `adminSignal` controls body features, while the header alone checks whether an admin source exists            |
+| Selecting Private gives zero results                     | The standalone app never supplies the protected admin endpoint/fetcher; it still consumes the public snapshot |
+| Initial page visibly rearranges                          | A compact loading branch is replaced by the full board without reserving first-view geometry                  |
+| Library consumers cannot type fields present on the wire | Hand-maintained frontend DTOs have no parity gate against the backend record                                  |
+| Outage screen gives no next step                         | The error branch discards board context and does not expose React Query's retry/refetch state                 |
+| Identical release tags can run different tooling         | Workflow action tags and `npm@latest` are mutable inputs                                                      |
 
 ## Recommendations
 
-| Priority | Action | Acceptance criterion | Status |
-|---:|---|---|---|
-| 1 | Fix mobile sizing and sticky-control reflow | No document-level horizontal scroll; controls remain visible and reachable | Closed |
-| 2 | Unify privileged-source and admin-control state | Guest data never presents Private/admin-only controls; a wired admin source shows `[Admin]` and the controls | Closed |
-| 3 | Stabilize the loading-to-board transition | Production-build CLS is at most `0.10` and the loading state remains honest | Closed |
-| 4 | Add a small Playwright browser gate | Guest render, desktop baseline, loading stability and phone overflow are regression-tested | Closed |
-| 5 | Pin the release supply chain | Actions use full SHAs; automated update PRs keep pins current | Closed |
-| 6 | Establish backend/frontend DTO parity | Strict typecheck fails when field presence or nullability diverges | Closed |
-| 7 | Add standalone security headers | Container passes the agreed response policy without breaking assets or `/api/` | Closed |
-| 8 | Improve snapshot failure recovery | Error view explains polling, offers immediate retry and preserves last-known data | Closed |
+| Priority | Action                                          | Acceptance criterion                                                                                         | Status |
+| -------: | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------ |
+|        1 | Fix mobile sizing and sticky-control reflow     | No document-level horizontal scroll; controls remain visible and reachable                                   | Closed |
+|        2 | Unify privileged-source and admin-control state | Guest data never presents Private/admin-only controls; a wired admin source shows `[Admin]` and the controls | Closed |
+|        3 | Stabilize the loading-to-board transition       | Production-build CLS is at most `0.10` and the loading state remains honest                                  | Closed |
+|        4 | Add a small Playwright browser gate             | Guest render, desktop baseline, loading stability and phone overflow are regression-tested                   | Closed |
+|        5 | Pin the release supply chain                    | Actions use full SHAs; automated update PRs keep pins current                                                | Closed |
+|        6 | Establish backend/frontend DTO parity           | Strict typecheck fails when field presence or nullability diverges                                           | Closed |
+|        7 | Add standalone security headers                 | Container passes the agreed response policy without breaking assets or `/api/`                               | Closed |
+|        8 | Improve snapshot failure recovery               | Error view explains polling, offers immediate retry and preserves last-known data                            | Closed |
 
 ## Actions taken
 
-| Action | Target | Result |
-|---|---|---|
-| Updated audit baseline | Frontend `main` | Fast-forwarded to `4553f10`; primary checkout remains clean |
-| Lint | Entire workspace | Passed with 0 errors and 8 existing Sonar warnings |
-| Unit tests | `@fix-portal/ci-frontend` | 29 files passed; 132 tests passed |
-| Typecheck | Library and standalone app | Passed |
-| Production builds | Library and standalone app | Passed; app bundle 256.76kB JS / 26.99kB CSS before gzip |
-| Dependency audit | Production npm graph | 0 vulnerabilities |
-| Guest walkthrough | Live public snapshot, desktop light/dark | Passed core workflows; no page errors or failed successful-path requests |
-| Responsive walkthrough | 390 × 844 viewport | Found CI-UI-001 |
-| Failure simulation | Aborted snapshot request twice | Found CI-UI-002; state reproduced consistently |
-| Role-state walkthrough | Standalone `?admin=true` | Found CI-UI-003; backend confidentiality remained intact |
-| Keyboard/modal check | Open-PR native dialog | Escape closes and focus returns to the invoking button |
-| Performance profile | Two clean local page loads | CLS `0.82` on both runs; found CI-PERF-005 |
-| Contract comparison | TS types, backend records, live JSON keys | Found CI-ARCH-004 |
-| Source/config review | Container and GitHub workflows | Found CI-SEC-006 and CI-CI-007 |
+| Action                 | Target                                    | Result                                                                   |
+| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------ |
+| Updated audit baseline | Frontend `main`                           | Fast-forwarded to `4553f10`; primary checkout remains clean              |
+| Lint                   | Entire workspace                          | Passed with 0 errors and 8 existing Sonar warnings                       |
+| Unit tests             | `@fix-portal/ci-frontend`                 | 29 files passed; 132 tests passed                                        |
+| Typecheck              | Library and standalone app                | Passed                                                                   |
+| Production builds      | Library and standalone app                | Passed; app bundle 256.76kB JS / 26.99kB CSS before gzip                 |
+| Dependency audit       | Production npm graph                      | 0 vulnerabilities                                                        |
+| Guest walkthrough      | Live public snapshot, desktop light/dark  | Passed core workflows; no page errors or failed successful-path requests |
+| Responsive walkthrough | 390 × 844 viewport                        | Found CI-UI-001                                                          |
+| Failure simulation     | Aborted snapshot request twice            | Found CI-UI-002; state reproduced consistently                           |
+| Role-state walkthrough | Standalone `?admin=true`                  | Found CI-UI-003; backend confidentiality remained intact                 |
+| Keyboard/modal check   | Open-PR native dialog                     | Escape closes and focus returns to the invoking button                   |
+| Performance profile    | Two clean local page loads                | CLS `0.82` on both runs; found CI-PERF-005                               |
+| Contract comparison    | TS types, backend records, live JSON keys | Found CI-ARCH-004                                                        |
+| Source/config review   | Container and GitHub workflows            | Found CI-SEC-006 and CI-CI-007                                           |
 
 ### Remediation verification
 
-| Action | Result |
-|---|---|
-| Lint | Passed with 0 errors and 8 advisory Sonar warnings |
-| Unit/component tests | 32 files passed; 137 tests passed |
-| Typecheck | Strict library typecheck passed |
-| Production builds | Library and standalone app passed; app bundle 257.56kB JS / 28.09kB CSS before gzip |
-| Browser regressions | 4 Chromium tests passed, including desktop screenshot and CLS/mobile gates |
-| Production dependencies | `npm audit --omit=dev`: 0 vulnerabilities |
-| Workflow validation | actionlint passed; all action references are immutable SHAs |
-| Container validation | Docker build and `nginx -t` passed; live public API proxy returned 200 |
-| Responsive walkthrough | 390 × 844 production container: client/scroll width `375/375` |
-| Failure walkthrough | Retry action and cached-data warning both reproduced |
-| Role-state walkthrough | `?admin=true` remained `[Guest]`; Visibility fieldset count was 0 |
+| Action                  | Result                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| Lint                    | Passed with 0 errors and 8 advisory Sonar warnings                                  |
+| Unit/component tests    | 32 files passed; 137 tests passed                                                   |
+| Typecheck               | Strict library typecheck passed                                                     |
+| Production builds       | Library and standalone app passed; app bundle 257.56kB JS / 28.09kB CSS before gzip |
+| Browser regressions     | 4 Chromium tests passed, including desktop screenshot and CLS/mobile gates          |
+| Production dependencies | `npm audit --omit=dev`: 0 vulnerabilities                                           |
+| Workflow validation     | actionlint passed; all action references are immutable SHAs                         |
+| Container validation    | Docker build and `nginx -t` passed; live public API proxy returned 200              |
+| Responsive walkthrough  | 390 × 844 production container: client/scroll width `375/375`                       |
+| Failure walkthrough     | Retry action and cached-data warning both reproduced                                |
+| Role-state walkthrough  | `?admin=true` remained `[Guest]`; Visibility fieldset count was 0                   |
 
 The original findings and evidence above are retained as the audit trail; each
 finding now carries its closure evidence and implementation commit.

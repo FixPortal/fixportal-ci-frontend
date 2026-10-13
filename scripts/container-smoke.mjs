@@ -18,11 +18,17 @@ function run(command, args, { timeout = 480_000 } = {}) {
     let stderr = ''
     const timer = setTimeout(() => {
       child.kill()
-      reject(new Error(`${command} ${args.join(' ')} timed out after ${timeout}ms\n${stdout}${stderr}`))
+      reject(
+        new Error(`${command} ${args.join(' ')} timed out after ${timeout}ms\n${stdout}${stderr}`),
+      )
     }, timeout)
 
-    child.stdout.on('data', (chunk) => { stdout += chunk })
-    child.stderr.on('data', (chunk) => { stderr += chunk })
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk
+    })
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk
+    })
     child.on('error', (error) => {
       clearTimeout(timer)
       reject(error)
@@ -37,7 +43,9 @@ function run(command, args, { timeout = 480_000 } = {}) {
 async function mustRun(command, args, options) {
   const result = await run(command, args, options)
   if (result.code !== 0) {
-    throw new Error(`${command} ${args.join(' ')} exited ${result.code}\n${result.stdout}${result.stderr}`)
+    throw new Error(
+      `${command} ${args.join(' ')} exited ${result.code}\n${result.stdout}${result.stderr}`,
+    )
   }
   return result.stdout.trim()
 }
@@ -61,7 +69,10 @@ async function assertInvalidStartup(label, value, expectedMessage = startupError
     assert.equal(logResult.code, 0, `${label}: could not read container logs`)
     const logs = logResult.stdout + logResult.stderr
     assert.notEqual(Number(exit), 0, `${label}: container unexpectedly exited successfully`)
-    assert.ok(logs.includes(expectedMessage), `${label}: startup error missing ${JSON.stringify(expectedMessage)}`)
+    assert.ok(
+      logs.includes(expectedMessage),
+      `${label}: startup error missing ${JSON.stringify(expectedMessage)}`,
+    )
   } finally {
     await removeContainer(name)
   }
@@ -83,7 +94,11 @@ async function assertValidStartup(label, value, extraHosts) {
     const port = Number(binding.match(/:(\d+)$/)?.[1])
     assert.ok(port, `${label}: could not parse published port from ${binding}`)
     const response = await waitFor(`http://127.0.0.1:${port}/`, Date.now() + 20_000)
-    assert.match(await response.text(), /<div id="root"><\/div>/, `${label}: accepted BACKEND_URL did not serve the SPA`)
+    assert.match(
+      await response.text(),
+      /<div id="root"><\/div>/,
+      `${label}: accepted BACKEND_URL did not serve the SPA`,
+    )
   } finally {
     await removeContainer(name)
   }
@@ -142,12 +157,21 @@ const fixturesDir = await mkdtemp(join(tmpdir(), 'ci-frontend-smoke-'))
 let keyPair
 try {
   await mustRun('openssl', [
-    'req', '-x509', '-newkey', 'rsa:2048',
-    '-keyout', join(fixturesDir, 'key.pem'),
-    '-out', join(fixturesDir, 'cert.pem'),
-    '-days', '1', '-nodes',
-    '-subj', '/CN=host.docker.internal',
-    '-addext', 'subjectAltName=DNS:host.docker.internal',
+    'req',
+    '-x509',
+    '-newkey',
+    'rsa:2048',
+    '-keyout',
+    join(fixturesDir, 'key.pem'),
+    '-out',
+    join(fixturesDir, 'cert.pem'),
+    '-days',
+    '1',
+    '-nodes',
+    '-subj',
+    '/CN=host.docker.internal',
+    '-addext',
+    'subjectAltName=DNS:host.docker.internal',
   ])
   keyPair = {
     cert: await readFile(join(fixturesDir, 'cert.pem')),
@@ -189,8 +213,16 @@ try {
   await assertInvalidStartup('port-zero', 'http://backend:0')
   await assertInvalidStartup('port-too-high', 'http://backend:65536')
   // IPv6 is deliberately unsupported; the error must say so, not recite "bare origin".
-  await assertInvalidStartup('ipv6-bracketed', 'http://[fd00::1]:8080', 'bracketed IPv6 literals are not supported')
-  await assertInvalidStartup('ipv6-bare', 'http://fd00::1', 'an IPv6 literal, which is not supported')
+  await assertInvalidStartup(
+    'ipv6-bracketed',
+    'http://[fd00::1]:8080',
+    'bracketed IPv6 literals are not supported',
+  )
+  await assertInvalidStartup(
+    'ipv6-bare',
+    'http://fd00::1',
+    'an IPv6 literal, which is not supported',
+  )
 
   // Underscores are legal Docker network aliases (compose-derived names) and
   // must be accepted — this was the MED-4 regression.
@@ -198,13 +230,23 @@ try {
 
   const name = `ci-frontend-smoke-${suffix}`
   containers.add(name)
-  await mustRun('docker', [
-    'run', '--detach', '--name', name,
-    '--add-host', 'host.docker.internal:host-gateway',
-    '--publish', '127.0.0.1::8080',
-    '--env', `BACKEND_URL=https://host.docker.internal:${paddedUpstreamPort}`,
-    image,
-  ], { timeout: 10_000 })
+  await mustRun(
+    'docker',
+    [
+      'run',
+      '--detach',
+      '--name',
+      name,
+      '--add-host',
+      'host.docker.internal:host-gateway',
+      '--publish',
+      '127.0.0.1::8080',
+      '--env',
+      `BACKEND_URL=https://host.docker.internal:${paddedUpstreamPort}`,
+      image,
+    ],
+    { timeout: 10_000 },
+  )
 
   const binding = await mustRun('docker', ['port', name, '8080/tcp'], { timeout: 10_000 })
   const containerPort = Number(binding.match(/:(\d+)$/)?.[1])
@@ -212,26 +254,42 @@ try {
   const origin = `http://127.0.0.1:${containerPort}`
 
   const whoami = await mustRun('docker', ['exec', name, 'whoami'], { timeout: 10_000 })
-  assert.equal(whoami, 'nginx', `production container must run as the unprivileged nginx user, got ${JSON.stringify(whoami)}`)
+  assert.equal(
+    whoami,
+    'nginx',
+    `production container must run as the unprivileged nginx user, got ${JSON.stringify(whoami)}`,
+  )
 
   const rootResponse = await waitFor(`${origin}/`, Date.now() + 20_000)
   const rootHtml = await rootResponse.text()
   assert.match(rootHtml, /<div id="root"><\/div>/, 'built SPA entry point is missing')
   assertSecurityHeaders(rootResponse, '/')
 
-  const nestedResponse = await fetch(`${origin}/nested/route`, { signal: AbortSignal.timeout(2_000) })
+  const nestedResponse = await fetch(`${origin}/nested/route`, {
+    signal: AbortSignal.timeout(2_000),
+  })
   assert.equal(nestedResponse.status, 200)
   assertSecurityHeaders(nestedResponse, '/nested/route')
   assert.equal(await nestedResponse.text(), rootHtml, 'nested route did not use SPA fallback')
 
-  const apiResponse = await fetch(`${origin}/api/probe?value=1`, { signal: AbortSignal.timeout(2_000) })
+  const apiResponse = await fetch(`${origin}/api/probe?value=1`, {
+    signal: AbortSignal.timeout(2_000),
+  })
   assert.equal(apiResponse.status, 200)
   assertSecurityHeaders(apiResponse, '/api/probe')
   assert.deepEqual(await apiResponse.json(), { ok: true })
   assert.equal(upstreamRequest?.url, '/api/probe?value=1')
-  assert.equal(upstreamRequest?.servername, 'host.docker.internal', 'TLS SNI is missing or incorrect')
+  assert.equal(
+    upstreamRequest?.servername,
+    'host.docker.internal',
+    'TLS SNI is missing or incorrect',
+  )
   assert.equal(upstreamRequest?.httpVersion, '1.1', 'upstream request is not HTTP/1.1')
-  assert.equal(upstreamRequest?.headers.connection, undefined, 'Connection header was forwarded upstream')
+  assert.equal(
+    upstreamRequest?.headers.connection,
+    undefined,
+    'Connection header was forwarded upstream',
+  )
   assert.equal(upstreamRequest?.headers.host, `host.docker.internal:${paddedUpstreamPort}`)
   assert.ok(upstreamRequest?.headers['x-forwarded-for'], 'X-Forwarded-For is missing')
 

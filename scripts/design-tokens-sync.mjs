@@ -5,9 +5,21 @@ import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 
 const TOKENS = [
-  '--app-bg', '--card-bg', '--border', '--border-strong', '--text', '--text-muted',
-  '--text-faint', '--brand', '--ok-border', '--bad-solid', '--bad-text', '--warn-text',
-  '--warn-fill-deep', '--font-sans', '--font-mono',
+  '--app-bg',
+  '--card-bg',
+  '--border',
+  '--border-strong',
+  '--text',
+  '--text-muted',
+  '--text-faint',
+  '--brand',
+  '--ok-border',
+  '--bad-solid',
+  '--bad-text',
+  '--warn-text',
+  '--warn-fill-deep',
+  '--font-sans',
+  '--font-mono',
 ]
 
 // EMPTY, and that is the finding rather than an omission.
@@ -135,7 +147,8 @@ export function compare(sourceCss, vendoredCss) {
       const expected = OVERRIDES[theme][token] ?? source[theme][token] ?? source.light[token]
       const actual = vendored[theme][token] ?? vendored.light[token]
       if (expected === undefined) differences.push(`${theme} ${token}: missing from source`)
-      else if (actual !== expected) differences.push(`${theme} ${token}: expected ${expected}, found ${actual ?? '<missing>'}`)
+      else if (actual !== expected)
+        differences.push(`${theme} ${token}: expected ${expected}, found ${actual ?? '<missing>'}`)
     }
   }
   return differences
@@ -215,10 +228,14 @@ export function compareShellFallback(shellHtml, vendoredCss) {
   const declared = shellFallbacks(shellHtml)
   if (declared.length === 0) return []
   const expected = values(vendoredCss, ':root')['--app-bg']
-  if (expected === undefined) return ['shell fallback: --app-bg is missing from the vendored :root block']
+  if (expected === undefined)
+    return ['shell fallback: --app-bg is missing from the vendored :root block']
   return declared
     .filter((actual) => actual.toLowerCase() !== expected.toLowerCase())
-    .map((actual) => `shell fallback: var(--app-bg, ${actual}) disagrees with the light --app-bg ${expected} - the pre-paint frame would flash the wrong colour`)
+    .map(
+      (actual) =>
+        `shell fallback: var(--app-bg, ${actual}) disagrees with the light --app-bg ${expected} - the pre-paint frame would flash the wrong colour`,
+    )
 }
 
 /**
@@ -248,8 +265,17 @@ function shellFallbacks(shellHtml) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const sourcePath = process.argv.find((arg) => arg.startsWith('--source='))?.slice('--source='.length) ?? defaultSourcePath()
-  const vendoredPath = path.resolve(worktreeRoot(), 'packages', 'ci-frontend', 'src', 'styles', 'tokens.css')
+  const sourcePath =
+    process.argv.find((arg) => arg.startsWith('--source='))?.slice('--source='.length) ??
+    defaultSourcePath()
+  const vendoredPath = path.resolve(
+    worktreeRoot(),
+    'packages',
+    'ci-frontend',
+    'src',
+    'styles',
+    'tokens.css',
+  )
   let sourceCss
   let vendoredCss
   try {

@@ -38,7 +38,7 @@ describe('readAdminSignal', () => {
     expect(readAdminSignal()).toBe(false)
   })
 
-  it.each(['getItem', 'setItem'] as const)('fails closed when localStorage.%s throws', method => {
+  it.each(['getItem', 'setItem'] as const)('fails closed when localStorage.%s throws', (method) => {
     const spy = vi.spyOn(Storage.prototype, method).mockImplementation(() => {
       throw new DOMException('denied', 'SecurityError')
     })

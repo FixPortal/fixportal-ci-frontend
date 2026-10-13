@@ -4,7 +4,9 @@ import { JobLaneRow } from './JobLaneRow'
 import type { JobSignal } from '../api/types'
 
 const signal: JobSignal = {
-  workflow: 'CI', name: 'Deploy (prod)', state: 'success',
+  workflow: 'CI',
+  name: 'Deploy (prod)',
+  state: 'success',
   htmlUrl: 'https://github.com/FixPortal/repo/actions/runs/1/job/2',
   updatedAt: '2026-05-30T12:00:00Z',
 }

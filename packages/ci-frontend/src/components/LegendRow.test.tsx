@@ -6,7 +6,10 @@ import { LegendRow } from './LegendRow'
 describe('LegendRow', () => {
   it('renders collapsed by default', () => {
     render(<LegendRow />)
-    expect(screen.getByRole('button', { name: /legend/i })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: /legend/i })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
     expect(screen.queryByText('passing')).not.toBeInTheDocument()
   })
 

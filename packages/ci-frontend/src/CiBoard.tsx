@@ -61,11 +61,7 @@ function QueryClientSafeProvider({ children }: { children: ReactNode }) {
     return <>{children}</>
   }
 
-  return (
-    <QueryClientProvider client={localClient}>
-      {children}
-    </QueryClientProvider>
-  )
+  return <QueryClientProvider client={localClient}>{children}</QueryClientProvider>
 }
 
 // The board is style-free at the component level: consumers import the
@@ -196,12 +192,26 @@ export function CiBoard({
   }, [])
 
   return (
-    <CiConfigProvider value={{ apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey, mergeFetcher, storageNamespace, repositoryScope }}>
+    <CiConfigProvider
+      value={{
+        apiBase,
+        snapshotFetcher,
+        snapshotCacheKey,
+        adminSnapshotUrl,
+        adminSnapshotFetcher,
+        adminSnapshotCacheKey,
+        mergeFetcher,
+        storageNamespace,
+        repositoryScope,
+      }}
+    >
       <QueryClientSafeProvider>
         <div className="ci-page" ref={pageRef}>
           {/* First tab stop: keyboard bypass of the ~11 toolbar controls before
               the board (WCAG 2.4.1). Targets the <main> in CiBoardContent. */}
-          <a href={`#${mainId}`} className="ci-skip-link">Skip to content</a>
+          <a href={`#${mainId}`} className="ci-skip-link">
+            Skip to content
+          </a>
           <div className="ci-embed">
             <header ref={headerRef} className="ci-embed__header">
               <div className="ci-embed__lockup">

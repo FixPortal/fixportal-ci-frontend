@@ -93,7 +93,7 @@ jobs:
           # `latest`, so an upstream release can change the gate's behaviour
           # with no change on our side. Matches fixportal-simulator-frontend
           # so health scores stay comparable across the estate.
-          version: "0.7.6"
+          version: '0.7.6'
         # Deliberately unscoped: no `directory` or `project` filter, so the
         # scan runs from the repo root and covers both workspaces
         # (apps/dashboard and packages/ci-frontend). That is also what keeps

@@ -1,24 +1,40 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { mergePullRequest } from './mergePullRequest'
 
-afterEach(() => { vi.unstubAllGlobals() })
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function jsonResponse(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  })
 }
 
 test('POSTs repo, pullNumber and headSha to the merge URL and returns the merge sha', async () => {
   const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { merged: true, sha: 'abc123' }))
   vi.stubGlobal('fetch', fetchMock)
-  const result = await mergePullRequest('/api/dashboard/merge', 'fixportal-ci-frontend', 42, 'deadbeef')
-  expect(fetchMock).toHaveBeenCalledWith('/api/dashboard/merge', expect.objectContaining({ method: 'POST' }))
+  const result = await mergePullRequest(
+    '/api/dashboard/merge',
+    'fixportal-ci-frontend',
+    42,
+    'deadbeef',
+  )
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/dashboard/merge',
+    expect.objectContaining({ method: 'POST' }),
+  )
   const body = JSON.parse(fetchMock.mock.calls[0][1].body)
   expect(body).toEqual({ repo: 'fixportal-ci-frontend', pullNumber: 42, headSha: 'deadbeef' })
   expect(result).toEqual({ ok: true, sha: 'abc123' })
 })
 
 test('maps a 409 (no longer mergeable) to a failure result with the backend message', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(409, { error: 'Pull request is not mergeable' })))
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(jsonResponse(409, { error: 'Pull request is not mergeable' })),
+  )
   const result = await mergePullRequest('/api/dashboard/merge', 'x', 1, 'sha')
   expect(result).toEqual({ ok: false, status: 409, message: 'Pull request is not mergeable' })
 })
@@ -55,7 +71,7 @@ test('a non-JSON 200 body maps to a failure result instead of throwing', async (
 
 test.each([null, {}, { merged: false }])(
   'a 200 body without positive merge confirmation maps to a failure result (%j)',
-  async body => {
+  async (body) => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(200, body)))
     const result = await mergePullRequest('/api/dashboard/merge', 'x', 1, 'sha')
     expect(result).toEqual({ ok: false, status: 200, message: 'Invalid merge response' })

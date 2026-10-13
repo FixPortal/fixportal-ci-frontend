@@ -3,8 +3,10 @@ import { describe, it, expect } from 'vitest'
 import { CiWeatherBar } from './CiWeatherBar'
 import type { CiTrendBucket } from '../api/types'
 
-const bucket = (state: CiTrendBucket['state']): CiTrendBucket =>
-  ({ bucketStart: '2026-05-30T11:00:00Z', state })
+const bucket = (state: CiTrendBucket['state']): CiTrendBucket => ({
+  bucketStart: '2026-05-30T11:00:00Z',
+  state,
+})
 
 describe('CiWeatherBar', () => {
   it('renders one block per bucket with a state-keyed data attribute', () => {
@@ -21,8 +23,7 @@ describe('CiWeatherBar', () => {
   it('summarises health in the accessible label', () => {
     const trend = [bucket('failing'), bucket('failing'), bucket('passing')]
     const { getByRole } = render(<CiWeatherBar trend={trend} />)
-    expect(getByRole('img').getAttribute('aria-label'))
-      .toMatch(/CI health, last 24h: 2 failing/i)
+    expect(getByRole('img').getAttribute('aria-label')).toMatch(/CI health, last 24h: 2 failing/i)
   })
 
   it('renders nothing for an empty trend', () => {

@@ -15,7 +15,12 @@ import { memo } from 'react'
 // toolbar's "Ready to merge" filter chip, and identifying its PR) while the
 // visible label stays the board's verdict wording.
 export const ReadyToMergePill = memo(function ReadyToMergePill({
-  ready, onMerge, busy, merging, merged, prNumber,
+  ready,
+  onMerge,
+  busy,
+  merging,
+  merged,
+  prNumber,
 }: {
   ready?: boolean | null
   onMerge?: () => void
@@ -46,9 +51,10 @@ export const ReadyToMergePill = memo(function ReadyToMergePill({
       </span>
     )
   }
-  const accessibleLabel = prNumber === undefined
-    ? `${accessibleAction} pull request`
-    : `${accessibleAction} PR #${prNumber}`
+  const accessibleLabel =
+    prNumber === undefined
+      ? `${accessibleAction} pull request`
+      : `${accessibleAction} PR #${prNumber}`
   return (
     <button
       type="button"

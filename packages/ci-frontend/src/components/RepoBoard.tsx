@@ -14,7 +14,11 @@ import { RepoActivityIndicator } from './RepoActivityIndicator'
 // onToggle takes the repo name so the parent can pass one stable callback rather
 // than a fresh per-repo closure that would defeat the memo.
 export const RepoBoard = memo(function RepoBoard({
-  repository, collapsed, onToggle, isAdmin, merge,
+  repository,
+  collapsed,
+  onToggle,
+  isAdmin,
+  merge,
 }: {
   repository: RepositorySnapshot
   collapsed: boolean
@@ -26,13 +30,22 @@ export const RepoBoard = memo(function RepoBoard({
   const noCi = isNoCi(repository)
   const ghHref = isAllowedHref(repository.htmlUrl)
   return (
-    <section className={`repo-board${collapsed ? ' repo-board--collapsed' : ''}${noCi ? ' repo-board--no-ci' : ''}`}>
+    <section
+      className={`repo-board${collapsed ? ' repo-board--collapsed' : ''}${noCi ? ' repo-board--no-ci' : ''}`}
+    >
       <header>
         {/* Disclosure pattern: the repo name is the section heading, the toggle
             lives inside it so screen-reader users can jump per repo by heading. */}
         <h2 className="repo-board__heading">
-          <button type="button" className="repo-board__toggle" onClick={() => onToggle(repository.name)} aria-expanded={!collapsed}>
-            <span className="repo-board__chev" aria-hidden="true">▸</span>
+          <button
+            type="button"
+            className="repo-board__toggle"
+            onClick={() => onToggle(repository.name)}
+            aria-expanded={!collapsed}
+          >
+            <span className="repo-board__chev" aria-hidden="true">
+              ▸
+            </span>
             {repository.name}
           </button>
         </h2>
@@ -40,11 +53,20 @@ export const RepoBoard = memo(function RepoBoard({
         <RepoMetricsLine metrics={repository.metrics} />
         <RepoActivityIndicator repository={repository} />
         {ghHref !== '#' ? (
-          <a className="repo-board__gh-link" href={ghHref} target="_blank" rel="noopener noreferrer" aria-label={`Open ${repository.name} on GitHub`}>
+          <a
+            className="repo-board__gh-link"
+            href={ghHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${repository.name} on GitHub`}
+          >
             GitHub ↗
           </a>
         ) : (
-          <span className="repo-board__gh-link repo-board__gh-link--static" aria-label={`${repository.name} GitHub link unavailable`}>
+          <span
+            className="repo-board__gh-link repo-board__gh-link--static"
+            aria-label={`${repository.name} GitHub link unavailable`}
+          >
             GitHub
           </span>
         )}
@@ -55,17 +77,29 @@ export const RepoBoard = memo(function RepoBoard({
             <div className="repo-board__empty">no workflows</div>
           ) : (
             <div className="repo-workflows">
-              <span className="repo-workflows__label">Workflows · {repository.workflows.length}</span>
+              <span className="repo-workflows__label">
+                Workflows · {repository.workflows.length}
+              </span>
               <div className="repo-top-signals">
-                {repository.workflows.map(wf => (
+                {repository.workflows.map((wf) => (
                   <SignalChip key={wf.file} workflow={wf} />
                 ))}
               </div>
             </div>
           )}
           <JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={repository.deploys ?? []} />
-          <JobLaneRow kind="packages" glyph="▣" label="Packages" signals={repository.packages ?? []} />
-          <PullRequestList pullRequests={pullRequests} repoName={repository.name} isAdmin={isAdmin} merge={merge} />
+          <JobLaneRow
+            kind="packages"
+            glyph="▣"
+            label="Packages"
+            signals={repository.packages ?? []}
+          />
+          <PullRequestList
+            pullRequests={pullRequests}
+            repoName={repository.name}
+            isAdmin={isAdmin}
+            merge={merge}
+          />
         </>
       )}
     </section>

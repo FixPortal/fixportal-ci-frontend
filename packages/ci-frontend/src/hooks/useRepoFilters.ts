@@ -49,13 +49,16 @@ function load(key: string): RepoFilters {
 
 function save(key: string, f: RepoFilters) {
   try {
-    localStorage.setItem(key, JSON.stringify({
-      search: f.search,
-      visibility: [...f.visibility],
-      ciStatus: [...f.ciStatus],
-      hasOpenPrs: f.hasOpenPrs,
-      readyToMerge: f.readyToMerge,
-    }))
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        search: f.search,
+        visibility: [...f.visibility],
+        ciStatus: [...f.ciStatus],
+        hasOpenPrs: f.hasOpenPrs,
+        readyToMerge: f.readyToMerge,
+      }),
+    )
   } catch {
     // ignore (private mode / quota) — filter state is best-effort
   }
@@ -86,17 +89,23 @@ export function useRepoFilters() {
     save(key, filters)
   }, [key, filters, loaded])
 
-  const setSearch = useCallback((search: string) => setFilters(f => ({ ...f, search })), [])
+  const setSearch = useCallback((search: string) => setFilters((f) => ({ ...f, search })), [])
   const toggleVisibility = useCallback(
-    (v: Visibility) => setFilters(f => ({ ...f, visibility: toggleIn(f.visibility, v) })),
+    (v: Visibility) => setFilters((f) => ({ ...f, visibility: toggleIn(f.visibility, v) })),
     [],
   )
   const toggleCiStatus = useCallback(
-    (s: CiStatus) => setFilters(f => ({ ...f, ciStatus: toggleIn(f.ciStatus, s) })),
+    (s: CiStatus) => setFilters((f) => ({ ...f, ciStatus: toggleIn(f.ciStatus, s) })),
     [],
   )
-  const toggleHasOpenPrs = useCallback(() => setFilters(f => ({ ...f, hasOpenPrs: !f.hasOpenPrs })), [])
-  const toggleReadyToMerge = useCallback(() => setFilters(f => ({ ...f, readyToMerge: !f.readyToMerge })), [])
+  const toggleHasOpenPrs = useCallback(
+    () => setFilters((f) => ({ ...f, hasOpenPrs: !f.hasOpenPrs })),
+    [],
+  )
+  const toggleReadyToMerge = useCallback(
+    () => setFilters((f) => ({ ...f, readyToMerge: !f.readyToMerge })),
+    [],
+  )
   const clear = useCallback(() => setFilters(emptyFilters()), [])
 
   const isActive =

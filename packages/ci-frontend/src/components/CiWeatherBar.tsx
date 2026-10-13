@@ -12,13 +12,13 @@ const BLOCK_WORD: Record<CiTrendState, string> = {
 
 export function CiWeatherBar({ trend }: { trend: CiTrendBucket[] }) {
   if (trend.length === 0) return null
-  const failing = trend.filter(b => b.state === 'failing').length
-  const healthy = trend.filter(b => b.state === 'passing').length
+  const failing = trend.filter((b) => b.state === 'failing').length
+  const healthy = trend.filter((b) => b.state === 'passing').length
   const label = `CI health, last 24h: ${failing} failing, ${healthy} healthy`
   return (
     <>
       <figure role="img" className="ci-weather" aria-label={label}>
-        {trend.map(b => (
+        {trend.map((b) => (
           // Per-block hover reveals which hour a block is and its state.
           <span
             key={b.bucketStart}

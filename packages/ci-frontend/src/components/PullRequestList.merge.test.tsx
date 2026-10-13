@@ -10,9 +10,14 @@ import type { PullRequest } from '../api/types'
 import type { MergeResult } from '../api/mergePullRequest'
 
 const readyPr = (n: number): PullRequest => ({
-  number: n, title: `PR ${n}`, author: 'octocat',
-  htmlUrl: `https://github.com/x/y/pull/${n}`, isDraft: false,
-  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, headSha: `sha-${n}`,
+  number: n,
+  title: `PR ${n}`,
+  author: 'octocat',
+  htmlUrl: `https://github.com/x/y/pull/${n}`,
+  isDraft: false,
+  createdAt: '2026-05-30T00:00:00Z',
+  readyToMerge: true,
+  headSha: `sha-${n}`,
 })
 
 // The component is presentational now; merge state comes from the page-level
@@ -22,13 +27,15 @@ function Harness({ prs, admin }: { prs: PullRequest[]; admin: boolean }) {
   return <PullRequestList pullRequests={prs} repoName="repo-a" isAdmin={admin} merge={merge} />
 }
 
-function renderList(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>, admin: boolean, prs: PullRequest[]) {
+function renderList(
+  mergeFetcher: (repo: string, n: number) => Promise<MergeResult>,
+  admin: boolean,
+  prs: PullRequest[],
+) {
   const queryClient = new QueryClient()
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
-        {children}
-      </CiConfigProvider>
+      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>{children}</CiConfigProvider>
     </QueryClientProvider>
   )
   return render(<Harness prs={prs} admin={admin} />, { wrapper })
@@ -49,7 +56,10 @@ test('a ready PR with no headSha renders no merge button, rather than sending an
 
 test('Merge all skips a ready PR with no headSha', async () => {
   const calls: number[] = []
-  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => {
+    calls.push(n)
+    return { ok: true, sha: 'x' } satisfies MergeResult
+  })
   renderList(mergeFetcher, true, [readyPr(3), { ...readyPr(9), headSha: null }, readyPr(4)])
   await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
   await screen.findByRole('button', { name: 'Merged PR #4' })
@@ -66,7 +76,10 @@ test('guest sees the pill but no button and no Merge all', () => {
 
 test('Merge all merges every ready PR in listed order', async () => {
   const calls: number[] = []
-  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => {
+    calls.push(n)
+    return { ok: true, sha: 'x' } satisfies MergeResult
+  })
   renderList(mergeFetcher, true, [readyPr(3), { ...readyPr(9), readyToMerge: false }, readyPr(4)])
   await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
   await screen.findByRole('button', { name: 'Merged PR #4' })
@@ -77,7 +90,12 @@ test('Merge all merges every ready PR in listed order', async () => {
 // same way in flight: an unchanged "Merge all" on a disabled button reads as dead.
 test('Merge all reads Merging while a merge in its repo is in flight', async () => {
   const resolvers: ((r: MergeResult) => void)[] = []
-  const mergeFetcher = vi.fn(() => new Promise<MergeResult>(res => { resolvers.push(res) }))
+  const mergeFetcher = vi.fn(
+    () =>
+      new Promise<MergeResult>((res) => {
+        resolvers.push(res)
+      }),
+  )
   renderList(mergeFetcher, true, [readyPr(3), readyPr(4)])
   await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
   const inFlight = await screen.findByRole('button', { name: 'Merging…' })
@@ -91,7 +109,10 @@ test('Merge all reads Merging while a merge in its repo is in flight', async () 
 })
 test('Merge all merges oldest first, whatever order the board lists them in', async () => {
   const calls: number[] = []
-  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => { calls.push(n); return { ok: true, sha: 'x' } satisfies MergeResult })
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => {
+    calls.push(n)
+    return { ok: true, sha: 'x' } satisfies MergeResult
+  })
   renderList(mergeFetcher, true, [
     { ...readyPr(9), createdAt: '2026-05-30T00:00:00Z' },
     { ...readyPr(4), createdAt: '2026-05-28T00:00:00Z' },
@@ -107,7 +128,9 @@ test('Merge all button is hidden when fewer than two PRs are ready', () => {
 })
 
 test('shows a dismissible inline error when a merge fails', async () => {
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   renderList(mergeFetcher, true, [readyPr(7)])
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
@@ -130,20 +153,22 @@ function renderTwoRepos(mergeFetcher: (repo: string, n: number) => Promise<Merge
   const queryClient = new QueryClient()
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
-        {children}
-      </CiConfigProvider>
+      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>{children}</CiConfigProvider>
     </QueryClientProvider>
   )
   return render(<TwoRepoHarness />, { wrapper })
 }
 
 test('a merge error renders only in the failing repo, not board-wide', async () => {
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   const { container } = renderTwoRepos(mergeFetcher)
   // Merge repo-b's PR; the alert must land in repo-b's section only.
   const repoBSection = container.querySelectorAll('.repo-prs')[1]
-  await userEvent.click(within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i }))
+  await userEvent.click(
+    within(repoBSection as HTMLElement).getByRole('button', { name: /rebase-merge/i }),
+  )
   const alerts = await screen.findAllByRole('alert')
   expect(alerts).toHaveLength(1)
   expect(alerts[0]).toHaveTextContent('not mergeable')
@@ -152,7 +177,12 @@ test('a merge error renders only in the failing repo, not board-wide', async () 
 
 test('an in-flight merge disables only its own pill, and a second merge can start', async () => {
   const resolvers: ((r: MergeResult) => void)[] = []
-  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(res => { resolvers.push(res) }))
+  const mergeFetcher = vi.fn().mockImplementation(
+    () =>
+      new Promise<MergeResult>((res) => {
+        resolvers.push(res)
+      }),
+  )
   const { container } = renderTwoRepos(mergeFetcher)
   const [repoASection, repoBSection] = container.querySelectorAll('.repo-prs')
   const pillA = within(repoASection as HTMLElement).getByRole('button', { name: /rebase-merge/i })
@@ -163,7 +193,7 @@ test('an in-flight merge disables only its own pill, and a second merge can star
   await userEvent.click(pillB)
   expect(mergeFetcher).toHaveBeenCalledTimes(2)
   expect(mergeFetcher).toHaveBeenNthCalledWith(2, 'repo-b', 8, 'sha-8')
-  resolvers.forEach(resolve => resolve({ ok: true, sha: 'abc' }))
+  resolvers.forEach((resolve) => resolve({ ok: true, sha: 'abc' }))
   await within(repoBSection as HTMLElement).findByRole('button', { name: 'Merged PR #8' })
 })
 

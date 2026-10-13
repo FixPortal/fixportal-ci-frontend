@@ -5,8 +5,7 @@
 // Never throws: every failure mode maps to { ok: false } so callers render an
 // inline message rather than relying on try/catch at each call site.
 export type MergeResult =
-  | { ok: true; sha: string }
-  | { ok: false; status: number | null; message: string }
+  { ok: true; sha: string } | { ok: false; status: number | null; message: string }
 
 async function errorMessage(response: Response): Promise<string> {
   if (response.status === 401 || response.status === 403) return 'Not authorised to merge'
@@ -35,7 +34,8 @@ export async function mergePullRequest(
   } catch {
     return { ok: false, status: null, message: 'Network error' }
   }
-  if (!response.ok) return { ok: false, status: response.status, message: await errorMessage(response) }
+  if (!response.ok)
+    return { ok: false, status: response.status, message: await errorMessage(response) }
   // A 200 with a non-JSON body must not throw either — "never throws" covers
   // every status, not just the error path.
   let body: unknown

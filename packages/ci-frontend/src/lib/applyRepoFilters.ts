@@ -35,7 +35,7 @@ export function emptyFilters(): RepoFilters {
 // ready") and null/undefined ("not yet determined", or an older backend that does not
 // send it at all) must fail the test rather than be coerced.
 export function hasReadyPr(repo: RepositorySnapshot): boolean {
-  return repo.pullRequests.some(pr => pr.readyToMerge === true)
+  return repo.pullRequests.some((pr) => pr.readyToMerge === true)
 }
 
 // The CI bucket a repo belongs to, or null when it sits outside all buckets
@@ -44,7 +44,7 @@ export function hasReadyPr(repo: RepositorySnapshot): boolean {
 // one failing and one running workflow buckets as failing, not running.
 function ciStatusOf(repo: RepositorySnapshot): CiStatus | null {
   if (isNoCi(repo)) return 'no-ci'
-  const state = worstState(repo.workflows.map(w => w.state))
+  const state = worstState(repo.workflows.map((w) => w.state))
   if (state === 'failure') return 'failing'
   if (state === 'running') return 'running'
   if (state === 'success') return 'passing'
@@ -58,7 +58,7 @@ function matchesQuery(repo: RepositorySnapshot, query: string): boolean {
   if (repo.name.toLowerCase().includes(query)) return true
   const prQuery = query.startsWith('#') ? query.slice(1) : query
   return repo.pullRequests.some(
-    pr =>
+    (pr) =>
       pr.title.toLowerCase().includes(query) ||
       (prQuery !== '' && String(pr.number).includes(prQuery)),
   )
@@ -71,7 +71,7 @@ export function applyRepoFilters(
   filters: RepoFilters,
 ): RepositorySnapshot[] {
   const query = filters.search.trim().toLowerCase()
-  return repos.filter(repo => {
+  return repos.filter((repo) => {
     if (query && !matchesQuery(repo, query)) return false
     if (filters.visibility.size > 0) {
       const v: Visibility = repo.private ? 'private' : 'public'

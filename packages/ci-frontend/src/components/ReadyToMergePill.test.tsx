@@ -32,10 +32,13 @@ test('names the in-flight state instead of looking ready again', () => {
   expect(screen.getByRole('button', { name: 'Merging PR #7' })).toHaveTextContent('Merging…')
 })
 
-test.each([[false], [null], [undefined]])('renders nothing when ready is %s, even with onMerge', ready => {
-  const { container } = render(<ReadyToMergePill ready={ready} onMerge={() => {}} />)
-  expect(container.firstChild).toBeNull()
-})
+test.each([[false], [null], [undefined]])(
+  'renders nothing when ready is %s, even with onMerge',
+  (ready) => {
+    const { container } = render(<ReadyToMergePill ready={ready} onMerge={() => {}} />)
+    expect(container.firstChild).toBeNull()
+  },
+)
 
 test('names the button for its PR when prNumber is given', () => {
   render(<ReadyToMergePill ready prNumber={7} onMerge={() => {}} />)

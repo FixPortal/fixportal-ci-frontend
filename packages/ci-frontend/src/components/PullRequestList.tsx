@@ -9,7 +9,12 @@ import { ReadyToMergePill } from './ReadyToMergePill'
 // Presentational: merge state is hoisted to the page (usePrMerge) and handed
 // down as props. Guests get no `merge` (and isAdmin false), so their render is
 // exactly what it was before the merge feature.
-export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
+export function PullRequestList({
+  pullRequests,
+  repoName,
+  isAdmin,
+  merge,
+}: {
   pullRequests: PullRequest[]
   repoName: string
   isAdmin?: boolean
@@ -17,7 +22,9 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
 }) {
   if (pullRequests.length === 0) return null
   // Strict === true, same rule as the pill itself: never coerce the tri-state.
-  const readyPrs = pullRequests.filter(pr => pr.readyToMerge === true && !merge?.merged.has(prMergeKey(repoName, pr.number)))
+  const readyPrs = pullRequests.filter(
+    (pr) => pr.readyToMerge === true && !merge?.merged.has(prMergeKey(repoName, pr.number)),
+  )
   // A PR can be ready-to-merge with no headSha yet recorded (validated independently
   // of readyToMerge). Merging it would only trade "Head SHA is required." for a
   // silently-empty one, so it is excluded here rather than coerced to ''.
@@ -26,7 +33,9 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
   const mergeablePrs = readyPrs
     .filter((pr): pr is typeof pr & { headSha: string } => Boolean(pr.headSha))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.number - b.number)
-  const openPrCount = pullRequests.filter(pr => !merge?.merged.has(prMergeKey(repoName, pr.number))).length
+  const openPrCount = pullRequests.filter(
+    (pr) => !merge?.merged.has(prMergeKey(repoName, pr.number)),
+  ).length
   const merging = merge?.merging
   const repoMerging = merging ? isRepoMerging(merging, repoName) : false
   return (
@@ -47,25 +56,37 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
           // too, and a disabled button with an idle label is the same dead read.
           aria-live="polite"
           disabled={repoMerging}
-          onClick={() => merge.mergeAll(repoName, mergeablePrs.map(pr => ({ number: pr.number, headSha: pr.headSha })))}
+          onClick={() =>
+            merge.mergeAll(
+              repoName,
+              mergeablePrs.map((pr) => ({ number: pr.number, headSha: pr.headSha })),
+            )
+          }
         >
           <span className="chip__dot" aria-hidden="true" />
-          <span className="chip__label">{repoMerging ? 'Merging…' : 'Merge all (oldest first)'}</span>
+          <span className="chip__label">
+            {repoMerging ? 'Merging…' : 'Merge all (oldest first)'}
+          </span>
         </button>
       )}
       {isAdmin && merge?.errors.has(repoName) && (
         <span className="repo-prs__merge-error" role="alert">
           {merge.errors.get(repoName)}
-          <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(repoName)}>✕</button>
+          <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(repoName)}>
+            ✕
+          </button>
         </span>
       )}
       <ul>
-        {pullRequests.map(pr => {
+        {pullRequests.map((pr) => {
           const href = isAllowedHref(pr.htmlUrl)
           const key = prMergeKey(repoName, pr.number)
           const locallyMerged = merge?.merged.has(key) ?? false
           return (
-            <li key={pr.number} className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}>
+            <li
+              key={pr.number}
+              className={pr.isDraft ? 'repo-prs__item repo-prs__item--draft' : 'repo-prs__item'}
+            >
               {/* The link and the pills share one flex line so the pills can take the
                   row's unused right-hand space -- see .repo-prs__line in board.css.
                   The pills stay OUTSIDE the anchor: each one carries its own link, and
@@ -89,7 +110,11 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                   <ReadyToMergePill
                     ready={pr.readyToMerge}
                     prNumber={pr.number}
-                    onMerge={isAdmin && merge && pr.headSha ? () => merge.mergeOne(repoName, pr.number, pr.headSha!) : undefined}
+                    onMerge={
+                      isAdmin && merge && pr.headSha
+                        ? () => merge.mergeOne(repoName, pr.number, pr.headSha!)
+                        : undefined
+                    }
                     merging={merging?.has(key) ?? false}
                     merged={locallyMerged}
                     // Busy is per-PR: only this pill's own merge (or a Merge all
@@ -101,7 +126,8 @@ export function PullRequestList({ pullRequests, repoName, isAdmin, merge }: {
                 </div>
               </div>
               <span className="repo-prs__meta">
-                {pr.author} · {formatRelativeTime(pr.createdAt)}{pr.isDraft ? ' · draft' : ''}
+                {pr.author} · {formatRelativeTime(pr.createdAt)}
+                {pr.isDraft ? ' · draft' : ''}
               </span>
             </li>
           )

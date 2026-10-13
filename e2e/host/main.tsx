@@ -17,21 +17,37 @@ async function fetchSnapshot(): Promise<DashboardSnapshot | null> {
 
 export function Consumer() {
   const [admin, setAdmin] = useState(true)
-  return <QueryClientProvider client={client}>
-    <button type="button" onClick={() => setAdmin(value => !value)}>
-      {admin ? 'Switch to guest' : 'Switch to admin'}
-    </button>
-    <button type="button" onClick={() => { void client.invalidateQueries() }}>Refresh fixture</button>
-    <CiBoard adminSignal={admin} adminSnapshotFetcher={fetchSnapshot} storageNamespace="browser-fixture" theme="light"
-      mergeFetcher={async (repo, pullNumber, headSha) => {
-        const response = await fetch('/fixture/merge', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ repo, pullNumber, headSha }),
-        })
-        if (!response.ok) return { ok: false, status: response.status, message: await response.text() }
-        return { ok: true, sha: (await response.json() as { sha: string }).sha }
-      }} />
-  </QueryClientProvider>
+  return (
+    <QueryClientProvider client={client}>
+      <button type="button" onClick={() => setAdmin((value) => !value)}>
+        {admin ? 'Switch to guest' : 'Switch to admin'}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void client.invalidateQueries()
+        }}
+      >
+        Refresh fixture
+      </button>
+      <CiBoard
+        adminSignal={admin}
+        adminSnapshotFetcher={fetchSnapshot}
+        storageNamespace="browser-fixture"
+        theme="light"
+        mergeFetcher={async (repo, pullNumber, headSha) => {
+          const response = await fetch('/fixture/merge', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ repo, pullNumber, headSha }),
+          })
+          if (!response.ok)
+            return { ok: false, status: response.status, message: await response.text() }
+          return { ok: true, sha: ((await response.json()) as { sha: string }).sha }
+        }}
+      />
+    </QueryClientProvider>
+  )
 }
 
 createRoot(document.getElementById('root')!).render(<Consumer />)

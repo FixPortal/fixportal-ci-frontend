@@ -53,7 +53,7 @@ A token is a password that only permits the specific things you tick.
    the board.
 3. **Repository access**: All repositories.
 4. Under **Permissions → Repository permissions**, set:
-   - **Actions**: Read-only — *required*, this is the build status
+   - **Actions**: Read-only — _required_, this is the build status
    - **Pull requests**: Read-only — for open-PR counts
    - **Contents**: Read-only — for the code metrics
    - **Code scanning alerts**: Read-only — only if you configure a CodeQL review pill
@@ -104,7 +104,7 @@ repository. Until then the board says it is waiting for a snapshot. That is
 normal, not an error.
 
 > **Leave `Admin__ExposePrivateToGuests` alone.** It is commented out in
-> `.env.example` for a reason: it makes the *unauthenticated* endpoint hand out
+> `.env.example` for a reason: it makes the _unauthenticated_ endpoint hand out
 > your private repositories to anyone who can reach the port.
 
 Review pills and the Ready-to-merge verdict are optional backend enrichment.
@@ -116,11 +116,11 @@ permission listed above. The rest of the dashboard works without this setup.
 
 ### If something goes wrong
 
-| What you see | What it means | Fix |
-|---|---|---|
-| Backend container exits with `GitHub:Owner must be configured` | It cannot find your `.env` | Make sure `.env` sits in the same folder as `docker-compose.yml`, and both lines are filled in |
-| Board says "waiting for snapshot" forever | The backend has not finished its first pass, or the token lacks **Actions: Read** | Check `docker compose logs backend` |
-| Board loads but your private repos are missing | Working as designed — the anonymous endpoint serves public repos only | Nothing to fix |
+| What you see                                                   | What it means                                                                     | Fix                                                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Backend container exits with `GitHub:Owner must be configured` | It cannot find your `.env`                                                        | Make sure `.env` sits in the same folder as `docker-compose.yml`, and both lines are filled in |
+| Board says "waiting for snapshot" forever                      | The backend has not finished its first pass, or the token lacks **Actions: Read** | Check `docker compose logs backend`                                                            |
+| Board loads but your private repos are missing                 | Working as designed — the anonymous endpoint serves public repos only             | Nothing to fix                                                                                 |
 
 ---
 
@@ -266,12 +266,12 @@ npm run build:app
 
 ## Which piece do I actually need?
 
-| I want to... | Repo | Section |
-|---|---|---|
-| Look at a working example | neither, just Docker | 1 |
-| Watch my own org's CI | `fixportal-ci-backend` | 2 |
-| Put the board in my app | `@fix-portal/ci-frontend` on npm | 3 |
-| Improve the board itself | this repo | 4 |
+| I want to...              | Repo                             | Section |
+| ------------------------- | -------------------------------- | ------- |
+| Look at a working example | neither, just Docker             | 1       |
+| Watch my own org's CI     | `fixportal-ci-backend`           | 2       |
+| Put the board in my app   | `@fix-portal/ci-frontend` on npm | 3       |
+| Improve the board itself  | this repo                        | 4       |
 
 ## Words used here
 

@@ -27,6 +27,8 @@ export function reviewSignalLabel(signal: ReviewSignal): string {
   if (signal.state === 'outstanding' && isValidSignalCount(signal.count)) {
     return `${signal.name}: ${signal.count} outstanding`
   }
-  const state = Object.hasOwn(STATE_LABELS, signal.state) ? STATE_LABELS[signal.state] : 'status unknown'
+  const state = Object.hasOwn(STATE_LABELS, signal.state)
+    ? STATE_LABELS[signal.state]
+    : 'status unknown'
   return `${signal.name}: ${state}`
 }

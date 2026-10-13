@@ -33,7 +33,14 @@ async function validateCustom(fetcher: SnapshotFetcher): Promise<DashboardSnapsh
 }
 
 export function useDashboardSnapshot() {
-  const { apiBase, snapshotFetcher, snapshotCacheKey, adminSnapshotUrl, adminSnapshotFetcher, adminSnapshotCacheKey } = useCiConfig()
+  const {
+    apiBase,
+    snapshotFetcher,
+    snapshotCacheKey,
+    adminSnapshotUrl,
+    adminSnapshotFetcher,
+    adminSnapshotCacheKey,
+  } = useCiConfig()
   const isAdmin = useCiAdmin()
 
   const queryKeyPrefix = 'dashboard-snapshot'
@@ -47,7 +54,11 @@ export function useDashboardSnapshot() {
   // not alias on a fixed sentinel — explicit cache keys win; otherwise each
   // fetcher function receives a stable module-local identity.
   if (isAdmin && adminSnapshotFetcher) {
-    queryKey = [queryKeyPrefix, '__admin_fetcher__', cacheKeyFor(adminSnapshotFetcher, adminSnapshotCacheKey)]
+    queryKey = [
+      queryKeyPrefix,
+      '__admin_fetcher__',
+      cacheKeyFor(adminSnapshotFetcher, adminSnapshotCacheKey),
+    ]
     queryFn = () => validateCustom(adminSnapshotFetcher)
   } else if (isAdmin && adminSnapshotUrl) {
     queryKey = [queryKeyPrefix, adminSnapshotUrl]

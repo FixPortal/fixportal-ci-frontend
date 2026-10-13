@@ -19,12 +19,14 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run build:lib && npm run dev -w dashboard -- --host 127.0.0.1 --port 5364 --strictPort',
+      command:
+        'npm run build:lib && npm run dev -w dashboard -- --host 127.0.0.1 --port 5364 --strictPort',
       url: 'http://127.0.0.1:5364',
       reuseExistingServer: false,
     },
     {
-      command: 'npx vite build --config e2e/host/vite.config.ts && npx vite preview --config e2e/host/vite.config.ts --host 127.0.0.1 --port 5365 --strictPort',
+      command:
+        'npx vite build --config e2e/host/vite.config.ts && npx vite preview --config e2e/host/vite.config.ts --host 127.0.0.1 --port 5365 --strictPort',
       url: 'http://127.0.0.1:5365',
       reuseExistingServer: false,
     },

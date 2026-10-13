@@ -48,7 +48,12 @@ const EXCEPT_TESTS = { except: { withName: '*.test.*' } }
 
 // Each row asserts: nothing in `from` may depend on `to`. Data-driven so the
 // matrix of invariants stays readable and easy to extend.
-const FORBIDDEN_EDGES: ReadonlyArray<{ from: string; fromGlob: string; to: string; toGlob: string }> = [
+const FORBIDDEN_EDGES: ReadonlyArray<{
+  from: string
+  fromGlob: string
+  to: string
+  toGlob: string
+}> = [
   // api is the bottom layer: it knows nothing above it.
   { from: 'api', fromGlob: '**/api/**', to: 'lib', toGlob: '**/lib/**' },
   { from: 'api', fromGlob: '**/api/**', to: 'hooks', toGlob: '**/hooks/**' },
@@ -68,38 +73,50 @@ const FORBIDDEN_EDGES: ReadonlyArray<{ from: string; fromGlob: string; to: strin
 
 describe('architecture / layer isolation', () => {
   for (const edge of FORBIDDEN_EDGES) {
-    it(`${edge.from} must not depend on ${edge.to}`, async () => {
-      const violations = await projectFiles(TS_CONFIG)
-        .inFolder(edge.fromGlob, EXCEPT_TESTS)
-        .shouldNot()
-        .dependOnFiles()
-        .inFolder(edge.toGlob)
-        .check()
-      expect(violations).toEqual([])
-    }, ARCHITECTURE_TEST_TIMEOUT_MS)
+    it(
+      `${edge.from} must not depend on ${edge.to}`,
+      async () => {
+        const violations = await projectFiles(TS_CONFIG)
+          .inFolder(edge.fromGlob, EXCEPT_TESTS)
+          .shouldNot()
+          .dependOnFiles()
+          .inFolder(edge.toGlob)
+          .check()
+        expect(violations).toEqual([])
+      },
+      ARCHITECTURE_TEST_TIMEOUT_MS,
+    )
   }
 
   // components are context-free: only pages/hooks may touch the React contexts.
   // The contexts live at src root (CiAdminContext.tsx / CiConfigContext.tsx), so
   // this targets them by filename rather than folder.
-  it('components must not depend on React contexts', async () => {
-    const violations = await projectFiles(TS_CONFIG)
-      .inFolder('**/components/**', EXCEPT_TESTS)
-      .shouldNot()
-      .dependOnFiles()
-      .withName('*Context.tsx')
-      .check()
-    expect(violations).toEqual([])
-  }, ARCHITECTURE_TEST_TIMEOUT_MS)
+  it(
+    'components must not depend on React contexts',
+    async () => {
+      const violations = await projectFiles(TS_CONFIG)
+        .inFolder('**/components/**', EXCEPT_TESTS)
+        .shouldNot()
+        .dependOnFiles()
+        .withName('*Context.tsx')
+        .check()
+      expect(violations).toEqual([])
+    },
+    ARCHITECTURE_TEST_TIMEOUT_MS,
+  )
 })
 
 describe('architecture / cycles', () => {
-  it('the whole src tree is free of import cycles', async () => {
-    const violations = await projectFiles(TS_CONFIG)
-      .inFolder('**/src/**')
-      .should()
-      .haveNoCycles()
-      .check()
-    expect(violations).toEqual([])
-  }, ARCHITECTURE_TEST_TIMEOUT_MS)
+  it(
+    'the whole src tree is free of import cycles',
+    async () => {
+      const violations = await projectFiles(TS_CONFIG)
+        .inFolder('**/src/**')
+        .should()
+        .haveNoCycles()
+        .check()
+      expect(violations).toEqual([])
+    },
+    ARCHITECTURE_TEST_TIMEOUT_MS,
+  )
 })

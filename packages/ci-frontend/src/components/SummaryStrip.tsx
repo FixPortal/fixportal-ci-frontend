@@ -26,11 +26,24 @@ const SUMMARY_LABELS: Record<string, string> = {
 // summary array's order; a panel with no present keys is hidden.
 const PANELS: { title: string; keys: string[] }[] = [
   { title: 'Review', keys: ['open-prs'] },
-  { title: 'CI status', keys: ['running', 'failing', 'packages-failing', 'deploys-running', 'deploys-failing', 'no-ci'] },
-  { title: 'Inventory', keys: ['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'] },
+  {
+    title: 'CI status',
+    keys: ['running', 'failing', 'packages-failing', 'deploys-running', 'deploys-failing', 'no-ci'],
+  },
+  {
+    title: 'Inventory',
+    keys: ['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'],
+  },
 ]
 
-const NEUTRAL_KEYS = new Set(['repos', 'workflows', 'nloc-fixportal', 'nloc-quickfixn', 'deploys', 'packages'])
+const NEUTRAL_KEYS = new Set([
+  'repos',
+  'workflows',
+  'nloc-fixportal',
+  'nloc-quickfixn',
+  'deploys',
+  'packages',
+])
 const EMPTY_TREND: CiTrendBucket[] = []
 
 type SummaryStripProps = {
@@ -49,7 +62,7 @@ function labelFor(key: string, count: number) {
 }
 
 function formatCount(key: string, count: number) {
-  return (key === 'nloc-fixportal' || key === 'nloc-quickfixn') ? formatCompactNumber(count) : count
+  return key === 'nloc-fixportal' || key === 'nloc-quickfixn' ? formatCompactNumber(count) : count
 }
 
 // A non-zero count is coloured to mirror its chip: failures red, running blue,
@@ -64,8 +77,14 @@ function toneFor(key: string, count: number): string {
   return 'alert'
 }
 
-export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ciTrend = EMPTY_TREND }: SummaryStripProps) {
-  const byKey = useMemo(() => new Map(summary.map(s => [s.key, s])), [summary])
+export function SummaryStrip({
+  summary,
+  onOpenPrs,
+  lastMerged,
+  nextPr = null,
+  ciTrend = EMPTY_TREND,
+}: SummaryStripProps) {
+  const byKey = useMemo(() => new Map(summary.map((s) => [s.key, s])), [summary])
 
   const [trendInfoOpen, setTrendInfoOpen] = useState(false)
   const trendLabelRef = useRef<HTMLDivElement>(null)
@@ -88,7 +107,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
 
   return (
     <section className="summary-panels">
-      {PANELS.map(panel => {
+      {PANELS.map((panel) => {
         const items: SummaryCount[] = []
         for (const k of panel.keys) {
           const entry = byKey.get(k)
@@ -97,20 +116,29 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
         if (items.length === 0) return null
         const isReview = panel.title === 'Review'
         const isCiStatus = panel.title === 'CI status'
-        const lastMergedHref = (isReview && lastMerged) ? isAllowedHref(lastMerged.htmlUrl) : '#'
-        const panelClassName = ['summary-panel', isReview && 'summary-panel--review', isCiStatus && 'summary-panel--ci'].filter(Boolean).join(' ')
+        const lastMergedHref = isReview && lastMerged ? isAllowedHref(lastMerged.htmlUrl) : '#'
+        const panelClassName = [
+          'summary-panel',
+          isReview && 'summary-panel--review',
+          isCiStatus && 'summary-panel--ci',
+        ]
+          .filter(Boolean)
+          .join(' ')
         return (
           <div key={panel.title} className={panelClassName}>
             <span className="summary-panel__title">{panel.title}</span>
             <div className="summary-panel__items">
-              {items.map(item => {
+              {items.map((item) => {
                 // An unavailable tile renders as an unknown dash, never a digit —
                 // a failed scan must be distinguishable from a measured zero.
                 const unavailable = item.unavailable === true
                 const tone = unavailable ? 'unknown' : toneFor(item.key, item.count)
                 const body = (
                   <>
-                    <span className="summary__count" aria-label={unavailable ? 'no data' : undefined}>
+                    <span
+                      className="summary__count"
+                      aria-label={unavailable ? 'no data' : undefined}
+                    >
                       {unavailable ? '—' : formatCount(item.key, item.count)}
                     </span>
                     <span className="summary__label">{labelFor(item.key, item.count)}</span>
@@ -126,38 +154,66 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                       data-tone={tone}
                       onClick={onOpenPrs}
                       disabled={item.count === 0}
-                    >{body}</button>
+                    >
+                      {body}
+                    </button>
                   )
                 }
                 return (
-                  <div key={item.key} className="summary__item" data-key={item.key} data-tone={tone}>{body}</div>
+                  <div
+                    key={item.key}
+                    className="summary__item"
+                    data-key={item.key}
+                    data-tone={tone}
+                  >
+                    {body}
+                  </div>
                 )
               })}
             </div>
             {isReview && nextPr && (
               <div className="summary-panel__next">
                 <span className="summary-panel__q-lab">next in queue</span>
-                <span className="summary-panel__q-body">{nextPr.repo} #{nextPr.number}</span>
+                <span className="summary-panel__q-body">
+                  {nextPr.repo} #{nextPr.number}
+                </span>
                 <span className="summary-panel__q-title">{nextPr.title}</span>
               </div>
             )}
-            {isReview && lastMerged && (lastMergedHref !== '#' ? (
-              <a className="summary-panel__merged" href={lastMergedHref} target="_blank" rel="noopener noreferrer">
-                <span className="summary-panel__q-lab">
-                  last merged <span className="summary-panel__q-age">({formatRelativeTime(lastMerged.mergedAt)})</span>
-                </span>
-                <span className="summary-panel__q-body">{lastMerged.repo} #{lastMerged.number}</span>
-                <span className="summary-panel__q-title">{lastMerged.title}</span>
-              </a>
-            ) : (
-              <div className="summary-panel__merged summary-panel__merged--static">
-                <span className="summary-panel__q-lab">
-                  last merged <span className="summary-panel__q-age">({formatRelativeTime(lastMerged.mergedAt)})</span>
-                </span>
-                <span className="summary-panel__q-body">{lastMerged.repo} #{lastMerged.number}</span>
-                <span className="summary-panel__q-title">{lastMerged.title}</span>
-              </div>
-            ))}
+            {isReview &&
+              lastMerged &&
+              (lastMergedHref !== '#' ? (
+                <a
+                  className="summary-panel__merged"
+                  href={lastMergedHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="summary-panel__q-lab">
+                    last merged{' '}
+                    <span className="summary-panel__q-age">
+                      ({formatRelativeTime(lastMerged.mergedAt)})
+                    </span>
+                  </span>
+                  <span className="summary-panel__q-body">
+                    {lastMerged.repo} #{lastMerged.number}
+                  </span>
+                  <span className="summary-panel__q-title">{lastMerged.title}</span>
+                </a>
+              ) : (
+                <div className="summary-panel__merged summary-panel__merged--static">
+                  <span className="summary-panel__q-lab">
+                    last merged{' '}
+                    <span className="summary-panel__q-age">
+                      ({formatRelativeTime(lastMerged.mergedAt)})
+                    </span>
+                  </span>
+                  <span className="summary-panel__q-body">
+                    {lastMerged.repo} #{lastMerged.number}
+                  </span>
+                  <span className="summary-panel__q-title">{lastMerged.title}</span>
+                </div>
+              ))}
             {panel.title === 'CI status' && ciTrend.length > 0 && (
               <div className="summary-panel__trend">
                 <CiWeatherBar trend={ciTrend} />
@@ -169,7 +225,7 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                     aria-label="CI health information"
                     aria-expanded={trendInfoOpen}
                     aria-controls={trendInfoOpen ? 'ci-trend-popover' : undefined}
-                    onClick={() => setTrendInfoOpen(o => !o)}
+                    onClick={() => setTrendInfoOpen((o) => !o)}
                   >
                     i
                   </button>
@@ -181,8 +237,24 @@ export function SummaryStrip({ summary, onOpenPrs, lastMerged, nextPr = null, ci
                     >
                       <div className="ci-trend-popover__title">CI health · 24h</div>
                       <p>Each bar is a 1-hour bucket of CI activity across the whole org.</p>
-                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--fail">■</span> Red — any run failed that hour (on any branch).</p>
-                      <p><span aria-hidden="true" className="ci-trend-popover__swatch ci-trend-popover__swatch--pass">■</span> Green — runs present, none failed.</p>
+                      <p>
+                        <span
+                          aria-hidden="true"
+                          className="ci-trend-popover__swatch ci-trend-popover__swatch--fail"
+                        >
+                          ■
+                        </span>{' '}
+                        Red — any run failed that hour (on any branch).
+                      </p>
+                      <p>
+                        <span
+                          aria-hidden="true"
+                          className="ci-trend-popover__swatch ci-trend-popover__swatch--pass"
+                        >
+                          ■
+                        </span>{' '}
+                        Green — runs present, none failed.
+                      </p>
                       <p>Grey bars are quiet hours with no CI runs in that hour.</p>
                       <p>Oldest bar on the left, newest on the right.</p>
                       <div className="ci-trend-popover__caret" aria-hidden="true" />

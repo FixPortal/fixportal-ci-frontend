@@ -4,7 +4,15 @@ import { PullRequestStepper } from './PullRequestStepper'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 
 const prs: OpenPr[] = [
-  { repo: 'x/y', number: 7, title: 'Add widget', author: 'octocat', htmlUrl: 'https://github.com/x/y/pull/7', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
+  {
+    repo: 'x/y',
+    number: 7,
+    title: 'Add widget',
+    author: 'octocat',
+    htmlUrl: 'https://github.com/x/y/pull/7',
+    isDraft: false,
+    createdAt: '2026-05-30T00:00:00Z',
+  },
 ]
 
 test('always shows the "Open on GitHub" link', () => {

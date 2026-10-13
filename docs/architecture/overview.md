@@ -3,8 +3,8 @@
 > Derived from the knowledge graphs in `graphify-out/` (agent graph) and
 > `.understand-anything/` (human graph). Both are regenerable build artifacts
 > (`/graphify --update`, `/understand`) and are git-ignored. This document is the
-> hand-curated reading of what those graphs surface — it records the *intent* and
-> the *load-bearing seams*, not a file-by-file inventory.
+> hand-curated reading of what those graphs surface — it records the _intent_ and
+> the _load-bearing seams_, not a file-by-file inventory.
 
 ## What this is
 
@@ -20,10 +20,10 @@ injectable and the design tokens are vendored.
 
 Two-tier npm-workspaces monorepo:
 
-| Path | Role |
-| --- | --- |
-| `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library |
-| `apps/dashboard` | a thin Vite app that consumes the library via the workspace (the runnable demo + deployable image) |
+| Path                   | Role                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library                                |
+| `apps/dashboard`       | a thin Vite app that consumes the library via the workspace (the runnable demo + deployable image) |
 
 ## The spine (data flow)
 
@@ -110,7 +110,7 @@ GET {apiBase}/api/dashboard/snapshot
   High degree ≠ load-bearing. Do not mistake it for a hub.
 - **`isAllowedHref()` is a small but cross-cutting security guard** — an XSS guard
   (blocks `javascript:`/`data:` link injection) shared by external-link components.
-  Worth tracking precisely *because* it is small and easy to forget when adding a
+  Worth tracking precisely _because_ it is small and easy to forget when adding a
   new external link.
 - **`CiBoardContent.tsx` is the genuine orchestration hub** (widest fan-out):
   it wires every hook and widget together and owns the public/private grouping

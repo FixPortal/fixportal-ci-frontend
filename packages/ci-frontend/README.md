@@ -59,31 +59,31 @@ creates an internal client.
 
 ### `CiBoard` props
 
-| Prop | Type | Default | Purpose |
-|---|---|---|---|
-| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable, and this prop is not a security control. |
-| `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct behind a proxy. |
-| `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
-| `snapshotCacheKey` | `string` | unset | Stable cache-key override for a custom guest fetcher. Distinct fetcher functions are isolated by default; set this to retain a row across recreated function identities. |
-| `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. Add `X-Admin-Key` server-side; never expose it to the browser. |
-| `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
-| `adminSnapshotCacheKey` | `string` | unset | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`. |
-| `mergeFetcher` | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`. |
-| `logo` | `ReactNode` | text wordmark | Brand mark in the dashboard header. |
-| `footerSlot` | `ReactNode` | generic footer | Footer content. |
-| `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
-| `repositoryScope` | `string` | unset | Canonical `owner/repository` identity that limits the board to one already-authorised repository. |
-| `showThemeSwitcher` | `boolean` | `true` | Shows the board's Light / Dark / System selector. |
+| Prop                    | Type                                                                          | Default        | Purpose                                                                                                                                                                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `adminSignal`           | `boolean`                                                                     | required       | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable, and this prop is not a security control. |
+| `apiBase`               | `string`                                                                      | `''`           | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct behind a proxy.                                                                                                                                  |
+| `snapshotFetcher`       | `() => Promise<DashboardSnapshot \| null>`                                    | plain fetch    | Guest snapshot fetcher for hosts that must attach auth headers.                                                                                                                                                                                  |
+| `snapshotCacheKey`      | `string`                                                                      | unset          | Stable cache-key override for a custom guest fetcher. Distinct fetcher functions are isolated by default; set this to retain a row across recreated function identities.                                                                         |
+| `adminSnapshotUrl`      | `string`                                                                      | unset          | Host proxy URL for the privileged snapshot. Add `X-Admin-Key` server-side; never expose it to the browser.                                                                                                                                       |
+| `adminSnapshotFetcher`  | `() => Promise<DashboardSnapshot \| null>`                                    | unset          | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`.                                                                                                                                                                           |
+| `adminSnapshotCacheKey` | `string`                                                                      | unset          | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`.                                                                                                                                            |
+| `mergeFetcher`          | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset          | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`.                                                                      |
+| `logo`                  | `ReactNode`                                                                   | text wordmark  | Brand mark in the dashboard header.                                                                                                                                                                                                              |
+| `footerSlot`            | `ReactNode`                                                                   | generic footer | Footer content.                                                                                                                                                                                                                                  |
+| `storageNamespace`      | `string`                                                                      | unset          | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin.                                                                                                                                      |
+| `repositoryScope`       | `string`                                                                      | unset          | Canonical `owner/repository` identity that limits the board to one already-authorised repository.                                                                                                                                                |
+| `showThemeSwitcher`     | `boolean`                                                                     | `true`         | Shows the board's Light / Dark / System selector.                                                                                                                                                                                                |
 
 ### Styling
 
 The board reads ~15 CSS custom properties (`--text`, `--border`, `--brand`,
 `--card-bg`, `--font-sans`, ...).
 
-| Your situation | What to import |
-|---|---|
-| No existing design system | `tokens.css` before `board.css` — a vendored light/dark token set is included |
-| You already define those property names | `board.css` only — your tokens flow in automatically |
+| Your situation                          | What to import                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------- |
+| No existing design system               | `tokens.css` before `board.css` — a vendored light/dark token set is included |
+| You already define those property names | `board.css` only — your tokens flow in automatically                          |
 
 The built-in Light / Dark / System selector applies `data-theme` to the board's
 own `.ci-page` container, leaving the host page untouched. Hide it with
@@ -116,11 +116,11 @@ Without them TypeScript reports `TS2882`; add `declare module '*.css'`.
 
 ## Compatibility
 
-| Peer dependency | Required |
-|---|---|
-| `react` | `>=18` |
-| `react-dom` | `>=18` |
-| `@tanstack/react-query` | `>=5` |
+| Peer dependency         | Required |
+| ----------------------- | -------- |
+| `react`                 | `>=18`   |
+| `react-dom`             | `>=18`   |
+| `@tanstack/react-query` | `>=5`    |
 
 ## Links
 
