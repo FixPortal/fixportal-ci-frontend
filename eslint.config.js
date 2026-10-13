@@ -12,7 +12,8 @@ export default defineConfig([
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
       // Full SonarJS recommended set (cognitive complexity + bug/code-smell rules).
@@ -20,8 +21,27 @@ export default defineConfig([
       sonarjs.configs.recommended,
     ],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2023,
       globals: globals.browser,
+      // Type-aware linting. Every .ts/.tsx matched here must belong to a tsconfig; a file
+      // in no project fails with "was not found by the project service".
+      parserOptions: {
+        projectService: {
+          // Tool config files sit outside every tsconfig on purpose: adding vite.config.ts
+          // to a project pulls @types/node into src, which turns the `@ts-expect-error`
+          // directives that probe missing Node typings into "unused directive" errors
+          // (observed: fonts.test.ts, board.css.test.ts, backendContract.contract.ts).
+          allowDefaultProject: [
+            'apps/dashboard/*.config.ts',
+            'packages/ci-frontend/*.config.ts',
+            'packages/ci-frontend/test/setup.ts',
+            'playwright.config.ts',
+            'test/package-consumer/vite.config.ts',
+          ],
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 12,
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       // Every SonarJS rule from the recommended set runs as a warning, not an error,
