@@ -45,12 +45,16 @@ function RepoFilterBarImpl({
             <FilterChip
               label="Public"
               pressed={filters.visibility.has('public')}
-              onClick={() => onToggleVisibility('public')}
+              onClick={() => {
+                onToggleVisibility('public')
+              }}
             />
             <FilterChip
               label="Private"
               pressed={filters.visibility.has('private')}
-              onClick={() => onToggleVisibility('private')}
+              onClick={() => {
+                onToggleVisibility('private')
+              }}
             />
           </fieldset>
           <span className="repo-filter__divider" aria-hidden="true" />
@@ -63,24 +67,32 @@ function RepoFilterBarImpl({
           label="Running"
           tone="running"
           pressed={filters.ciStatus.has('running')}
-          onClick={() => onToggleCiStatus('running')}
+          onClick={() => {
+            onToggleCiStatus('running')
+          }}
         />
         <FilterChip
           label="Failing"
           tone="failing"
           pressed={filters.ciStatus.has('failing')}
-          onClick={() => onToggleCiStatus('failing')}
+          onClick={() => {
+            onToggleCiStatus('failing')
+          }}
         />
         <FilterChip
           label="Passing"
           tone="passing"
           pressed={filters.ciStatus.has('passing')}
-          onClick={() => onToggleCiStatus('passing')}
+          onClick={() => {
+            onToggleCiStatus('passing')
+          }}
         />
         <FilterChip
           label="No-CI"
           pressed={filters.ciStatus.has('no-ci')}
-          onClick={() => onToggleCiStatus('no-ci')}
+          onClick={() => {
+            onToggleCiStatus('no-ci')
+          }}
         />
       </fieldset>
 

@@ -46,7 +46,7 @@ const NEUTRAL_KEYS = new Set([
 ])
 const EMPTY_TREND: CiTrendBucket[] = []
 
-type SummaryStripProps = {
+interface SummaryStripProps {
   summary: SummaryCount[]
   onOpenPrs?: () => void
   lastMerged: MergedPr | null
@@ -225,7 +225,9 @@ export function SummaryStrip({
                     aria-label="CI health information"
                     aria-expanded={trendInfoOpen}
                     aria-controls={trendInfoOpen ? 'ci-trend-popover' : undefined}
-                    onClick={() => setTrendInfoOpen((o) => !o)}
+                    onClick={() => {
+                      setTrendInfoOpen((o) => !o)
+                    }}
                   >
                     i
                   </button>

@@ -150,7 +150,13 @@ export function PullRequestStepper({
         {isAdmin && merge?.errors.has(pr.repo) && (
           <span className="pr-card__merge-error" role="alert">
             {merge.errors.get(pr.repo)}
-            <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(pr.repo)}>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => {
+                merge.dismissError(pr.repo)
+              }}
+            >
               ✕
             </button>
           </span>
@@ -173,14 +179,18 @@ export function PullRequestStepper({
         <div className="pr-modal__nav">
           <button
             type="button"
-            onClick={() => setI(Math.max(safeIndex - 1, 0))}
+            onClick={() => {
+              setI(Math.max(safeIndex - 1, 0))
+            }}
             disabled={safeIndex === 0}
           >
             ‹ Prev
           </button>
           <button
             type="button"
-            onClick={() => setI(Math.min(safeIndex + 1, prs.length - 1))}
+            onClick={() => {
+              setI(Math.min(safeIndex + 1, prs.length - 1))
+            }}
             disabled={safeIndex === prs.length - 1}
           >
             Next ›

@@ -194,7 +194,11 @@ test('supports keyboard search and phone layout while recording interaction timi
   await page.evaluate(
     () =>
       new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve()
+          }),
+        )
       }),
   )
   const measurements = await page.evaluate(() => {

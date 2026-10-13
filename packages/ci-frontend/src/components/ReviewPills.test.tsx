@@ -42,7 +42,7 @@ test('shows the count only on an outstanding signal', () => {
 })
 
 test('does not show a count on a non-outstanding signal even when one is supplied', () => {
-  render(<ReviewPills signals={[{ name: 'Gitar', state: 'clean', count: 5 } as ReviewSignal]} />)
+  render(<ReviewPills signals={[{ name: 'Gitar', state: 'clean', count: 5 }]} />)
   expect(screen.queryByText('5')).toBeNull()
 })
 

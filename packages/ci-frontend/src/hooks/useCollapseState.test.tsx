@@ -3,7 +3,9 @@ import { renderHook, act } from '@testing-library/react'
 import { useCollapseState } from './useCollapseState'
 
 describe('useCollapseState', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('defaults to expanded (nothing collapsed)', () => {
     const { result } = renderHook(() => useCollapseState())
@@ -13,16 +15,22 @@ describe('useCollapseState', () => {
 
   it('toggles a repo and persists to localStorage', () => {
     const { result } = renderHook(() => useCollapseState())
-    act(() => result.current.toggle('a'))
+    act(() => {
+      result.current.toggle('a')
+    })
     expect(result.current.isCollapsed('a')).toBe(true)
     expect(localStorage.getItem('ci-dashboard:collapsed')).toContain('a')
   })
 
   it('collapseAll then expandAll', () => {
     const { result } = renderHook(() => useCollapseState())
-    act(() => result.current.collapseAll(['a', 'b']))
+    act(() => {
+      result.current.collapseAll(['a', 'b'])
+    })
     expect(result.current.allCollapsed(['a', 'b'])).toBe(true)
-    act(() => result.current.expandAll())
+    act(() => {
+      result.current.expandAll()
+    })
     expect(result.current.isCollapsed('a')).toBe(false)
   })
 

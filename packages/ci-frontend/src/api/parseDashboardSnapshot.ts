@@ -62,21 +62,21 @@ function validateWorkflowRun(value: unknown, path: string): void {
   nullable(object.branch, `${path}.branch`, stringAt)
   nullable(object.event, `${path}.event`, stringAt)
   stringAt(object.updatedAt, `${path}.updatedAt`)
-  optional(object.repository, `${path}.repository`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, stringAt),
-  )
-  optional(object.workflowFile, `${path}.workflowFile`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, stringAt),
-  )
-  optional(object.providerRunId, `${path}.providerRunId`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, numberAt),
-  )
-  optional(object.runAttempt, `${path}.runAttempt`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, numberAt),
-  )
-  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, stringAt),
-  )
+  optional(object.repository, `${path}.repository`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, stringAt)
+  })
+  optional(object.workflowFile, `${path}.workflowFile`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, stringAt)
+  })
+  optional(object.providerRunId, `${path}.providerRunId`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, numberAt)
+  })
+  optional(object.runAttempt, `${path}.runAttempt`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, numberAt)
+  })
+  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, stringAt)
+  })
 }
 
 function validateWorkflowSnapshot(value: unknown, path: string): void {
@@ -85,25 +85,25 @@ function validateWorkflowSnapshot(value: unknown, path: string): void {
   stringAt(object.file, `${path}.file`)
   enumAt(object.state, `${path}.state`, signalStates, 'signal state')
   nullable(object.lastRun, `${path}.lastRun`, validateWorkflowRun)
-  optional(object.recentRuns, `${path}.recentRuns`, (nested, nestedPath) =>
+  optional(object.recentRuns, `${path}.recentRuns`, (nested, nestedPath) => {
     nullable(nested, nestedPath, (items, itemsPath) => {
-      arrayAt(items, itemsPath).forEach((item, index) =>
-        validateWorkflowRun(item, `${itemsPath}[${index}]`),
-      )
-    }),
-  )
+      arrayAt(items, itemsPath).forEach((item, index) => {
+        validateWorkflowRun(item, `${itemsPath}[${index}]`)
+      })
+    })
+  })
 }
 
 function validateReviewSignal(value: unknown, path: string): void {
   const object = objectAt(value, path)
   stringAt(object.name, `${path}.name`)
   enumAt(object.state, `${path}.state`, reviewSignalStates, 'review signal state')
-  optional(object.count, `${path}.count`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, numberAt),
-  )
-  optional(object.htmlUrl, `${path}.htmlUrl`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, stringAt),
-  )
+  optional(object.count, `${path}.count`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, numberAt)
+  })
+  optional(object.htmlUrl, `${path}.htmlUrl`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, stringAt)
+  })
 }
 
 function validatePullRequest(value: unknown, path: string): void {
@@ -114,19 +114,19 @@ function validatePullRequest(value: unknown, path: string): void {
   stringAt(object.htmlUrl, `${path}.htmlUrl`)
   booleanAt(object.isDraft, `${path}.isDraft`)
   stringAt(object.createdAt, `${path}.createdAt`)
-  optional(object.reviewSignals, `${path}.reviewSignals`, (nested, nestedPath) =>
+  optional(object.reviewSignals, `${path}.reviewSignals`, (nested, nestedPath) => {
     nullable(nested, nestedPath, (items, itemsPath) => {
-      arrayAt(items, itemsPath).forEach((item, index) =>
-        validateReviewSignal(item, `${itemsPath}[${index}]`),
-      )
-    }),
-  )
-  optional(object.readyToMerge, `${path}.readyToMerge`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, booleanAt),
-  )
-  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, stringAt),
-  )
+      arrayAt(items, itemsPath).forEach((item, index) => {
+        validateReviewSignal(item, `${itemsPath}[${index}]`)
+      })
+    })
+  })
+  optional(object.readyToMerge, `${path}.readyToMerge`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, booleanAt)
+  })
+  optional(object.headSha, `${path}.headSha`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, stringAt)
+  })
 }
 
 function validateRepoMetrics(value: unknown, path: string): void {
@@ -162,26 +162,26 @@ function validateRepositorySnapshot(value: unknown, path: string): void {
   stringAt(object.name, `${path}.name`)
   stringAt(object.htmlUrl, `${path}.htmlUrl`)
   booleanAt(object.private, `${path}.private`)
-  arrayAt(object.workflows, `${path}.workflows`).forEach((item, index) =>
-    validateWorkflowSnapshot(item, `${path}.workflows[${index}]`),
-  )
-  arrayAt(object.pullRequests, `${path}.pullRequests`).forEach((item, index) =>
-    validatePullRequest(item, `${path}.pullRequests[${index}]`),
-  )
+  arrayAt(object.workflows, `${path}.workflows`).forEach((item, index) => {
+    validateWorkflowSnapshot(item, `${path}.workflows[${index}]`)
+  })
+  arrayAt(object.pullRequests, `${path}.pullRequests`).forEach((item, index) => {
+    validatePullRequest(item, `${path}.pullRequests[${index}]`)
+  })
   nullable(object.metrics, `${path}.metrics`, validateRepoMetrics)
   nullable(object.deploys, `${path}.deploys`, (items, itemsPath) => {
-    arrayAt(items, itemsPath).forEach((item, index) =>
-      validateJobSignal(item, `${itemsPath}[${index}]`),
-    )
+    arrayAt(items, itemsPath).forEach((item, index) => {
+      validateJobSignal(item, `${itemsPath}[${index}]`)
+    })
   })
   nullable(object.packages, `${path}.packages`, (items, itemsPath) => {
-    arrayAt(items, itemsPath).forEach((item, index) =>
-      validateJobSignal(item, `${itemsPath}[${index}]`),
-    )
+    arrayAt(items, itemsPath).forEach((item, index) => {
+      validateJobSignal(item, `${itemsPath}[${index}]`)
+    })
   })
-  optional(object.lastMergedPr, `${path}.lastMergedPr`, (nested, nestedPath) =>
-    nullable(nested, nestedPath, validateMergedPr),
-  )
+  optional(object.lastMergedPr, `${path}.lastMergedPr`, (nested, nestedPath) => {
+    nullable(nested, nestedPath, validateMergedPr)
+  })
 }
 
 function validateSummaryCount(value: unknown, path: string): void {
@@ -202,27 +202,27 @@ function validateDashboardSnapshot(value: unknown, path: string): void {
   const object = objectAt(value, path)
   stringAt(object.refreshedAt, `${path}.refreshedAt`)
   stringAt(object.org, `${path}.org`)
-  arrayAt(object.repositories, `${path}.repositories`).forEach((item, index) =>
-    validateRepositorySnapshot(item, `${path}.repositories[${index}]`),
-  )
-  arrayAt(object.summary, `${path}.summary`).forEach((item, index) =>
-    validateSummaryCount(item, `${path}.summary[${index}]`),
-  )
+  arrayAt(object.repositories, `${path}.repositories`).forEach((item, index) => {
+    validateRepositorySnapshot(item, `${path}.repositories[${index}]`)
+  })
+  arrayAt(object.summary, `${path}.summary`).forEach((item, index) => {
+    validateSummaryCount(item, `${path}.summary[${index}]`)
+  })
   nullable(object.lastMergedPr, `${path}.lastMergedPr`, validateMergedPr)
-  optional(object.ciTrend, `${path}.ciTrend`, (nested, nestedPath) =>
+  optional(object.ciTrend, `${path}.ciTrend`, (nested, nestedPath) => {
     nullable(nested, nestedPath, (items, itemsPath) => {
-      arrayAt(items, itemsPath).forEach((item, index) =>
-        validateCiTrendBucket(item, `${itemsPath}[${index}]`),
-      )
-    }),
-  )
-  optional(object.publicCiTrend, `${path}.publicCiTrend`, (nested, nestedPath) =>
+      arrayAt(items, itemsPath).forEach((item, index) => {
+        validateCiTrendBucket(item, `${itemsPath}[${index}]`)
+      })
+    })
+  })
+  optional(object.publicCiTrend, `${path}.publicCiTrend`, (nested, nestedPath) => {
     nullable(nested, nestedPath, (items, itemsPath) => {
-      arrayAt(items, itemsPath).forEach((item, index) =>
-        validateCiTrendBucket(item, `${itemsPath}[${index}]`),
-      )
-    }),
-  )
+      arrayAt(items, itemsPath).forEach((item, index) => {
+        validateCiTrendBucket(item, `${itemsPath}[${index}]`)
+      })
+    })
+  })
 }
 
 export function parseDashboardSnapshot(value: unknown): DashboardSnapshot {

@@ -91,7 +91,9 @@ function buildRepoList(
           label="Public"
           count={publicRepos.length}
           collapsed={collapse.isCollapsed(KEY_PUBLIC)}
-          onToggle={() => collapse.toggle(KEY_PUBLIC)}
+          onToggle={() => {
+            collapse.toggle(KEY_PUBLIC)
+          }}
         />
         {!collapse.isCollapsed(KEY_PUBLIC) &&
           publicRepos.map((repository) => (
@@ -108,7 +110,9 @@ function buildRepoList(
           label="Private"
           count={privateRepos.length}
           collapsed={collapse.isCollapsed(KEY_PRIVATE)}
-          onToggle={() => collapse.toggle(KEY_PRIVATE)}
+          onToggle={() => {
+            collapse.toggle(KEY_PRIVATE)
+          }}
         />
         {!collapse.isCollapsed(KEY_PRIVATE) &&
           privateRepos.map((repository) => (
@@ -229,8 +233,12 @@ export function CiBoardContent() {
 
   useEffect(() => {
     if (openPrs.length === 0 && stepperOpen) {
-      const id = setTimeout(() => setStepperOpen(false), 0)
-      return () => clearTimeout(id)
+      const id = setTimeout(() => {
+        setStepperOpen(false)
+      }, 0)
+      return () => {
+        clearTimeout(id)
+      }
     }
     return undefined
   }, [openPrs.length, stepperOpen])
@@ -334,7 +342,9 @@ export function CiBoardContent() {
               placeholder="Filter repos or PRs..."
               aria-label="Filter repos by name, or by PR number or title"
               value={filters.filters.search}
-              onChange={(e) => filters.setSearch(e.target.value)}
+              onChange={(e) => {
+                filters.setSearch(e.target.value)
+              }}
             />
             {/* Beside the search box rather than in the filter row below: that row
               already overflows on a standard screen, and this is a scope switch on
@@ -381,9 +391,9 @@ export function CiBoardContent() {
             <button
               type="button"
               className="dashboard__collapse-all"
-              onClick={() =>
+              onClick={() => {
                 allCollapsed ? collapse.expandAll() : collapse.collapseAll(allCollapsibleKeys)
-              }
+              }}
             >
               {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
             </button>
@@ -391,7 +401,13 @@ export function CiBoardContent() {
         </div>
         <SummaryStrip
           summary={summary}
-          onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
+          onOpenPrs={
+            isAdmin
+              ? () => {
+                  setStepperOpen(true)
+                }
+              : undefined
+          }
           lastMerged={lastMergedPr}
           nextPr={nextPr}
           ciTrend={
@@ -423,7 +439,9 @@ export function CiBoardContent() {
       {stepperOpen && openPrs.length > 0 && (
         <PullRequestStepper
           prs={openPrs}
-          onClose={() => setStepperOpen(false)}
+          onClose={() => {
+            setStepperOpen(false)
+          }}
           isAdmin={isAdmin}
           merge={merge}
         />

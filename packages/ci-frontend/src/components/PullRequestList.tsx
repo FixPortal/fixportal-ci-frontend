@@ -72,7 +72,13 @@ export function PullRequestList({
       {isAdmin && merge?.errors.has(repoName) && (
         <span className="repo-prs__merge-error" role="alert">
           {merge.errors.get(repoName)}
-          <button type="button" aria-label="Dismiss" onClick={() => merge.dismissError(repoName)}>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => {
+              merge.dismissError(repoName)
+            }}
+          >
             ✕
           </button>
         </span>

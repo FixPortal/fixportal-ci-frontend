@@ -160,7 +160,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   )
 
   const mergeAll = useCallback(
-    async (repo: string, prs: ReadonlyArray<{ number: number; headSha: string }>) => {
+    async (repo: string, prs: readonly { number: number; headSha: string }[]) => {
       const allKey = prMergeKey(repo, 'all')
       const generation = sourceGeneration.current
       if (!startMerge(allKey)) return

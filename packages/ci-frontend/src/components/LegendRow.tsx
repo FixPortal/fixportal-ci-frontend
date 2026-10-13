@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SignalState } from '../api/types'
 
-const STATUS_ITEMS: ReadonlyArray<readonly [SignalState, string]> = [
+const STATUS_ITEMS: readonly (readonly [SignalState, string])[] = [
   ['success', 'passing'],
   ['failure', 'failing'],
   ['running', 'running'],
@@ -16,7 +16,9 @@ export function LegendRow() {
         type="button"
         className="legend-row__toggle"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setOpen((o) => !o)
+        }}
       >
         Legend {open ? '▴' : '▾'}
       </button>

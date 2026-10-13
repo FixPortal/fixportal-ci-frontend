@@ -45,7 +45,9 @@ const readySnapshot: DashboardSnapshot = {
 }
 
 describe('CiBoard landmark structure', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('renders the wordmark as the page h1 and a skip link as the first control', async () => {
     render(
@@ -69,7 +71,9 @@ describe('CiBoard landmark structure', () => {
 })
 
 describe('CiBoard admin source gating', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('stays guest-only when the admin signal has no privileged source', async () => {
     render(
@@ -147,7 +151,9 @@ describe('CiBoard admin source gating', () => {
 })
 
 describe('CiBoard snapshot retry integration', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('surfaces a persistent fetch failure and recovers through the Retry now action', async () => {
     const snapshotFetcher = vi
@@ -163,9 +169,14 @@ describe('CiBoard snapshot retry integration', () => {
       />,
     )
 
-    await waitFor(() => expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument(), {
-      timeout: 5_000,
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument()
+      },
+      {
+        timeout: 5_000,
+      },
+    )
     expect(snapshotFetcher).toHaveBeenCalledTimes(2)
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry now' }))
@@ -175,7 +186,9 @@ describe('CiBoard snapshot retry integration', () => {
 })
 
 describe('CiBoard controlled theme', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+  })
 
   it('applies the host-resolved theme to .ci-page with the switcher suppressed', async () => {
     const { container } = render(
