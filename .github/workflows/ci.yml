@@ -59,6 +59,9 @@ jobs:
         # runs.
         run: npm ci --ignore-scripts
 
+      - name: Format check
+        run: npm run format
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
