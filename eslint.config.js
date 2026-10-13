@@ -178,6 +178,21 @@ export default defineConfig([
     rules: { '@typescript-eslint/no-unsafe-call': 'off' },
   },
   {
+    // These fixtures import the BUILT package (@fix-portal/ci-frontend resolves to
+    // packages/ci-frontend/dist). CI lints before build:lib, so the types do not resolve there
+    // and every use reports as an error-typed `any`. Their types are checked after the build
+    // by the e2e and package-consumer typechecks, which is where the real check lives.
+    files: ['e2e/host/**/*.tsx', 'test/package-consumer/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/no-redundant-type-constituents': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
+  {
     // Playwright specs run against a real browser and the real clock; there is no Clock to
     // inject into a fixture timestamp. The enum and default-export bans still apply.
     files: ['e2e/**/*.{ts,tsx}'],
