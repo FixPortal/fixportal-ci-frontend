@@ -11,9 +11,15 @@ import type { OpenPr } from '../lib/flattenOpenPrs'
 import type { MergeResult } from '../api/mergePullRequest'
 
 const openPr: OpenPr = {
-  number: 7, title: 'Add widget', author: 'octocat',
-  htmlUrl: 'https://github.com/x/y/pull/7', isDraft: false,
-  createdAt: '2026-05-30T00:00:00Z', readyToMerge: true, repo: 'repo-a', headSha: 'sha-7',
+  number: 7,
+  title: 'Add widget',
+  author: 'octocat',
+  htmlUrl: 'https://github.com/x/y/pull/7',
+  isDraft: false,
+  createdAt: '2026-05-30T00:00:00Z',
+  readyToMerge: true,
+  repo: 'repo-a',
+  headSha: 'sha-7',
 }
 
 // The component is presentational now; merge state comes from the page-level
@@ -27,14 +33,15 @@ function wrapperWith(mergeFetcher: (repo: string, n: number) => Promise<MergeRes
   const queryClient = new QueryClient()
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>
-        {children}
-      </CiConfigProvider>
+      <CiConfigProvider value={{ apiBase: '', mergeFetcher }}>{children}</CiConfigProvider>
     </QueryClientProvider>
   )
 }
 
-function renderStepper(mergeFetcher: (repo: string, n: number) => Promise<MergeResult>, admin: boolean) {
+function renderStepper(
+  mergeFetcher: (repo: string, n: number) => Promise<MergeResult>,
+  admin: boolean,
+) {
   return render(<Harness prs={[openPr]} admin={admin} />, { wrapper: wrapperWith(mergeFetcher) })
 }
 
@@ -51,18 +58,19 @@ test('guest sees a display-only pill in the stepper', () => {
 })
 
 test('stepper shows the merge failure inline', async () => {
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   renderStepper(mergeFetcher, true)
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
 
-test('paging to another PR drops the previous PR\'s merge error', async () => {
-  const prs: OpenPr[] = [
-    openPr,
-    { ...openPr, number: 8, title: 'Add sprocket', repo: 'repo-b' },
-  ]
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+test("paging to another PR drops the previous PR's merge error", async () => {
+  const prs: OpenPr[] = [openPr, { ...openPr, number: 8, title: 'Add sprocket', repo: 'repo-b' }]
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<Harness prs={prs} admin={true} />, { wrapper: wrapperWith(mergeFetcher) })
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
@@ -72,11 +80,10 @@ test('paging to another PR drops the previous PR\'s merge error', async () => {
 })
 
 test('paging between PRs in the same repo keeps the repo merge error', async () => {
-  const prs: OpenPr[] = [
-    openPr,
-    { ...openPr, number: 8, title: 'Add sprocket' },
-  ]
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const prs: OpenPr[] = [openPr, { ...openPr, number: 8, title: 'Add sprocket' }]
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<Harness prs={prs} admin={true} />, { wrapper: wrapperWith(mergeFetcher) })
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
@@ -95,10 +102,14 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
     const merge = usePrMerge()
     // Publish via an effect: React Compiler forbids mutating outer-scope values
     // during render, and effects run before the test's awaited assertions.
-    useEffect(() => { mergeRef.current = merge })
+    useEffect(() => {
+      mergeRef.current = merge
+    })
     return <PullRequestStepper prs={prs} onClose={() => {}} isAdmin merge={merge} />
   }
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
   render(<CaptureHarness />, { wrapper: wrapperWith(mergeFetcher) })
   // Fail a merge on repo-b while the stepper shows repo-a's PR.
   await act(() => mergeRef.current!.mergeOne('repo-b', 8, 'sha-8'))
@@ -110,16 +121,22 @@ test('a merge error from another repo does not bleed into the displayed PR', asy
   await userEvent.click(screen.getByRole('button', { name: /rebase-merge/i }))
   expect(await screen.findByRole('alert')).toHaveTextContent('not mergeable')
 })
-test('opening the stepper keeps an error already recorded for the shown PR\'s repo', async () => {
+test("opening the stepper keeps an error already recorded for the shown PR's repo", async () => {
   const mergeRef: { current: ReturnType<typeof usePrMerge> | null } = { current: null }
   function LateOpenHarness({ open }: { open: boolean }) {
     const merge = usePrMerge()
-    useEffect(() => { mergeRef.current = merge })
+    useEffect(() => {
+      mergeRef.current = merge
+    })
     if (!open) return null
     return <PullRequestStepper prs={[openPr]} onClose={() => {}} isAdmin merge={merge} />
   }
-  const mergeFetcher = vi.fn().mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
-  const { rerender } = render(<LateOpenHarness open={false} />, { wrapper: wrapperWith(mergeFetcher) })
+  const mergeFetcher = vi
+    .fn()
+    .mockResolvedValue({ ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult)
+  const { rerender } = render(<LateOpenHarness open={false} />, {
+    wrapper: wrapperWith(mergeFetcher),
+  })
   // Fail repo-a's merge from the board, then open the stepper on that PR: the
   // paging effect's mount run must not swallow the error it lands on.
   await act(() => mergeRef.current!.mergeOne('repo-a', 7, 'sha-7'))

@@ -9,8 +9,26 @@ const snapshot: DashboardSnapshot = {
   refreshedAt: '2026-06-22T10:00:00Z',
   org: 'FixPortal',
   repositories: [
-    { name: 'engine', htmlUrl: '', private: false, workflows: [{ name: 'ci', file: 'ci.yml', state: 'failure', lastRun: null }], pullRequests: [], metrics: null, deploys: [], packages: [] },
-    { name: 'portal', htmlUrl: '', private: false, workflows: [{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }], pullRequests: [], metrics: null, deploys: [], packages: [] },
+    {
+      name: 'engine',
+      htmlUrl: '',
+      private: false,
+      workflows: [{ name: 'ci', file: 'ci.yml', state: 'failure', lastRun: null }],
+      pullRequests: [],
+      metrics: null,
+      deploys: [],
+      packages: [],
+    },
+    {
+      name: 'portal',
+      htmlUrl: '',
+      private: false,
+      workflows: [{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }],
+      pullRequests: [],
+      metrics: null,
+      deploys: [],
+      packages: [],
+    },
   ],
   summary: [],
   lastMergedPr: null,
@@ -24,7 +42,16 @@ const readySnapshot: DashboardSnapshot = {
     {
       ...snapshot.repositories[1],
       pullRequests: [
-        { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: '', isDraft: false, createdAt: '2026-06-20T00:00:00Z', readyToMerge: true, headSha: 'sha-7' },
+        {
+          number: 7,
+          title: 'Add widget',
+          author: 'octocat',
+          htmlUrl: '',
+          isDraft: false,
+          createdAt: '2026-06-20T00:00:00Z',
+          readyToMerge: true,
+          headSha: 'sha-7',
+        },
       ],
     },
   ],
@@ -48,10 +75,15 @@ describe('CiBoardContent filtering', () => {
   it('reconciles a successful merge before the stale snapshot catches up', async () => {
     const staleSnapshot = { ...readySnapshot, summary: [{ key: 'open-prs', count: 1 }] }
     const staleSnapshotFetcher = vi.fn().mockResolvedValue(staleSnapshot)
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ merged: true, sha: 'abc123' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ merged: true, sha: 'abc123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    )
     render(
       <CiBoard
         adminSignal={true}
@@ -70,7 +102,9 @@ describe('CiBoardContent filtering', () => {
       () => screen.queryByText('Add widget', { selector: '.repo-prs__title' }),
       { timeout: 2_000 },
     )
-    expect(screen.queryByText('Add widget', { selector: '.repo-prs__title' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Add widget', { selector: '.repo-prs__title' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '0Open PRs' })).toBeDisabled()
   })
 
@@ -102,7 +136,9 @@ describe('CiBoardContent filtering', () => {
       />,
     )
 
-    expect(await screen.findByText('Add widget', { selector: '.repo-prs__title' })).toBeInTheDocument()
+    expect(
+      await screen.findByText('Add widget', { selector: '.repo-prs__title' }),
+    ).toBeInTheDocument()
   })
 
   it('shows the filtered empty state with a Clear filters action when nothing matches', async () => {
@@ -127,7 +163,9 @@ describe('CiBoardContent filtering', () => {
     )
     expect(await screen.findByText('engine')).toBeInTheDocument()
     const chip = screen.getByRole('button', { name: /^ready to merge$/i })
-    expect(within(screen.getByRole('search')).queryByRole('button', { name: /ready to merge/i })).toBeNull()
+    expect(
+      within(screen.getByRole('search')).queryByRole('button', { name: /ready to merge/i }),
+    ).toBeNull()
     await userEvent.click(chip)
     expect(await screen.findByText('portal')).toBeInTheDocument()
     expect(screen.queryByText('engine')).not.toBeInTheDocument()
@@ -174,7 +212,16 @@ describe('CiBoardContent scope text', () => {
       ...snapshot,
       repositories: [
         ...snapshot.repositories,
-        { name: 'static-site', htmlUrl: '', private: false, workflows: [], pullRequests: [], metrics: null, deploys: [], packages: [] },
+        {
+          name: 'static-site',
+          htmlUrl: '',
+          private: false,
+          workflows: [],
+          pullRequests: [],
+          metrics: null,
+          deploys: [],
+          packages: [],
+        },
       ],
     }
     render(
@@ -215,7 +262,16 @@ describe('CiBoardContent controlled repository scope', () => {
         htmlUrl: '',
         private: true,
         workflows: [{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }],
-        pullRequests: [{ number: 1, title: 'Scoped PR', author: 'chris', htmlUrl: '', isDraft: false, createdAt: '2026-06-22T08:00:00Z' }],
+        pullRequests: [
+          {
+            number: 1,
+            title: 'Scoped PR',
+            author: 'chris',
+            htmlUrl: '',
+            isDraft: false,
+            createdAt: '2026-06-22T08:00:00Z',
+          },
+        ],
         metrics: null,
         deploys: [],
         packages: [],
@@ -225,7 +281,16 @@ describe('CiBoardContent controlled repository scope', () => {
         htmlUrl: '',
         private: false,
         workflows: [{ name: 'ci', file: 'ci.yml', state: 'failure', lastRun: null }],
-        pullRequests: [{ number: 2, title: 'Other PR', author: 'chris', htmlUrl: '', isDraft: false, createdAt: '2026-06-22T07:00:00Z' }],
+        pullRequests: [
+          {
+            number: 2,
+            title: 'Other PR',
+            author: 'chris',
+            htmlUrl: '',
+            isDraft: false,
+            createdAt: '2026-06-22T07:00:00Z',
+          },
+        ],
         metrics: null,
         deploys: [],
         packages: [],
@@ -250,12 +315,14 @@ describe('CiBoardContent controlled repository scope', () => {
 
     expect(await screen.findByText('controlled')).toBeInTheDocument()
     expect(screen.queryByText('controlled-extra')).not.toBeInTheDocument()
-    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent('FixPortal · 1 of 1 repositories')
+    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent(
+      'FixPortal · 1 of 1 repositories',
+    )
   })
 
   it.each(['other/controlled', 'FixPortal/control', 'FixPortal/controlled-ex'])(
     'rejects non-exact repository scope %s',
-    async repositoryScope => {
+    async (repositoryScope) => {
       renderScopedBoard(repositoryScope)
 
       expect(await screen.findByText('No repositories found.')).toBeInTheDocument()
@@ -266,14 +333,18 @@ describe('CiBoardContent controlled repository scope', () => {
     renderScopedBoard('FixPortal/controlled')
 
     expect(await screen.findByText('controlled')).toBeInTheDocument()
-    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent('FixPortal · 1 of 1 repositories')
+    expect(document.querySelector('.dashboard__repo-scope')).toHaveTextContent(
+      'FixPortal · 1 of 1 repositories',
+    )
     expect(document.querySelector('[data-key="repos"]')).toHaveTextContent('1Repositories')
     expect(screen.getByRole('button', { name: '1Open PR' })).toBeInTheDocument()
     expect(screen.getByText('controlled #1')).toBeInTheDocument()
     expect(screen.queryByText('Other merge')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: '1Open PR' }))
-    expect(await screen.findByRole('dialog', { name: 'Open pull requests' })).toHaveTextContent('controlled')
+    expect(await screen.findByRole('dialog', { name: 'Open pull requests' })).toHaveTextContent(
+      'controlled',
+    )
     expect(screen.getByRole('dialog')).toHaveTextContent('1 / 1')
     expect(screen.queryByText('Other PR')).not.toBeInTheDocument()
   })
@@ -288,7 +359,7 @@ describe('CiBoardContent controlled repository scope', () => {
 
   // An empty/whitespace scope matches nothing, which used to blank the board
   // with "No repositories found." It means "no scope" and must behave as such.
-  it.each(['', '   '])('treats empty scope %j as no scope', async repositoryScope => {
+  it.each(['', '   '])('treats empty scope %j as no scope', async (repositoryScope) => {
     renderScopedBoard(repositoryScope)
 
     expect(await screen.findByText('controlled-extra')).toBeInTheDocument()
@@ -347,7 +418,9 @@ describe('CiBoardContent public snapshot fallbacks', () => {
 
     render(<CiBoard adminSignal={false} snapshotFetcher={async () => publicSnapshot} />)
 
-    expect(await screen.findByRole('img', { name: /CI health, last 24h: 0 failing, 1 healthy/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('img', { name: /CI health, last 24h: 0 failing, 1 healthy/i }),
+    ).toBeInTheDocument()
   })
 
   it('renders the newest visible repository merge when the aggregate merge is unavailable', async () => {

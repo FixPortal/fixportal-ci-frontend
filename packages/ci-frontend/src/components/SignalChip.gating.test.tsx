@@ -4,22 +4,33 @@ import { SignalChip } from './SignalChip'
 import type { WorkflowSnapshot } from '../api/types'
 
 const wfWithRun: WorkflowSnapshot = {
-  name: 'CI', file: 'ci.yml', state: 'success',
+  name: 'CI',
+  file: 'ci.yml',
+  state: 'success',
   lastRun: {
-    status: 'completed', conclusion: 'success',
+    status: 'completed',
+    conclusion: 'success',
     htmlUrl: 'https://github.com/FixPortal/repo/actions/runs/1',
-    title: 'CI', runNumber: 1, branch: 'main', event: 'push',
+    title: 'CI',
+    runNumber: 1,
+    branch: 'main',
+    event: 'push',
     updatedAt: '2026-05-30T12:00:00Z',
   },
 }
 
 const wfNoRun: WorkflowSnapshot = {
-  name: 'CI', file: 'ci.yml', state: 'unknown', lastRun: null,
+  name: 'CI',
+  file: 'ci.yml',
+  state: 'unknown',
+  lastRun: null,
 }
 
 // A htmlUrl that is truthy but rejected by isAllowedHref (protocol-relative).
 const wfRejectedUrl: WorkflowSnapshot = {
-  name: 'CI', file: 'ci.yml', state: 'success',
+  name: 'CI',
+  file: 'ci.yml',
+  state: 'success',
   lastRun: { ...wfWithRun.lastRun!, htmlUrl: '//evil.example.com/path' },
 }
 

@@ -7,7 +7,8 @@ const root = process.cwd()
 const npmExecPath = process.env.npm_execpath
 if (!npmExecPath) throw new Error('npm_execpath is required to run the package smoke')
 
-const runNpm = (args, cwd) => execFileSync(process.execPath, [npmExecPath, ...args], { cwd, stdio: 'inherit' })
+const runNpm = (args, cwd) =>
+  execFileSync(process.execPath, [npmExecPath, ...args], { cwd, stdio: 'inherit' })
 const temp = await mkdtemp(join(tmpdir(), 'ci frontend consumer-'))
 
 try {

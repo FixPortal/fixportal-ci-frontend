@@ -4,7 +4,12 @@ import { ReviewPills } from './ReviewPills'
 import type { ReviewSignal } from '../api/types'
 
 const signals: ReviewSignal[] = [
-  { name: 'CodeRabbit', state: 'outstanding', count: 3, htmlUrl: 'https://github.com/x/y/pull/7/files' },
+  {
+    name: 'CodeRabbit',
+    state: 'outstanding',
+    count: 3,
+    htmlUrl: 'https://github.com/x/y/pull/7/files',
+  },
   { name: 'Gitar', state: 'clean' },
   { name: 'CodeQL', state: 'pending' },
 ]
@@ -16,18 +21,19 @@ test('renders one pill per signal', () => {
   expect(screen.getByText('CodeQL')).toBeInTheDocument()
 })
 
-test.each([[undefined], [null], [[] as ReviewSignal[]]])('renders nothing for %o', input => {
+test.each([[undefined], [null], [[] as ReviewSignal[]]])('renders nothing for %o', (input) => {
   const { container } = render(<ReviewPills signals={input} />)
   expect(container.firstChild).toBeNull()
 })
 
-test.each([[{} as unknown as ReviewSignal[]], [3 as unknown as ReviewSignal[]], ['x' as unknown as ReviewSignal[]]])(
-  'renders nothing for non-array signals %o',
-  input => {
-    const { container } = render(<ReviewPills signals={input} />)
-    expect(container.firstChild).toBeNull()
-  },
-)
+test.each([
+  [{} as unknown as ReviewSignal[]],
+  [3 as unknown as ReviewSignal[]],
+  ['x' as unknown as ReviewSignal[]],
+])('renders nothing for non-array signals %o', (input) => {
+  const { container } = render(<ReviewPills signals={input} />)
+  expect(container.firstChild).toBeNull()
+})
 
 test('shows the count only on an outstanding signal', () => {
   render(<ReviewPills signals={signals} />)
@@ -36,11 +42,7 @@ test('shows the count only on an outstanding signal', () => {
 })
 
 test('does not show a count on a non-outstanding signal even when one is supplied', () => {
-  render(
-    <ReviewPills
-      signals={[{ name: 'Gitar', state: 'clean', count: 5 } as ReviewSignal]}
-    />,
-  )
+  render(<ReviewPills signals={[{ name: 'Gitar', state: 'clean', count: 5 } as ReviewSignal]} />)
   expect(screen.queryByText('5')).toBeNull()
 })
 
@@ -59,7 +61,9 @@ test('links an outstanding pill that has a safe url', () => {
 
 test('links a clean pill that has a safe url', () => {
   render(
-    <ReviewPills signals={[{ name: 'Gitar', state: 'clean', htmlUrl: 'https://github.com/x/y/pull/7' }]} />,
+    <ReviewPills
+      signals={[{ name: 'Gitar', state: 'clean', htmlUrl: 'https://github.com/x/y/pull/7' }]}
+    />,
   )
   const link = screen.getByRole('link', { name: /Gitar/ })
   expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7')
@@ -67,7 +71,11 @@ test('links a clean pill that has a safe url', () => {
 
 test('degrades to a static span when the url is rejected by the sanitizer', () => {
   const { container } = render(
-    <ReviewPills signals={[{ name: 'CodeRabbit', state: 'outstanding', count: 1, htmlUrl: 'javascript:alert(1)' }]} />,
+    <ReviewPills
+      signals={[
+        { name: 'CodeRabbit', state: 'outstanding', count: 1, htmlUrl: 'javascript:alert(1)' },
+      ]}
+    />,
   )
   expect(screen.queryByRole('link')).toBeNull()
   // A link-role check alone would also pass for a bare <a> with no href attribute;
@@ -108,7 +116,9 @@ test('renders nothing when every entry is malformed', () => {
 })
 
 test('an unrecognised state still renders instead of vanishing', () => {
-  render(<ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />)
+  render(
+    <ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />,
+  )
   expect(screen.getByText('FutureBot')).toBeInTheDocument()
 })
 
@@ -121,14 +131,22 @@ test('an unrecognised state gets the unknown modifier, never a class built from 
 })
 
 test('an unrecognised state carries the "status unknown" accessible label', () => {
-  render(<ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />)
+  render(
+    <ReviewPills signals={[{ name: 'FutureBot', state: 'errored' } as unknown as ReviewSignal]} />,
+  )
   expect(screen.getByText('FutureBot: status unknown')).toBeInTheDocument()
 })
 
 test('an unrecognised state never links', () => {
   const { container } = render(
     <ReviewPills
-      signals={[{ name: 'FutureBot', state: 'errored', htmlUrl: 'https://github.com/x/y/pull/7' } as unknown as ReviewSignal]}
+      signals={[
+        {
+          name: 'FutureBot',
+          state: 'errored',
+          htmlUrl: 'https://github.com/x/y/pull/7',
+        } as unknown as ReviewSignal,
+      ]}
     />,
   )
   expect(container.querySelector('a')).toBeNull()

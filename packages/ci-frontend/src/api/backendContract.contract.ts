@@ -14,7 +14,12 @@ test('accepts the backend-owned dashboard snapshot fixture', () => {
   const pullRequest = snapshot.repositories[0]?.pullRequests[0]
 
   expect(pullRequest?.reviewSignals).toEqual([
-    { name: 'CodeRabbit', state: 'clean', count: 0, htmlUrl: 'https://github.com/FixPortal/public-repo/pull/42#pullrequestreview-1' },
+    {
+      name: 'CodeRabbit',
+      state: 'clean',
+      count: 0,
+      htmlUrl: 'https://github.com/FixPortal/public-repo/pull/42#pullrequestreview-1',
+    },
     { name: 'CodeQL', state: 'outstanding', count: 2, htmlUrl: null },
     { name: 'Gitar', state: 'pending', count: null, htmlUrl: null },
     { name: 'Optional', state: 'disabled', count: null, htmlUrl: null },

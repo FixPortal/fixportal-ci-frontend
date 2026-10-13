@@ -26,14 +26,24 @@ const cssPath = fileURLToPath(new URL('./board.css', here))
 const css: string = readFileSync(cssPath, 'utf-8')
 
 describe('board.css review pill selectors', () => {
-  it.each(['clean', 'outstanding', 'pending', 'disabled', 'unknown'])('defines .chip--review-%s', state => {
-    expect(css).toContain(`.chip--review-${state}`)
-  })
+  it.each(['clean', 'outstanding', 'pending', 'disabled', 'unknown'])(
+    'defines .chip--review-%s',
+    (state) => {
+      expect(css).toContain(`.chip--review-${state}`)
+    },
+  )
 
-  it.each(['.chip--unknown', '.chip--review-pending', '.chip--review-disabled', '.chip--review-unknown'])('%s preserves text contrast', selector => {
+  it.each([
+    '.chip--unknown',
+    '.chip--review-pending',
+    '.chip--review-disabled',
+    '.chip--review-unknown',
+  ])('%s preserves text contrast', (selector) => {
     // Every rule naming the class (later, compound, pseudo-class or inside @media), not
     // just the first block: a later `.chip--unknown:hover { opacity }` must also fail.
-    const rules = [...css.matchAll(new RegExp(`([^{}]*\\${selector}(?![\\w-])[^{}]*)\\{([^}]*)\\}`, 'g'))]
+    const rules = [
+      ...css.matchAll(new RegExp(`([^{}]*\\${selector}(?![\\w-])[^{}]*)\\{([^}]*)\\}`, 'g')),
+    ]
     expect(rules.length).toBeGreaterThan(0)
     for (const [, rule, body] of rules) expect(body, rule).not.toMatch(/opacity\s*:/)
   })
@@ -95,7 +105,10 @@ describe('board.css merge affordances', () => {
     expect(css).toMatch(/\.chip--actionable\s*\{[^}]*cursor:\s*pointer/)
     expect(css).toMatch(/\.chip--actionable:disabled\s*\{[^}]*cursor:\s*default/)
   })
-  it.each(['.repo-prs__merge-all', '.repo-prs__merge-error', '.pr-card__merge-error'])('defines %s', selector => {
-    expect(css).toContain(selector)
-  })
+  it.each(['.repo-prs__merge-all', '.repo-prs__merge-error', '.pr-card__merge-error'])(
+    'defines %s',
+    (selector) => {
+      expect(css).toContain(selector)
+    },
+  )
 })

@@ -25,10 +25,10 @@
 
 ## What's in the repo
 
-| Path | Contents |
-|---|---|
-| `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library |
-| `apps/dashboard` | Thin Vite app that wires the library to a snapshot endpoint and serves it |
+| Path                   | Contents                                                                  |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `packages/ci-frontend` | `@fix-portal/ci-frontend` — the publishable React component library       |
+| `apps/dashboard`       | Thin Vite app that wires the library to a snapshot endpoint and serves it |
 
 ## See it running
 
@@ -136,31 +136,31 @@ export function App() {
 
 ### `CiBoard` props
 
-| Prop | Type | Default | Purpose |
-|---|---|---|---|
-| `adminSignal` | `boolean` | required | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable. |
-| `apiBase` | `string` | `''` | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct when running behind a proxy. |
-| `snapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | plain fetch | Guest snapshot fetcher for hosts that must attach auth headers. |
-| `snapshotCacheKey` | `string` | unset | Stable cache-key override for a custom guest fetcher. Distinct fetcher functions are isolated by default; set this to retain a row across recreated function identities. |
-| `adminSnapshotUrl` | `string` | unset | Host proxy URL for the privileged snapshot. The host must add `X-Admin-Key` server-side; never expose that secret to the browser. |
-| `adminSnapshotFetcher` | `() => Promise<DashboardSnapshot \| null>` | unset | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`. |
-| `adminSnapshotCacheKey` | `string` | unset | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`. |
-| `mergeFetcher` | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`. |
-| `logo` | `ReactNode` | text wordmark | Brand mark rendered in the dashboard header. |
-| `footerSlot` | `ReactNode` | generic footer | Footer content; pass your own to replace the default. |
-| `storageNamespace` | `string` | unset | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin. |
-| `repositoryScope` | `string` | unset | Canonical `owner/repository` identity that limits the board to one already-authorised repository. |
-| `showThemeSwitcher` | `boolean` | `true` | Shows the board's Light / Dark / System selector. |
+| Prop                    | Type                                                                          | Default        | Purpose                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adminSignal`           | `boolean`                                                                     | required       | Host-computed admin state. Private repos and admin-only controls appear only when this is `true` and an admin snapshot URL or fetcher is configured; safe links in the guest snapshot remain clickable. |
+| `apiBase`               | `string`                                                                      | `''`           | Origin of the CI backend (no trailing slash). Empty string uses relative `/api/` URLs — correct when running behind a proxy.                                                                            |
+| `snapshotFetcher`       | `() => Promise<DashboardSnapshot \| null>`                                    | plain fetch    | Guest snapshot fetcher for hosts that must attach auth headers.                                                                                                                                         |
+| `snapshotCacheKey`      | `string`                                                                      | unset          | Stable cache-key override for a custom guest fetcher. Distinct fetcher functions are isolated by default; set this to retain a row across recreated function identities.                                |
+| `adminSnapshotUrl`      | `string`                                                                      | unset          | Host proxy URL for the privileged snapshot. The host must add `X-Admin-Key` server-side; never expose that secret to the browser.                                                                       |
+| `adminSnapshotFetcher`  | `() => Promise<DashboardSnapshot \| null>`                                    | unset          | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`.                                                                                                                                  |
+| `adminSnapshotCacheKey` | `string`                                                                      | unset          | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`.                                                                                                   |
+| `mergeFetcher`          | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset          | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`.                             |
+| `logo`                  | `ReactNode`                                                                   | text wordmark  | Brand mark rendered in the dashboard header.                                                                                                                                                            |
+| `footerSlot`            | `ReactNode`                                                                   | generic footer | Footer content; pass your own to replace the default.                                                                                                                                                   |
+| `storageNamespace`      | `string`                                                                      | unset          | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin.                                                                                             |
+| `repositoryScope`       | `string`                                                                      | unset          | Canonical `owner/repository` identity that limits the board to one already-authorised repository.                                                                                                       |
+| `showThemeSwitcher`     | `boolean`                                                                     | `true`         | Shows the board's Light / Dark / System selector.                                                                                                                                                       |
 
 ### Styling
 
 The board reads ~15 CSS custom properties (`--text`, `--border`, `--brand`, `--card-bg`,
 `--font-sans`, ...).
 
-| Scenario | What to import |
-|---|---|
-| No existing design system | `tokens.css` before `board.css` — vendored light/dark token set included |
-| You already define those token names | `board.css` only — your tokens flow in automatically |
+| Scenario                             | What to import                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| No existing design system            | `tokens.css` before `board.css` — vendored light/dark token set included |
+| You already define those token names | `board.css` only — your tokens flow in automatically                     |
 
 The built-in Light / Dark / System selector applies `data-theme` to the board's own
 `.ci-page` container, so it does not alter the host page. Hide it with
@@ -218,11 +218,11 @@ See `src/api/types.ts` for the full shape.
 
 ## Compatibility
 
-| Peer dependency | Required version |
-|---|---|
-| `react` | `>=18` |
-| `react-dom` | `>=18` |
-| `@tanstack/react-query` | `>=5` |
+| Peer dependency         | Required version |
+| ----------------------- | ---------------- |
+| `react`                 | `>=18`           |
+| `react-dom`             | `>=18`           |
+| `@tanstack/react-query` | `>=5`            |
 
 The standalone Docker app and Vite dev server target Node 22 (see `Dockerfile`).
 
@@ -261,16 +261,16 @@ something.
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| nginx logs `502` + `peer closed connection in SSL handshake` | nginx resolves the HTTPS upstream hostname to an IP and connects without SNI, so the backend rejects the handshake | Pull `latest` or rebuild from source (fix: `proxy_ssl_server_name on` added 2026-06-20) |
-| Dashboard shows "waiting for snapshot" indefinitely | Backend returned `204 No Content` — no snapshot has been generated yet | Wait for the backend's first scheduled CI run, or check backend logs |
-| Container exits immediately: `Error: BACKEND_URL must be set` | `BACKEND_URL` env var was not passed to `docker run` | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command |
-| `/api/` requests return wrong paths or 404 | Trailing slash on `BACKEND_URL` causes nginx to strip the `/api/` prefix before forwarding | Remove the trailing slash from `BACKEND_URL` |
-| Dev mode ignores your backend | `VITE_CI_API_BASE` not set in `apps/dashboard/.env` | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin |
-| Dev mode sits at "Dashboard unavailable. Retrying automatically." | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173` |
-| Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
-| `TS2882` on the `board.css` / `tokens.css` imports | Your TypeScript setup has no ambient declaration for CSS modules | Add `declare module '*.css'` — see [TypeScript: CSS imports](#typescript-css-imports) |
+| Symptom                                                                                   | Cause                                                                                                                  | Fix                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| nginx logs `502` + `peer closed connection in SSL handshake`                              | nginx resolves the HTTPS upstream hostname to an IP and connects without SNI, so the backend rejects the handshake     | Pull `latest` or rebuild from source (fix: `proxy_ssl_server_name on` added 2026-06-20)                  |
+| Dashboard shows "waiting for snapshot" indefinitely                                       | Backend returned `204 No Content` — no snapshot has been generated yet                                                 | Wait for the backend's first scheduled CI run, or check backend logs                                     |
+| Container exits immediately: `Error: BACKEND_URL must be set`                             | `BACKEND_URL` env var was not passed to `docker run`                                                                   | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command                                 |
+| `/api/` requests return wrong paths or 404                                                | Trailing slash on `BACKEND_URL` causes nginx to strip the `/api/` prefix before forwarding                             | Remove the trailing slash from `BACKEND_URL`                                                             |
+| Dev mode ignores your backend                                                             | `VITE_CI_API_BASE` not set in `apps/dashboard/.env`                                                                    | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin                        |
+| Dev mode sits at "Dashboard unavailable. Retrying automatically."                         | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173`                                     |
+| Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both                                                                  | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
+| `TS2882` on the `board.css` / `tokens.css` imports                                        | Your TypeScript setup has no ambient declaration for CSS modules                                                       | Add `declare module '*.css'` — see [TypeScript: CSS imports](#typescript-css-imports)                    |
 
 ## Contributing
 

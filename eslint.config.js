@@ -27,7 +27,7 @@ export default defineConfig([
       // Every SonarJS rule from the recommended set runs as a warning, not an error,
       // so findings surface in the editor and CI logs without failing `eslint .`.
       ...Object.fromEntries(
-        Object.keys(sonarjs.configs.recommended.rules ?? {}).map(name => [name, 'warn']),
+        Object.keys(sonarjs.configs.recommended.rules ?? {}).map((name) => [name, 'warn']),
       ),
       // Silence SonarJS rules that are stylistic policy or false-positive noise here.
       'sonarjs/file-header': 'off',

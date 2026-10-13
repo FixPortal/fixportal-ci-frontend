@@ -2,7 +2,11 @@ import { expect, test } from 'vitest'
 import { reviewSignalLabel } from './reviewSignalLabel'
 import type { ReviewSignal } from '../api/types'
 
-const signal = (over: Partial<ReviewSignal>): ReviewSignal => ({ name: 'CodeRabbit', state: 'clean', ...over })
+const signal = (over: Partial<ReviewSignal>): ReviewSignal => ({
+  name: 'CodeRabbit',
+  state: 'clean',
+  ...over,
+})
 
 test.each([
   [signal({ state: 'clean' }), 'CodeRabbit: clean'],
@@ -29,9 +33,11 @@ test('falls back for an Object.prototype member name rather than stringifying a 
 })
 
 test('treats a NaN count as absent instead of rendering "NaN outstanding"', () => {
-  expect(reviewSignalLabel(signal({ state: 'outstanding', count: NaN }))).toBe('CodeRabbit: outstanding')
+  expect(reviewSignalLabel(signal({ state: 'outstanding', count: NaN }))).toBe(
+    'CodeRabbit: outstanding',
+  )
 })
 
-test.each([2.5, -1])('treats a non-count number %s as absent', count => {
+test.each([2.5, -1])('treats a non-count number %s as absent', (count) => {
   expect(reviewSignalLabel(signal({ state: 'outstanding', count }))).toBe('CodeRabbit: outstanding')
 })

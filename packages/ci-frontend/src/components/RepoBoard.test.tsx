@@ -5,8 +5,14 @@ import { RepoBoard } from './RepoBoard'
 
 function repo(over: Partial<RepositorySnapshot>): RepositorySnapshot {
   return {
-    name: 'fixportal-docs', htmlUrl: '', private: false,
-    workflows: [], pullRequests: [], metrics: null, deploys: [], packages: [],
+    name: 'fixportal-docs',
+    htmlUrl: '',
+    private: false,
+    workflows: [],
+    pullRequests: [],
+    metrics: null,
+    deploys: [],
+    packages: [],
     ...over,
   }
 }
@@ -28,12 +34,18 @@ describe('RepoBoard GitHub link', () => {
   it('renders the GitHub link for private repos without admin gating', () => {
     render(
       <RepoBoard
-        repository={repo({ name: 'fixportal-engine', htmlUrl: 'https://github.com/FixPortal/fixportal-engine', private: true })}
+        repository={repo({
+          name: 'fixportal-engine',
+          htmlUrl: 'https://github.com/FixPortal/fixportal-engine',
+          private: true,
+        })}
         collapsed={false}
         onToggle={() => {}}
       />,
     )
-    expect(screen.getByRole('link', { name: /open fixportal-engine on github/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /open fixportal-engine on github/i }),
+    ).toBeInTheDocument()
   })
 
   it('renders a static "GitHub" label, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
@@ -51,13 +63,14 @@ describe('RepoBoard GitHub link', () => {
 
 describe('RepoBoard heading structure', () => {
   it('wraps the collapse toggle in a level-2 heading (disclosure pattern)', () => {
-    render(
-      <RepoBoard repository={repo({})} collapsed={false} onToggle={() => {}} />,
-    )
+    render(<RepoBoard repository={repo({})} collapsed={false} onToggle={() => {}} />)
     const heading = screen.getByRole('heading', { level: 2, name: 'fixportal-docs' })
     expect(heading).toBeInTheDocument()
     // The toggle keeps its own role/name inside the heading.
-    expect(screen.getByRole('button', { name: 'fixportal-docs' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'fixportal-docs' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
   })
 })
 

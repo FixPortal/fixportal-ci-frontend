@@ -16,7 +16,7 @@ export function LegendRow() {
         type="button"
         className="legend-row__toggle"
         aria-expanded={open}
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
       >
         Legend {open ? '▴' : '▾'}
       </button>
@@ -34,7 +34,9 @@ export function LegendRow() {
               <span className="legend-row__noci" aria-hidden="true" />
               No-CI
             </span>
-            <span className="legend-row__sep" aria-hidden="true">·</span>
+            <span className="legend-row__sep" aria-hidden="true">
+              ·
+            </span>
             <span className="legend-row__gloss">
               <b>CI</b> = workflow runs · <b>CD</b> = deploys &amp; packages
             </span>
@@ -42,19 +44,49 @@ export function LegendRow() {
           <div className="legend-row__scanning">
             <span className="legend-row__label">Review pills</span>
             <span className="legend-row__def-desc">
-              GitHub CodeQL, Code Quality and Secret Scanning are enabled on public repositories only,
-              so those pills do not appear on private ones and never hold back a Ready to merge verdict.
+              GitHub CodeQL, Code Quality and Secret Scanning are enabled on public repositories
+              only, so those pills do not appear on private ones and never hold back a Ready to
+              merge verdict.
             </span>
           </div>
           <div className="legend-row__metrics">
-            <a className="legend-row__label" href="https://github.com/terryyin/lizard" target="_blank" rel="noopener noreferrer">Lizard metrics</a>
-            <span><b>NLOC</b> <span className="legend-row__def-desc">non-comment lines of code</span></span>
-            <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><a href="https://en.wikipedia.org/wiki/Cyclomatic_complexity" target="_blank" rel="noopener noreferrer"><b>avg CCN</b></a> <span className="legend-row__def-desc">cyclomatic complexity</span></span>
-            <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><b>functions</b> <span className="legend-row__def-desc">count</span></span>
-            <span className="legend-row__sep" aria-hidden="true">·</span>
-            <span><b>complex</b> <span className="legend-row__def-desc">functions over CCN&nbsp;15</span></span>
+            <a
+              className="legend-row__label"
+              href="https://github.com/terryyin/lizard"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Lizard metrics
+            </a>
+            <span>
+              <b>NLOC</b> <span className="legend-row__def-desc">non-comment lines of code</span>
+            </span>
+            <span className="legend-row__sep" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              <a
+                href="https://en.wikipedia.org/wiki/Cyclomatic_complexity"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <b>avg CCN</b>
+              </a>{' '}
+              <span className="legend-row__def-desc">cyclomatic complexity</span>
+            </span>
+            <span className="legend-row__sep" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              <b>functions</b> <span className="legend-row__def-desc">count</span>
+            </span>
+            <span className="legend-row__sep" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              <b>complex</b>{' '}
+              <span className="legend-row__def-desc">functions over CCN&nbsp;15</span>
+            </span>
           </div>
         </div>
       )}

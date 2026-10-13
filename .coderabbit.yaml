@@ -31,7 +31,7 @@ reviews:
     enabled: false
     # `review-high-manual` is a durable manual override for an otherwise NORMAL PR and is
     # never removed; review-tier.yml no longer re-applies `review-high` for it.
-    labels: ["review-high", "review-high-manual"]
+    labels: ['review-high', 'review-high-manual']
     drafts: false
     # Still load-bearing under label triggering: once a PR carries the label, every later push
     # re-reviews it and spends from the same pool. CodeRabbit ships 5; its own docs suggest 1-2.
@@ -60,19 +60,19 @@ reviews:
     # silently and by accident. What gets skipped is decided by PATH via review-policy.json and
     # by AUTHOR here — never by a title, which can lie about what a PR touches.
     ignore_usernames:
-      - "dependabot[bot]"
-      - "renovate[bot]"
+      - 'dependabot[bot]'
+      - 'renovate[bot]'
 
   path_filters:
-    - "!**/bin/**"
-    - "!**/obj/**"
-    - "!**/dist/**"
-    - "!**/build/**"
-    - "!**/coverage/**"
-    - "!**/*.lock"
-    - "!**/package-lock.json"
-    - "!**/pnpm-lock.yaml"
-    - "!**/yarn.lock"
+    - '!**/bin/**'
+    - '!**/obj/**'
+    - '!**/dist/**'
+    - '!**/build/**'
+    - '!**/coverage/**'
+    - '!**/*.lock'
+    - '!**/package-lock.json'
+    - '!**/pnpm-lock.yaml'
+    - '!**/yarn.lock'
 
   instructions: |
     Review as a senior engineer. Prioritise correctness, security, maintainability,

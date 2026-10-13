@@ -28,7 +28,9 @@ describe('useHideNoCi', () => {
 
   it('does not overwrite storage when the initial read throws, and persists later toggles', () => {
     localStorage.setItem('ci-dashboard:hide-no-ci', 'true')
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage denied')
+    })
     const { result } = renderHook(() => useHideNoCi())
     getItem.mockRestore()
     expect(result.current.hidden).toBe(false)

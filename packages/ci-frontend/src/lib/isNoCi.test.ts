@@ -5,8 +5,13 @@ import { isNoCi } from './isNoCi'
 function repo(workflows: RepositorySnapshot['workflows']): RepositorySnapshot {
   return {
     workflows,
-    name: 'r', htmlUrl: '', private: false,
-    pullRequests: [], metrics: null, deploys: [], packages: [],
+    name: 'r',
+    htmlUrl: '',
+    private: false,
+    pullRequests: [],
+    metrics: null,
+    deploys: [],
+    packages: [],
   }
 }
 
@@ -15,6 +20,8 @@ describe('isNoCi', () => {
     expect(isNoCi(repo([]))).toBe(true)
   })
   it('is false when a repo has at least one workflow', () => {
-    expect(isNoCi(repo([{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }]))).toBe(false)
+    expect(isNoCi(repo([{ name: 'ci', file: 'ci.yml', state: 'success', lastRun: null }]))).toBe(
+      false,
+    )
   })
 })

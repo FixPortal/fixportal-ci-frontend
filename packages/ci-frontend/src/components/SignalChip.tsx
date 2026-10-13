@@ -32,8 +32,18 @@ export const SignalChip = memo(function SignalChip({ workflow }: { workflow: Wor
   )
   // Open the run in a new tab so the always-on board never navigates away.
   return linkable ? (
-    <a className={className} href={href} title={stateLabel(workflow.state)} target="_blank" rel="noopener noreferrer">{body}</a>
+    <a
+      className={className}
+      href={href}
+      title={stateLabel(workflow.state)}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {body}
+    </a>
   ) : (
-    <span className={className} title={stateLabel(workflow.state)}>{body}</span>
+    <span className={className} title={stateLabel(workflow.state)}>
+      {body}
+    </span>
   )
 })

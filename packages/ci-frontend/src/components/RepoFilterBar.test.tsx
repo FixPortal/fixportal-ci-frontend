@@ -45,7 +45,7 @@ describe('RepoFilterBar', () => {
   it('renders Running first in the CI-status group', () => {
     setup()
     const group = screen.getByRole('group', { name: 'CI Status' })
-    const labels = [...group.querySelectorAll('button')].map(b => b.textContent)
+    const labels = [...group.querySelectorAll('button')].map((b) => b.textContent)
     expect(labels).toEqual(['Running', 'Failing', 'Passing', 'No-CI'])
   })
   it('fires the matching toggle handler when a chip is clicked', async () => {
@@ -65,6 +65,9 @@ describe('RepoFilterBar', () => {
     filters.ciStatus.add('failing')
     setup({ filters })
     expect(screen.getByRole('button', { name: /failing/i })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: /passing/i })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /passing/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
   })
 })

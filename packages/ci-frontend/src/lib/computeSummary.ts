@@ -15,18 +15,26 @@ const NLOC_QUICKFIXN_KEY = 'nloc-quickfixn'
 // is stable regardless of the filtered repo set. Mirrors what the server sends
 // in snapshot.data.summary so admin and guest panels look the same.
 const ALWAYS_VISIBLE_KEYS = new Set([
-  'repos', 'workflows', NLOC_FIXPORTAL_KEY, NLOC_QUICKFIXN_KEY, 'deploys', 'packages', // inventory
-  'open-prs',                           // Review panel (carries next-in-queue / last-merged)
-  'running', 'failing', 'no-ci',        // core CI status
-  'deploys-running', 'deploys-failing', // deploy lane (zero = nothing deploying / all clean)
-  'packages-failing',                   // package lane
+  'repos',
+  'workflows',
+  NLOC_FIXPORTAL_KEY,
+  NLOC_QUICKFIXN_KEY,
+  'deploys',
+  'packages', // inventory
+  'open-prs', // Review panel (carries next-in-queue / last-merged)
+  'running',
+  'failing',
+  'no-ci', // core CI status
+  'deploys-running',
+  'deploys-failing', // deploy lane (zero = nothing deploying / all clean)
+  'packages-failing', // package lane
 ])
 
 // An nloc bucket has "no value" when it has contributing repos but none of them
 // produced metrics — e.g. the metrics scanner failed host-wide. Zero
 // contributing repos is a true zero, not a missing measurement.
 function nlocUnavailable(repos: RepositorySnapshot[]): boolean {
-  return repos.length > 0 && repos.every(r => r.metrics === null)
+  return repos.length > 0 && repos.every((r) => r.metrics === null)
 }
 
 // Marks the enrichment-derived nloc tiles on any summary array — the locally
@@ -37,11 +45,13 @@ export function withNlocAvailability(
   repos: RepositorySnapshot[],
   nlocSplitRepo: string = DEFAULT_NLOC_SPLIT_REPO,
 ): SummaryCount[] {
-  const fixportalRepos = repos.filter(r => r.name !== nlocSplitRepo)
-  const quickfixnRepos = repos.filter(r => r.name === nlocSplitRepo)
-  return summary.map(c => {
-    if (c.key === NLOC_FIXPORTAL_KEY) return { ...c, unavailable: nlocUnavailable(fixportalRepos) || undefined }
-    if (c.key === NLOC_QUICKFIXN_KEY) return { ...c, unavailable: nlocUnavailable(quickfixnRepos) || undefined }
+  const fixportalRepos = repos.filter((r) => r.name !== nlocSplitRepo)
+  const quickfixnRepos = repos.filter((r) => r.name === nlocSplitRepo)
+  return summary.map((c) => {
+    if (c.key === NLOC_FIXPORTAL_KEY)
+      return { ...c, unavailable: nlocUnavailable(fixportalRepos) || undefined }
+    if (c.key === NLOC_QUICKFIXN_KEY)
+      return { ...c, unavailable: nlocUnavailable(quickfixnRepos) || undefined }
     return c
   })
 }
@@ -52,33 +62,37 @@ export function computeSummary(
   repos: RepositorySnapshot[],
   nlocSplitRepo: string = DEFAULT_NLOC_SPLIT_REPO,
 ): SummaryCount[] {
-  const workflows = repos.flatMap(r => r.workflows)
-  const deploys = repos.flatMap(r => r.deploys ?? [])
-  const packages = repos.flatMap(r => r.packages ?? [])
-  const openPrs = repos.flatMap(r => r.pullRequests)
+  const workflows = repos.flatMap((r) => r.workflows)
+  const deploys = repos.flatMap((r) => r.deploys ?? [])
+  const packages = repos.flatMap((r) => r.packages ?? [])
+  const openPrs = repos.flatMap((r) => r.pullRequests)
 
   const nlocFixportal = repos
-    .filter(r => r.name !== nlocSplitRepo)
+    .filter((r) => r.name !== nlocSplitRepo)
     .reduce((acc, r) => acc + (r.metrics?.nloc ?? 0), 0)
   const nlocQuickfixn = repos
-    .filter(r => r.name === nlocSplitRepo)
+    .filter((r) => r.name === nlocSplitRepo)
     .reduce((acc, r) => acc + (r.metrics?.nloc ?? 0), 0)
 
   const all: SummaryCount[] = [
     { key: 'repos', count: repos.length },
     { key: 'workflows', count: workflows.length },
-    { key: 'failing', count: workflows.filter(w => w.state === 'failure').length },
-    { key: 'running', count: workflows.filter(w => w.state === 'running').length },
+    { key: 'failing', count: workflows.filter((w) => w.state === 'failure').length },
+    { key: 'running', count: workflows.filter((w) => w.state === 'running').length },
     { key: 'no-ci', count: repos.filter(isNoCi).length },
     { key: 'open-prs', count: openPrs.length },
     { key: NLOC_FIXPORTAL_KEY, count: nlocFixportal },
     { key: NLOC_QUICKFIXN_KEY, count: nlocQuickfixn },
     { key: 'deploys', count: deploys.length },
     { key: 'packages', count: packages.length },
-    { key: 'deploys-failing', count: deploys.filter(d => d.state === 'failure').length },
-    { key: 'deploys-running', count: deploys.filter(d => d.state === 'running').length },
-    { key: 'packages-failing', count: packages.filter(p => p.state === 'failure').length },
+    { key: 'deploys-failing', count: deploys.filter((d) => d.state === 'failure').length },
+    { key: 'deploys-running', count: deploys.filter((d) => d.state === 'running').length },
+    { key: 'packages-failing', count: packages.filter((p) => p.state === 'failure').length },
   ]
 
-  return withNlocAvailability(all.filter(c => ALWAYS_VISIBLE_KEYS.has(c.key) || c.count > 0), repos, nlocSplitRepo)
+  return withNlocAvailability(
+    all.filter((c) => ALWAYS_VISIBLE_KEYS.has(c.key) || c.count > 0),
+    repos,
+    nlocSplitRepo,
+  )
 }

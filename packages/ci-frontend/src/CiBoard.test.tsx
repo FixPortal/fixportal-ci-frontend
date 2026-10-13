@@ -56,9 +56,14 @@ describe('CiBoard landmark structure', () => {
       />,
     )
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' }),
+    ).toBeInTheDocument()
     // Namespaced target id: co-hosted boards on one page must not collide.
-    expect(screen.getByRole('link', { name: /skip to content/i })).toHaveAttribute('href', '#ci-main-a11y-structure')
+    expect(screen.getByRole('link', { name: /skip to content/i })).toHaveAttribute(
+      'href',
+      '#ci-main-a11y-structure',
+    )
     expect(document.getElementById('ci-main-a11y-structure')).not.toBeNull()
   })
 })
@@ -107,9 +112,7 @@ describe('CiBoard admin source gating', () => {
       />,
     )
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Rebase-merge PR #42' }),
-    )
+    await userEvent.click(await screen.findByRole('button', { name: 'Rebase-merge PR #42' }))
 
     expect(mergeFetcher).toHaveBeenCalledOnce()
     expect(mergeFetcher).toHaveBeenCalledWith('ci-frontend', 42, 'sha-42')
@@ -147,7 +150,8 @@ describe('CiBoard snapshot retry integration', () => {
   beforeEach(() => localStorage.clear())
 
   it('surfaces a persistent fetch failure and recovers through the Retry now action', async () => {
-    const snapshotFetcher = vi.fn()
+    const snapshotFetcher = vi
+      .fn()
       .mockRejectedValueOnce(new Error('temporary failure'))
       .mockRejectedValueOnce(new Error('temporary failure'))
       .mockResolvedValue(snapshot)
@@ -159,7 +163,9 @@ describe('CiBoard snapshot retry integration', () => {
       />,
     )
 
-    await waitFor(() => expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument(), { timeout: 5_000 })
+    await waitFor(() => expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument(), {
+      timeout: 5_000,
+    })
     expect(snapshotFetcher).toHaveBeenCalledTimes(2)
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry now' }))
@@ -182,7 +188,9 @@ describe('CiBoard controlled theme', () => {
       />,
     )
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'CI Dashboard' }),
+    ).toBeInTheDocument()
     expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'dark')
     expect(screen.queryByRole('combobox', { name: 'Select theme' })).not.toBeInTheDocument()
   })
@@ -222,9 +230,15 @@ describe('CiBoard controlled theme', () => {
   it('keeps a saved theme when the initial read throws, and persists the next user choice', async () => {
     const key = 'ci:theme:theme-denied'
     localStorage.setItem(key, 'dark')
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage denied')
+    })
     render(
-      <CiBoard adminSignal={false} snapshotFetcher={async () => snapshot} storageNamespace="theme-denied" />,
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={async () => snapshot}
+        storageNamespace="theme-denied"
+      />,
     )
     getItem.mockRestore()
 

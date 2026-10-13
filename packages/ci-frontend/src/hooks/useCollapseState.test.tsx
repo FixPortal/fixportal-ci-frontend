@@ -41,7 +41,9 @@ describe('useCollapseState', () => {
 
   it('does not overwrite storage when the initial read throws', () => {
     localStorage.setItem('ci-dashboard:collapsed', JSON.stringify(['x']))
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage denied')
+    })
     const { result } = renderHook(() => useCollapseState())
     getItem.mockRestore()
     expect(result.current.isCollapsed('x')).toBe(false)

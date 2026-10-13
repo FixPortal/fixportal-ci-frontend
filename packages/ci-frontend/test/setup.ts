@@ -30,7 +30,9 @@ globalThis.ResizeObserver = class ResizeObserver {
 // cleanup() in their own afterEach are unaffected -- a double-call is a no-op.
 import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
-afterEach(() => { cleanup() })
+afterEach(() => {
+  cleanup()
+})
 
 // jsdom ships <dialog> as throwing "Not implemented" stubs for the imperative
 // API. PullRequestStepper calls dialogRef.current.showModal() on mount, so

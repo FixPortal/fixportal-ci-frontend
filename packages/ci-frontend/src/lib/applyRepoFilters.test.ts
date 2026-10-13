@@ -5,8 +5,14 @@ import { applyRepoFilters, emptyFilters, type RepoFilters } from './applyRepoFil
 
 function repo(over: Partial<RepositorySnapshot>): RepositorySnapshot {
   return {
-    name: 'fixportal-docs', htmlUrl: '', private: false,
-    workflows: [], pullRequests: [], metrics: null, deploys: [], packages: [],
+    name: 'fixportal-docs',
+    htmlUrl: '',
+    private: false,
+    workflows: [],
+    pullRequests: [],
+    metrics: null,
+    deploys: [],
+    packages: [],
     ...over,
   }
 }
@@ -22,9 +28,20 @@ const passing = repo({ name: 'portal', workflows: [wf('success')] })
 const running = repo({ name: 'web', workflows: [wf('running')] })
 const noCi = repo({ name: 'docs', workflows: [] })
 const privatePassing = repo({ name: 'secret', private: true, workflows: [wf('success')] })
-const withPr = repo({ name: 'review', workflows: [wf('success')], pullRequests: [
-  { number: 181, title: 'FIX Decoder', author: 'a', htmlUrl: '', isDraft: false, createdAt: '2026-01-01' },
-] })
+const withPr = repo({
+  name: 'review',
+  workflows: [wf('success')],
+  pullRequests: [
+    {
+      number: 181,
+      title: 'FIX Decoder',
+      author: 'a',
+      htmlUrl: '',
+      isDraft: false,
+      createdAt: '2026-01-01',
+    },
+  ],
+})
 const all = [failing, passing, running, noCi, privatePassing, withPr]
 
 function pr(number: number, readyToMerge?: boolean | null) {
@@ -50,7 +67,7 @@ describe('applyRepoFilters — readyToMerge', () => {
   const pool = [ready, notReady, undetermined, absent, mixed, noPrs]
 
   it('keeps only repos with at least one ready pull request', () => {
-    const kept = applyRepoFilters(pool, filters({ readyToMerge: true })).map(r => r.name)
+    const kept = applyRepoFilters(pool, filters({ readyToMerge: true })).map((r) => r.name)
     expect(kept).toEqual(['ready', 'mixed'])
   })
 
@@ -71,7 +88,7 @@ describe('applyRepoFilters — readyToMerge', () => {
       [ready, readyPrivate],
       filters({ readyToMerge: true, visibility: new Set(['private'] as const) }),
     )
-    expect(kept.map(r => r.name)).toEqual(['hidden'])
+    expect(kept.map((r) => r.name)).toEqual(['hidden'])
   })
 })
 
@@ -81,14 +98,18 @@ describe('applyRepoFilters', () => {
   })
 
   it('matches the search substring case-insensitively against repo name', () => {
-    expect(applyRepoFilters(all, filters({ search: 'ENG' })).map(r => r.name)).toEqual(['engine'])
+    expect(applyRepoFilters(all, filters({ search: 'ENG' })).map((r) => r.name)).toEqual(['engine'])
     expect(applyRepoFilters(all, filters({ search: '  ' }))).toEqual(all) // whitespace-only = no filter
   })
 
   it('matches the search against open PR titles and numbers', () => {
-    expect(applyRepoFilters(all, filters({ search: 'decoder' })).map(r => r.name)).toEqual(['review'])
-    expect(applyRepoFilters(all, filters({ search: '181' })).map(r => r.name)).toEqual(['review'])
-    expect(applyRepoFilters(all, filters({ search: '#181' })).map(r => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ search: 'decoder' })).map((r) => r.name)).toEqual([
+      'review',
+    ])
+    expect(applyRepoFilters(all, filters({ search: '181' })).map((r) => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ search: '#181' })).map((r) => r.name)).toEqual([
+      'review',
+    ])
     expect(applyRepoFilters(all, filters({ search: '#' }))).toEqual([]) // bare # is not "every repo with a PR"
   })
 
@@ -100,12 +121,12 @@ describe('applyRepoFilters', () => {
 
   it('within the CI-status group, OR across selected buckets', () => {
     const out = applyRepoFilters(all, filters({ ciStatus: new Set(['failing', 'no-ci']) }))
-    expect(out.map(r => r.name).sort()).toEqual(['docs', 'engine'])
+    expect(out.map((r) => r.name).sort()).toEqual(['docs', 'engine'])
   })
 
   it('buckets a running repo under the running chip', () => {
     const out = applyRepoFilters(all, filters({ ciStatus: new Set(['running']) }))
-    expect(out.map(r => r.name)).toEqual(['web'])
+    expect(out.map((r) => r.name)).toEqual(['web'])
   })
   it('buckets a repo with both a failing and a running workflow as failing', () => {
     const mixed = repo({ name: 'mixed', workflows: [wf('failure'), wf('running')] })
@@ -115,24 +136,31 @@ describe('applyRepoFilters', () => {
   it('excludes unselected buckets / all-unknown repos when any CI-status chip is selected', () => {
     const out = applyRepoFilters(all, filters({ ciStatus: new Set(['passing']) }))
     expect(out).not.toContain(running)
-    expect(out.map(r => r.name).sort()).toEqual(['portal', 'review', 'secret'])
+    expect(out.map((r) => r.name).sort()).toEqual(['portal', 'review', 'secret'])
   })
 
   it('hasOpenPrs keeps only repos with >=1 open PR', () => {
-    expect(applyRepoFilters(all, filters({ hasOpenPrs: true })).map(r => r.name)).toEqual(['review'])
+    expect(applyRepoFilters(all, filters({ hasOpenPrs: true })).map((r) => r.name)).toEqual([
+      'review',
+    ])
   })
 
   it('ANDs across groups', () => {
-    const out = applyRepoFilters(all, filters({
-      visibility: new Set(['public']),
-      ciStatus: new Set(['passing']),
-      hasOpenPrs: true,
-    }))
-    expect(out.map(r => r.name)).toEqual(['review'])
+    const out = applyRepoFilters(
+      all,
+      filters({
+        visibility: new Set(['public']),
+        ciStatus: new Set(['passing']),
+        hasOpenPrs: true,
+      }),
+    )
+    expect(out.map((r) => r.name)).toEqual(['review'])
   })
 
   it('yields an empty list when filters exclude everything', () => {
-    expect(applyRepoFilters(all, filters({ ciStatus: new Set(['failing']), hasOpenPrs: true }))).toEqual([])
+    expect(
+      applyRepoFilters(all, filters({ ciStatus: new Set(['failing']), hasOpenPrs: true })),
+    ).toEqual([])
   })
 
   it('emptyFilters returns fresh Sets each call (no shared mutable state)', () => {

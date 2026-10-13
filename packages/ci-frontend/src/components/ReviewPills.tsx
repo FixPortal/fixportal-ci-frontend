@@ -20,7 +20,11 @@ const KNOWN_STATES: ReadonlySet<string> = new Set(['clean', 'outstanding', 'pend
 // Memoised for the same reason as SignalChip: on a no-change poll tick React Query
 // preserves the signal array's reference (structural sharing), so the row skips
 // re-rendering every 20 seconds.
-export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: ReviewSignal[] | null }) {
+export const ReviewPills = memo(function ReviewPills({
+  signals,
+}: {
+  signals?: ReviewSignal[] | null
+}) {
   if (!Array.isArray(signals) || signals.length === 0) return null
   // The snapshot boundary does no runtime validation of the array's CONTENTS (this is a
   // published library -- consumers point it at their own backends), so a null or malformed
@@ -31,7 +35,11 @@ export const ReviewPills = memo(function ReviewPills({ signals }: { signals?: Re
   // rest of the session. Skip bad entries instead. Same posture as reviewSignalLabel's
   // Record<string, string> keying: never assume the snapshot is total.
   const wellFormed = signals.filter(
-    (s): s is ReviewSignal => typeof s === 'object' && s !== null && typeof s.name === 'string' && typeof s.state === 'string',
+    (s): s is ReviewSignal =>
+      typeof s === 'object' &&
+      s !== null &&
+      typeof s.name === 'string' &&
+      typeof s.state === 'string',
   )
   if (wellFormed.length === 0) return null
   return (

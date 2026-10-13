@@ -70,20 +70,26 @@ const snapshot = {
   ciTrend: [],
 }
 
-async function openDashboard(page: Page, holdResponse = false, refreshedAt = new Date().toISOString()) {
+async function openDashboard(
+  page: Page,
+  holdResponse = false,
+  refreshedAt = new Date().toISOString(),
+) {
   let release!: () => void
-  const responseReady = new Promise<void>(resolve => { release = resolve })
+  const responseReady = new Promise<void>((resolve) => {
+    release = resolve
+  })
   if (!holdResponse) release()
-  await page.route('**/api/dashboard/snapshot', async route => {
+  await page.route('**/api/dashboard/snapshot', async (route) => {
     await responseReady
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         ...snapshot,
         refreshedAt,
-        repositories: snapshot.repositories.map(repository => ({
+        repositories: snapshot.repositories.map((repository) => ({
           ...repository,
-          workflows: repository.workflows.map(workflow => ({
+          workflows: repository.workflows.map((workflow) => ({
             ...workflow,
             lastRun: workflow.lastRun ? { ...workflow.lastRun, updatedAt: refreshedAt } : null,
           })),
@@ -98,20 +104,25 @@ async function openDashboard(page: Page, holdResponse = false, refreshedAt = new
     await paintedFrames(page)
     release()
   }
-  await expect(page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true }),
+  ).toBeVisible()
 }
 
 async function paintedFrames(page: Page) {
-  await page.evaluate(() => new Promise<void>(resolve => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-  }))
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }),
+  )
 }
 
 async function installClsObserver(page: Page) {
   await page.addInitScript(() => {
     const state = window
     state.__cls = 0
-    state.__clsObserver = new PerformanceObserver(list => {
+    state.__clsObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         const shift = entry as PerformanceEntry & { value: number; hadRecentInput: boolean }
         if (!shift.hadRecentInput) state.__cls += shift.value
@@ -145,13 +156,15 @@ test('keeps cold-load CLS within the good threshold', async ({ page }) => {
     }
     return state.__cls
   })
-  expect(cls).toBeLessThanOrEqual(0.10)
+  expect(cls).toBeLessThanOrEqual(0.1)
 })
 
 test('reserves the first viewport while the dashboard loads', async ({ page }) => {
   let release!: () => void
-  const responseReady = new Promise<void>(resolve => { release = resolve })
-  await page.route('**/api/dashboard/snapshot', async route => {
+  const responseReady = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/api/dashboard/snapshot', async (route) => {
     await responseReady
     await route.fulfill({
       contentType: 'application/json',
@@ -161,9 +174,13 @@ test('reserves the first viewport while the dashboard loads', async ({ page }) =
   await page.addInitScript(() => localStorage.setItem('ci:theme', 'light'))
   await page.goto('/')
   await expect(page.getByText('Loading dashboard…')).toBeVisible()
-  const loadingHeight = await page.locator('main').evaluate(element => element.getBoundingClientRect().height)
+  const loadingHeight = await page
+    .locator('main')
+    .evaluate((element) => element.getBoundingClientRect().height)
   release()
-  await expect(page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'fixportal-ci-frontend', exact: true }),
+  ).toBeVisible()
   expect(loadingHeight).toBeGreaterThanOrEqual(720)
 })
 
@@ -174,5 +191,8 @@ test('preserves the desktop dashboard', async ({ page }) => {
   await expect(page.getByTitle('CodeRabbit: clean')).toBeVisible()
   await expect(page.getByTitle('Gitar: clean')).toBeVisible()
   await expect(page.getByTitle('Ready to merge')).toBeVisible()
-  await expect(page).toHaveScreenshot('dashboard-desktop.png', { animations: 'disabled', maxDiffPixelRatio: 0.017 })
+  await expect(page).toHaveScreenshot('dashboard-desktop.png', {
+    animations: 'disabled',
+    maxDiffPixelRatio: 0.017,
+  })
 })

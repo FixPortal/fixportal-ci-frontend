@@ -40,6 +40,10 @@ type PublicTypes = [
   WorkflowSnapshot,
 ]
 
-const props: PublicTypes[0] = { adminSignal: false, apiBase: DEFAULT_CI_API_BASE, footerSlot: <DefaultFooter /> }
+const props: PublicTypes[0] = {
+  adminSignal: false,
+  apiBase: DEFAULT_CI_API_BASE,
+  footerSlot: <DefaultFooter />,
+}
 
 createRoot(document.createElement('div')).render(<CiBoard {...props} />)

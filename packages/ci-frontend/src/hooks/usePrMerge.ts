@@ -35,9 +35,12 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   // would both see the pre-render state and both start the same merge.
   const inFlight = useRef(new Set<string>())
 
-  useEffect(() => () => {
-    for (const timer of receiptTimers.current) clearTimeout(timer)
-  }, [])
+  useEffect(
+    () => () => {
+      for (const timer of receiptTimers.current) clearTimeout(timer)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (previousSnapshotOrg.current === snapshotOrg) return
@@ -55,25 +58,28 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   const startMerge = useCallback((key: string) => {
     if (inFlight.current.has(key)) return false
     inFlight.current.add(key)
-    setMerging(current => new Set(current).add(key))
+    setMerging((current) => new Set(current).add(key))
     return true
   }, [])
 
   const endMerge = useCallback((key: string) => {
     inFlight.current.delete(key)
-    setMerging(current => {
+    setMerging((current) => {
       const next = new Set(current)
       next.delete(key)
       return next
     })
   }, [])
 
-  const endMergeIfCurrent = useCallback((key: string, generation: number) => {
-    if (generation === sourceGeneration.current) endMerge(key)
-  }, [endMerge])
+  const endMergeIfCurrent = useCallback(
+    (key: string, generation: number) => {
+      if (generation === sourceGeneration.current) endMerge(key)
+    },
+    [endMerge],
+  )
 
   const dismissError = useCallback((repo: string) => {
-    setErrors(current => {
+    setErrors((current) => {
       if (!current.has(repo)) return current
       const next = new Map(current)
       next.delete(repo)
@@ -82,20 +88,20 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   }, [])
 
   const setRepoError = useCallback((repo: string, message: string) => {
-    setErrors(current => new Map(current).set(repo, message))
+    setErrors((current) => new Map(current).set(repo, message))
   }, [])
 
   const markMerged = useCallback((repo: string, pullNumber: number) => {
     const key = prMergeKey(repo, pullNumber)
-    setMerged(current => {
+    setMerged((current) => {
       const next = new Set(current).add(key)
       // ponytail: cap merged keys; prune against snapshots if 1,000 merges between polls becomes realistic.
       if (next.size > MAX_MERGED_KEYS) next.delete(next.values().next().value!)
       return next
     })
-    setReceipts(current => new Set(current).add(key))
+    setReceipts((current) => new Set(current).add(key))
     const timer = setTimeout(() => {
-      setReceipts(current => {
+      setReceipts((current) => {
         const next = new Set(current)
         next.delete(key)
         return next
@@ -184,7 +190,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           }
           if (generation !== sourceGeneration.current) return
           if (!result.ok) {
-            setRepoError(repo, `Merged ${merged} of ${attempted}; failed on #${n}: ${result.message}`)
+            setRepoError(
+              repo,
+              `Merged ${merged} of ${attempted}; failed on #${n}: ${result.message}`,
+            )
             break
           }
           merged += 1

@@ -4,7 +4,14 @@ import { PullRequestList } from './PullRequestList'
 import type { PullRequest, ReviewSignal } from '../api/types'
 
 const prs: PullRequest[] = [
-  { number: 7, title: 'Add widget', author: 'octocat', htmlUrl: 'https://github.com/x/y/pull/7', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
+  {
+    number: 7,
+    title: 'Add widget',
+    author: 'octocat',
+    htmlUrl: 'https://github.com/x/y/pull/7',
+    isDraft: false,
+    createdAt: '2026-05-30T00:00:00Z',
+  },
 ]
 
 test('always renders a GitHub link for each PR', () => {
@@ -20,7 +27,14 @@ test('renders nothing when there are no pull requests', () => {
 
 test('renders static text, not a dead link, when htmlUrl is rejected by the sanitizer', () => {
   const rejected: PullRequest[] = [
-    { number: 9, title: 'Suspicious PR', author: 'mallory', htmlUrl: 'javascript:alert(1)', isDraft: false, createdAt: '2026-05-30T00:00:00Z' },
+    {
+      number: 9,
+      title: 'Suspicious PR',
+      author: 'mallory',
+      htmlUrl: 'javascript:alert(1)',
+      isDraft: false,
+      createdAt: '2026-05-30T00:00:00Z',
+    },
   ]
   render(<PullRequestList pullRequests={rejected} repoName="x/y" />)
   expect(screen.queryByRole('link')).toBeNull()
@@ -70,15 +84,20 @@ test('renders a Ready to merge pill when the backend has judged the PR ready', (
 // null/undefined is "not yet determined" or an older backend that never sends the
 // field -- neither may be coerced into a green light, because acting on a wrong
 // pill means merging a PR that isn't ready.
-test.each([[false], [null], [undefined]])('renders no Ready to merge pill when readyToMerge is %s', ready => {
-  render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} repoName="x/y" />)
-  expect(screen.queryByText('Ready to merge')).toBeNull()
-})
+test.each([[false], [null], [undefined]])(
+  'renders no Ready to merge pill when readyToMerge is %s',
+  (ready) => {
+    render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: ready }]} repoName="x/y" />)
+    expect(screen.queryByText('Ready to merge')).toBeNull()
+  },
+)
 
 // The pill carries no link of its own, but it sits in the same line as the PR
 // anchor -- inside it, it would be inert content inside a link target.
 test('renders the ready pill outside the PR anchor', () => {
-  const { container } = render(<PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />)
+  const { container } = render(
+    <PullRequestList pullRequests={[{ ...prs[0], readyToMerge: true }]} repoName="x/y" />,
+  )
   const pill = container.querySelector('.chip--ready')
   expect(pill).not.toBeNull()
   expect(pill?.closest('a')).toBeNull()

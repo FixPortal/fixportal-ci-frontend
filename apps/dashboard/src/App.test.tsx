@@ -22,11 +22,24 @@ describe('App admin state startup', () => {
   it.each([
     ['stored admin state', true, () => localStorage.setItem('ci:admin', 'true')],
     ['admin URL parameter', true, () => window.history.pushState({}, '', '/?admin=true')],
-    ['denied localStorage read', false, () => vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new DOMException('denied', 'SecurityError') })],
-    ['denied localStorage write', false, () => {
-      window.history.pushState({}, '', '/?admin=true')
-      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('denied', 'SecurityError') })
-    }],
+    [
+      'denied localStorage read',
+      false,
+      () =>
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+          throw new DOMException('denied', 'SecurityError')
+        }),
+    ],
+    [
+      'denied localStorage write',
+      false,
+      () => {
+        window.history.pushState({}, '', '/?admin=true')
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+          throw new DOMException('denied', 'SecurityError')
+        })
+      },
+    ],
   ] as const)('passes %s to CiBoard', (_scenario, expected, arrange) => {
     arrange()
     render(<App />)

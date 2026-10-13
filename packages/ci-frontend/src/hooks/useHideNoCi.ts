@@ -32,7 +32,7 @@ export function useHideNoCi() {
 
   const toggle = useCallback(() => {
     changed.current = true
-    setHidden(prev => !prev)
+    setHidden((prev) => !prev)
   }, [])
 
   return { hidden, toggle }

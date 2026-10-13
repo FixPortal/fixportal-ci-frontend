@@ -63,7 +63,15 @@ describe('useRepoFilters', () => {
   })
 
   it('seeds from existing localStorage (Sets rehydrated from arrays)', () => {
-    localStorage.setItem(KEY, JSON.stringify({ search: 'seed', visibility: ['public'], ciStatus: ['failing'], hasOpenPrs: true }))
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        search: 'seed',
+        visibility: ['public'],
+        ciStatus: ['failing'],
+        hasOpenPrs: true,
+      }),
+    )
     const { result } = renderHook(() => useRepoFilters())
     expect(result.current.filters.search).toBe('seed')
     expect(result.current.filters.visibility.has('public')).toBe(true)
@@ -78,9 +86,16 @@ describe('useRepoFilters', () => {
   })
 
   it('uses defaults when localStorage reads throw, without overwriting the stored filters', () => {
-    const stored = JSON.stringify({ search: 'kept', visibility: [], ciStatus: [], hasOpenPrs: false })
+    const stored = JSON.stringify({
+      search: 'kept',
+      visibility: [],
+      ciStatus: [],
+      hasOpenPrs: false,
+    })
     localStorage.setItem(KEY, stored)
-    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage denied') })
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage denied')
+    })
     const { result } = renderHook(() => useRepoFilters())
     expect(result.current.isActive).toBe(false)
     expect(result.current.filters.search).toBe('')
@@ -89,7 +104,9 @@ describe('useRepoFilters', () => {
   })
 
   it('keeps in-memory filter state when localStorage writes throw', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('storage full') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage full')
+    })
     const { result } = renderHook(() => useRepoFilters())
     act(() => result.current.setSearch('engine'))
     expect(result.current.filters.search).toBe('engine')
@@ -98,7 +115,15 @@ describe('useRepoFilters', () => {
 
   it('persists to and seeds from the namespaced key when storageNamespace is set', () => {
     const NS_KEY = `${KEY}:acme`
-    localStorage.setItem(NS_KEY, JSON.stringify({ search: 'ns-seed', visibility: ['private'], ciStatus: [], hasOpenPrs: false }))
+    localStorage.setItem(
+      NS_KEY,
+      JSON.stringify({
+        search: 'ns-seed',
+        visibility: ['private'],
+        ciStatus: [],
+        hasOpenPrs: false,
+      }),
+    )
     const { result } = renderHook(() => useRepoFilters(), { wrapper: nsWrapper('acme') })
     // Seeds from the namespaced key, not the bare default key.
     expect(result.current.filters.search).toBe('ns-seed')
@@ -110,9 +135,15 @@ describe('useRepoFilters', () => {
   })
 
   it('drops unknown members from persisted Sets (untrusted localStorage)', () => {
-    localStorage.setItem(KEY, JSON.stringify({
-      search: '', visibility: ['public', 'bogus'], ciStatus: ['running', 'failing', 'garbage', 42], hasOpenPrs: false,
-    }))
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        search: '',
+        visibility: ['public', 'bogus'],
+        ciStatus: ['running', 'failing', 'garbage', 42],
+        hasOpenPrs: false,
+      }),
+    )
     const { result } = renderHook(() => useRepoFilters())
     expect([...result.current.filters.visibility]).toEqual(['public'])
     expect([...result.current.filters.ciStatus]).toEqual(['running', 'failing'])

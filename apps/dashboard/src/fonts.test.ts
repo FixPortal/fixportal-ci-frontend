@@ -21,13 +21,15 @@ const here = import.meta.url
 const fontsDir = fileURLToPath(new URL('../public/fonts', here))
 // Cast: node:fs is untyped here (no @types/node, see header) and it.each needs
 // a concrete element type to check its callback signature.
-const vendored = (readdirSync(fontsDir) as string[]).filter(file => file.endsWith('.woff2'))
+const vendored = (readdirSync(fontsDir) as string[]).filter((file) => file.endsWith('.woff2'))
 
 // createRequire resolves through the workspace root's hoisted node_modules.
 // No return annotation: Buffer's type comes from @types/node, which this app
 // deliberately does not depend on (see header).
 function fontsourceFile(file: string) {
-  const pkg = file.startsWith('ibm-plex-mono-') ? '@fontsource/ibm-plex-mono' : '@fontsource/ibm-plex-sans'
+  const pkg = file.startsWith('ibm-plex-mono-')
+    ? '@fontsource/ibm-plex-mono'
+    : '@fontsource/ibm-plex-sans'
   const pkgDir = dirname(require.resolve(`${pkg}/package.json`))
   return readFileSync(join(pkgDir, 'files', file))
 }
@@ -45,7 +47,7 @@ describe('vendored IBM Plex fonts', () => {
     ])
   })
 
-  it.each(vendored)('%s byte-matches the installed @fontsource package', file => {
+  it.each(vendored)('%s byte-matches the installed @fontsource package', (file) => {
     const local = readFileSync(join(fontsDir, file))
     expect(local.equals(fontsourceFile(file))).toBe(true)
   })

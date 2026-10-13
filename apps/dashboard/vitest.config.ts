@@ -5,10 +5,14 @@ import { defineConfig } from 'vitest/config'
 // boundary test run from a fresh install before the library has been built.
 export default defineConfig({
   resolve: {
-    alias: [{
-      find: /^@fix-portal\/ci-frontend$/,
-      replacement: fileURLToPath(new URL('../../packages/ci-frontend/src/index.ts', import.meta.url)),
-    }],
+    alias: [
+      {
+        find: /^@fix-portal\/ci-frontend$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/ci-frontend/src/index.ts', import.meta.url),
+        ),
+      },
+    ],
   },
   test: {
     environment: 'jsdom',

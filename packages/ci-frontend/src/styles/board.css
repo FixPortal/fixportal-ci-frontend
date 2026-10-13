@@ -87,7 +87,7 @@
   --chip-on-failing-ink: #991b1b;
 }
 
-.ci-page[data-theme="dark"] {
+.ci-page[data-theme='dark'] {
   --surface-2: #1c2538;
   --run: #60a5fa;
   --unknown: #5d6880;
@@ -122,8 +122,13 @@
 /* Keyframes must be top-level (cannot be nested). Renamed from the dashboard's
    `live-pulse` to avoid any collision with simulator-global animations. */
 @keyframes ci-live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .ci-page .ci-embed {
@@ -217,7 +222,13 @@
   align-items: flex-end;
   gap: var(--space-3);
 }
-.ci-embed__wordmark { display: block; margin: 0; font-size: inherit; font-weight: inherit; color: var(--text); }
+.ci-embed__wordmark {
+  display: block;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--text);
+}
 /* Text fallback used when no `logo` node is passed to CiBoard. */
 .ci-embed__wordmark-text {
   font-family: var(--font-sans);
@@ -355,7 +366,9 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .live-dot { animation: none; }
+    .live-dot {
+      animation: none;
+    }
   }
 
   .state-msg {
@@ -365,15 +378,21 @@
     font-size: var(--fs-14);
   }
 
-  .state-msg--error { color: var(--bad-text); }
+  .state-msg--error {
+    color: var(--bad-text);
+  }
 
   .dashboard-page--loading {
     box-sizing: border-box;
     min-height: calc(100vh - var(--ci-header-h, 56px));
   }
 
-  .dashboard__loading-panels { opacity: 0.65; }
-  .dashboard__loading-panel { min-height: 140px; }
+  .dashboard__loading-panels {
+    opacity: 0.65;
+  }
+  .dashboard__loading-panel {
+    min-height: 140px;
+  }
   .dashboard__loading-line {
     display: block;
     width: 100%;
@@ -381,7 +400,9 @@
     border-radius: var(--r-control);
     background: var(--surface-2);
   }
-  .dashboard__loading-line--short { width: 45%; }
+  .dashboard__loading-line--short {
+    width: 45%;
+  }
 
   /* ---- Summary panels ------------------------------------------------------ */
 
@@ -441,9 +462,17 @@
     text-align: left;
     cursor: pointer;
   }
-  .summary__item--btn:hover .summary__label { color: var(--text); }
-  .summary__item--btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: var(--r-control); }
-  .summary__item--btn:disabled { cursor: default; }
+  .summary__item--btn:hover .summary__label {
+    color: var(--text);
+  }
+  .summary__item--btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+    border-radius: var(--r-control);
+  }
+  .summary__item--btn:disabled {
+    cursor: default;
+  }
 
   .summary__count {
     font-family: var(--font-mono);
@@ -466,25 +495,37 @@
      as a quiet line. Only a non-zero attention count earns the hero size (the
      tones below are all unreachable at zero — toneFor returns ok for 0), which
      makes the first failure the loudest thing on the strip. */
-  .summary__item[data-tone="alert"] .summary__count,
-  .summary__item[data-tone="fail"] .summary__count,
-  .summary__item[data-tone="run"] .summary__count,
-  .summary__item[data-tone="review"] .summary__count,
-  .summary__item[data-tone="no-ci"] .summary__count {
+  .summary__item[data-tone='alert'] .summary__count,
+  .summary__item[data-tone='fail'] .summary__count,
+  .summary__item[data-tone='run'] .summary__count,
+  .summary__item[data-tone='review'] .summary__count,
+  .summary__item[data-tone='no-ci'] .summary__count {
     font-size: var(--fs-24);
   }
 
   /* Non-zero counts take their chip's colour; zero / inventory stay quiet. */
-  .summary__item[data-tone="alert"] .summary__count { color: var(--warn-text); }
-  .summary__item[data-tone="fail"] .summary__count { color: var(--bad-text); }
-  .summary__item[data-tone="run"] .summary__count { color: var(--run); }
-  .summary__item[data-tone="review"] .summary__count { color: var(--brand); }
-  .summary__item[data-tone="no-ci"] .summary__count { color: var(--no-ci); }
+  .summary__item[data-tone='alert'] .summary__count {
+    color: var(--warn-text);
+  }
+  .summary__item[data-tone='fail'] .summary__count {
+    color: var(--bad-text);
+  }
+  .summary__item[data-tone='run'] .summary__count {
+    color: var(--run);
+  }
+  .summary__item[data-tone='review'] .summary__count {
+    color: var(--brand);
+  }
+  .summary__item[data-tone='no-ci'] .summary__count {
+    color: var(--no-ci);
+  }
   /* A metric whose scan failed is unknown, not zero (CIF-002). Reads in
      --text-muted, not the --unknown chip grey: as small text ink --unknown
      fails WCAG AA (2.645:1 light, 3.19:1 dark — the same figure the
      review-pending chip note cites for refusing it at .chip--review-pending). */
-  .summary__item[data-tone="unknown"] .summary__count { color: var(--text-muted); }
+  .summary__item[data-tone='unknown'] .summary__count {
+    color: var(--text-muted);
+  }
 
   /* CI status uses a fixed 3-col grid so Running/Deploys-Running and
      Failing/Deploys-Failing align in columns regardless of which items are present. */
@@ -493,12 +534,30 @@
     grid-template-columns: repeat(3, max-content);
     gap: var(--space-4) var(--space-6);
   }
-  .summary-panel--ci .summary__item[data-key="running"]          { grid-column: 1; grid-row: 1; }
-  .summary-panel--ci .summary__item[data-key="failing"]          { grid-column: 2; grid-row: 1; }
-  .summary-panel--ci .summary__item[data-key="packages-failing"] { grid-column: 3; grid-row: 1; }
-  .summary-panel--ci .summary__item[data-key="deploys-running"]  { grid-column: 1; grid-row: 2; }
-  .summary-panel--ci .summary__item[data-key="deploys-failing"]  { grid-column: 2; grid-row: 2; }
-  .summary-panel--ci .summary__item[data-key="no-ci"]            { grid-column: 3; grid-row: 2; }
+  .summary-panel--ci .summary__item[data-key='running'] {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .summary-panel--ci .summary__item[data-key='failing'] {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .summary-panel--ci .summary__item[data-key='packages-failing'] {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .summary-panel--ci .summary__item[data-key='deploys-running'] {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .summary-panel--ci .summary__item[data-key='deploys-failing'] {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .summary-panel--ci .summary__item[data-key='no-ci'] {
+    grid-column: 3;
+    grid-row: 2;
+  }
 
   /* ---- Repo boards --------------------------------------------------------- */
 
@@ -608,7 +667,9 @@
     font-size: var(--fs-12);
     transition: transform 0.15s ease;
   }
-  .repo-board:not(.repo-board--collapsed) .repo-board__chev { transform: rotate(90deg); }
+  .repo-board:not(.repo-board--collapsed) .repo-board__chev {
+    transform: rotate(90deg);
+  }
 
   .repo-board__gh-link {
     font-family: var(--font-mono);
@@ -623,7 +684,10 @@
     align-items: center;
     min-height: 24px;
   }
-  .repo-board__gh-link:hover { color: var(--text); text-decoration: underline; }
+  .repo-board__gh-link:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
 
   .dashboard__filter-row {
     display: flex;
@@ -655,13 +719,17 @@
     white-space: nowrap;
   }
   .dashboard__collapse-all:hover,
-  .dashboard__hide-noci:hover { border-color: var(--border-strong); }
+  .dashboard__hide-noci:hover {
+    border-color: var(--border-strong);
+  }
   .dashboard__hide-noci--on {
     color: var(--no-ci);
     border-color: var(--no-ci);
     background: color-mix(in srgb, var(--no-ci) 16%, transparent);
   }
-  .dashboard__hide-noci--on:hover { border-color: var(--no-ci); }
+  .dashboard__hide-noci--on:hover {
+    border-color: var(--no-ci);
+  }
 
   /* ---- Filter bar ---------------------------------------------------------- */
 
@@ -731,7 +799,9 @@
     cursor: pointer;
     white-space: nowrap;
   }
-  .repo-filter__chip:hover { border-color: var(--border-strong); }
+  .repo-filter__chip:hover {
+    border-color: var(--border-strong);
+  }
   .repo-filter__chip--on {
     color: var(--chip-on-ink);
     border-color: var(--brand);
@@ -780,19 +850,27 @@
       flex-direction: column;
       align-items: stretch;
     }
-    .dashboard__board-controls { margin-left: 0; }
-    .summary-panel { min-width: 0; }
+    .dashboard__board-controls {
+      margin-left: 0;
+    }
+    .summary-panel {
+      min-width: 0;
+    }
     .summary-panel--ci .summary-panel__items {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       column-gap: var(--space-3);
     }
-    .summary-panel--ci .summary__item { min-width: 0; }
+    .summary-panel--ci .summary__item {
+      min-width: 0;
+    }
     .repo-board > header {
       flex-direction: column;
       align-items: flex-start;
       gap: var(--space-2);
     }
-    .repo-metrics { gap: var(--space-3); }
+    .repo-metrics {
+      gap: var(--space-3);
+    }
   }
 
   .repo-top-signals {
@@ -834,7 +912,10 @@
     text-decoration: none;
     font-size: var(--fs-12);
     line-height: 1;
-    transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+    transition:
+      border-color 0.12s ease,
+      background 0.12s ease,
+      transform 0.12s ease;
   }
 
   .chip:hover {
@@ -850,19 +931,41 @@
   /* Non-interactive chip — a workflow with no run, or a private repo whose run URL
      would 404 for the anonymous audience. Present the status without inviting a
      click: no pointer cursor, no hover lift. */
-  .chip--static { cursor: default; }
-  .chip--static:hover { border-color: var(--border); transform: none; }
+  .chip--static {
+    cursor: default;
+  }
+  .chip--static:hover {
+    border-color: var(--border);
+    transform: none;
+  }
 
   /* Buttons get the chip look minus the user-agent button chrome. Actionable =
      clickable chip (merge pills); chip--static stays for display-only chips. */
-  button.chip { font: inherit; }
-  .chip--actionable { cursor: pointer; }
-  .chip--actionable:disabled { cursor: default; opacity: 0.6; }
-  .repo-prs__merge-all { margin-left: 0.5rem; }
+  button.chip {
+    font: inherit;
+  }
+  .chip--actionable {
+    cursor: pointer;
+  }
+  .chip--actionable:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .repo-prs__merge-all {
+    margin-left: 0.5rem;
+  }
   .repo-prs__merge-error,
-  .pr-card__merge-error { display: block; font-size: 0.8rem; color: var(--bad-text); margin-top: 0.25rem; }
+  .pr-card__merge-error {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--bad-text);
+    margin-top: 0.25rem;
+  }
   .repo-prs__merge-error button,
-  .pr-card__merge-error button { margin-left: 0.5rem; cursor: pointer; }
+  .pr-card__merge-error button {
+    margin-left: 0.5rem;
+    cursor: pointer;
+  }
 
   .chip__dot {
     flex: none;
@@ -934,7 +1037,9 @@
     background: color-mix(in srgb, var(--run) 12%, var(--surface-2));
     border-color: color-mix(in srgb, var(--run) 45%, var(--border));
   }
-  .chip--running .chip__label { color: var(--run); }
+  .chip--running .chip__label {
+    color: var(--run);
+  }
   .chip--running .chip__dot {
     background: var(--run);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent);
@@ -942,7 +1047,9 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .chip--running .chip__dot { animation: none; }
+    .chip--running .chip__dot {
+      animation: none;
+    }
   }
 
   /* ---- Review pills -------------------------------------------------------- */
@@ -1097,7 +1204,9 @@
   }
 
   /* Functions above the complexity threshold draw the eye, like a warning chip. */
-  .repo-metrics__complex dd { color: var(--warn-text); }
+  .repo-metrics__complex dd {
+    color: var(--warn-text);
+  }
 
   /* ---- Open PRs (below the signals) ---------------------------------------- */
   .repo-prs {
@@ -1170,7 +1279,9 @@
     color: var(--text);
   }
 
-  .repo-prs__line > a:hover .repo-prs__title { text-decoration: underline; }
+  .repo-prs__line > a:hover .repo-prs__title {
+    text-decoration: underline;
+  }
 
   .repo-prs__num {
     font-family: var(--font-mono);
@@ -1186,7 +1297,9 @@
   }
 
   /* Drafts read as not-yet-live: dimmed title. */
-  .repo-prs__item--draft .repo-prs__title { color: var(--text-muted); }
+  .repo-prs__item--draft .repo-prs__title {
+    color: var(--text-muted);
+  }
 
   /* ---- Job-lane rows (deploys, packages) ----------------------------------- */
   .repo-joblane {
@@ -1211,8 +1324,12 @@
      brand — the old --pkg purple was a fifth hue, off-standard post-adoption
      (purple is reserved for outbound flow). The glyph + label text carry the
      lane distinction; colour was redundant. */
-  .repo-joblane--deploys .repo-joblane__label { color: var(--brand-ink); }
-  .repo-joblane--packages .repo-joblane__label { color: var(--text-muted); }
+  .repo-joblane--deploys .repo-joblane__label {
+    color: var(--brand-ink);
+  }
+  .repo-joblane--packages .repo-joblane__label {
+    color: var(--text-muted);
+  }
 
   .repo-joblane__chips {
     display: flex;
@@ -1222,7 +1339,9 @@
 
   /* Lane chips reuse the state colours but stay solid (never dashed) so they read
      as first-class signals next to the workflow chips. */
-  .chip--joblane { border-style: solid; }
+  .chip--joblane {
+    border-style: solid;
+  }
 
   /* ---- Collapsible legend row (sticky header, below SummaryStrip) ---------- */
   .legend-row {
@@ -1318,20 +1437,20 @@
     background: var(--unknown);
   }
 
-  .legend-row__dot[data-state="success"] {
+  .legend-row__dot[data-state='success'] {
     background: var(--ok-border);
   }
 
-  .legend-row__dot[data-state="failure"] {
+  .legend-row__dot[data-state='failure'] {
     background: var(--bad-solid);
     border-radius: 2px;
   }
 
-  .legend-row__dot[data-state="running"] {
+  .legend-row__dot[data-state='running'] {
     background: var(--run);
   }
 
-  .legend-row__dot[data-state="unknown"] {
+  .legend-row__dot[data-state='unknown'] {
     background: transparent;
     border: 1.5px dashed var(--unknown);
   }
@@ -1414,22 +1533,41 @@
     background: transparent;
     border: 1.5px solid var(--unknown);
   }
-  .repo-activity__dot[data-activity="success"] { background: var(--ok-border); border-color: var(--ok-border); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent); }
-  .repo-activity__dot[data-activity="running"] { background: var(--run); border-color: var(--run); box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent); }
+  .repo-activity__dot[data-activity='success'] {
+    background: var(--ok-border);
+    border-color: var(--ok-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-border) 30%, transparent);
+  }
+  .repo-activity__dot[data-activity='running'] {
+    background: var(--run);
+    border-color: var(--run);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--run) 30%, transparent);
+  }
   /* Square failure LED — the same non-colour shape cue as the failure chip dot. */
-  .repo-activity__dot[data-activity="failure"] { background: var(--bad-solid); border-color: var(--bad-solid); border-radius: 2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent); }
+  .repo-activity__dot[data-activity='failure'] {
+    background: var(--bad-solid);
+    border-color: var(--bad-solid);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad-solid) 30%, transparent);
+  }
 
   /* ---- Responsive: phones + touch ------------------------------------------ */
 
   /* Summary panels go full-width and stack rather than squeezing side by side. */
   @media (max-width: 560px) {
-    .summary-panels { grid-template-columns: 1fr; }
+    .summary-panels {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Comfortable tap targets on touch pointers. */
   @media (pointer: coarse) {
-    .chip { padding: var(--space-2) var(--space-3); }
-    .summary__item--btn { min-height: 44px; }
+    .chip {
+      padding: var(--space-2) var(--space-3);
+    }
+    .summary__item--btn {
+      min-height: 44px;
+    }
   }
 
   /* ---- PR stepper modal ---------------------------------------------------- */
@@ -1447,33 +1585,115 @@
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
     padding: var(--space-4);
   }
-  .pr-modal:focus { outline: none; }
-  .pr-modal::backdrop { background: rgba(3, 6, 12, 0.62); }
-  .pr-modal__top { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
-  .pr-modal__title { font-size: var(--fs-13); font-weight: 600; }
-  .pr-modal__counter { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
+  .pr-modal:focus {
+    outline: none;
+  }
+  .pr-modal::backdrop {
+    background: rgba(3, 6, 12, 0.62);
+  }
+  .pr-modal__top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .pr-modal__title {
+    font-size: var(--fs-13);
+    font-weight: 600;
+  }
+  .pr-modal__counter {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
   .pr-modal__x {
-    margin-left: auto; width: 26px; height: 26px; border-radius: var(--r-chip);
-    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); cursor: pointer;
+    margin-left: auto;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-chip);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
   }
-  .pr-card { border: 1px solid var(--border); border-left: 3px solid var(--unknown); border-radius: var(--r-chip); padding: var(--space-4); background: var(--surface-2); }
-  .pr-card--amber { border-left-color: var(--warn-fill-deep); }
-  .pr-card--red { border-left-color: var(--bad-solid); }
-  .pr-card--draft { opacity: 0.72; }
-  .pr-card__head { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
-  .pr-card__repo { color: var(--text-muted); }
-  .pr-card__meta { margin-left: auto; }
-  .pr-card__title { margin: var(--space-3) 0 var(--space-2); font-size: var(--fs-14); font-weight: 600; line-height: 1.3; color: var(--text); }
-  .pr-card__foot { display: flex; align-items: center; justify-content: space-between; }
-  .pr-card__author { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--text-muted); }
-  .pr-card__gh { font-size: var(--fs-12); color: var(--brand-ink); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border)); border-radius: var(--r-chip); padding: var(--space-1) var(--space-2); text-decoration: none; }
-  .pr-modal__nav { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-4); }
+  .pr-card {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--unknown);
+    border-radius: var(--r-chip);
+    padding: var(--space-4);
+    background: var(--surface-2);
+  }
+  .pr-card--amber {
+    border-left-color: var(--warn-fill-deep);
+  }
+  .pr-card--red {
+    border-left-color: var(--bad-solid);
+  }
+  .pr-card--draft {
+    opacity: 0.72;
+  }
+  .pr-card__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
+  .pr-card__repo {
+    color: var(--text-muted);
+  }
+  .pr-card__meta {
+    margin-left: auto;
+  }
+  .pr-card__title {
+    margin: var(--space-3) 0 var(--space-2);
+    font-size: var(--fs-14);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .pr-card__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pr-card__author {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+  }
+  .pr-card__gh {
+    font-size: var(--fs-12);
+    color: var(--brand-ink);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border));
+    border-radius: var(--r-chip);
+    padding: var(--space-1) var(--space-2);
+    text-decoration: none;
+  }
+  .pr-modal__nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-4);
+  }
   .pr-modal__nav button {
-    font-family: var(--font-sans); font-size: var(--fs-12); color: var(--text);
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-chip); padding: var(--space-2) var(--space-4); cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: var(--fs-12);
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-chip);
+    padding: var(--space-2) var(--space-4);
+    cursor: pointer;
   }
-  .pr-modal__nav button:disabled { opacity: 0.4; cursor: default; }
-  .pr-modal__nav button:not(:disabled):hover { border-color: var(--border-strong); }
+  .pr-modal__nav button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .pr-modal__nav button:not(:disabled):hover {
+    border-color: var(--border-strong);
+  }
 
   .summary-panel__merged,
   .summary-panel__next {
@@ -1487,12 +1707,28 @@
     color: var(--text-muted);
     text-decoration: none;
   }
-  .summary-panel__q-lab { display: block; margin-bottom: var(--space-1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  .summary-panel__q-lab {
+    display: block;
+    margin-bottom: var(--space-1);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
   /* The "(2m ago)" age rides the uppercased label but stays sentence-case itself. */
-  .summary-panel__q-age { text-transform: none; letter-spacing: 0; }
-  .summary-panel__q-body { color: var(--text-muted); }
-  .summary-panel__q-title { display: block; color: var(--text-muted); }
-  .summary-panel__merged:hover .summary-panel__q-title { text-decoration: underline; }
+  .summary-panel__q-age {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .summary-panel__q-body {
+    color: var(--text-muted);
+  }
+  .summary-panel__q-title {
+    display: block;
+    color: var(--text-muted);
+  }
+  .summary-panel__merged:hover .summary-panel__q-title {
+    text-decoration: underline;
+  }
   .summary-panel__trend {
     margin-top: var(--space-3);
     padding-top: var(--space-2);
@@ -1509,9 +1745,15 @@
     border-radius: 2px;
     background: var(--unknown);
   }
-  .ci-weather__block[data-state="passing"] { background: var(--ok-border); }
-  .ci-weather__block[data-state="failing"] { background: var(--bad-solid); }
-  .ci-weather__block[data-state="noData"]  { background: color-mix(in srgb, var(--unknown) 35%, transparent); }
+  .ci-weather__block[data-state='passing'] {
+    background: var(--ok-border);
+  }
+  .ci-weather__block[data-state='failing'] {
+    background: var(--bad-solid);
+  }
+  .ci-weather__block[data-state='noData'] {
+    background: color-mix(in srgb, var(--unknown) 35%, transparent);
+  }
   .ci-weather__readout {
     display: block;
     margin-top: var(--space-1);
@@ -1562,10 +1804,12 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: border-color 0.12s ease, color 0.12s ease;
+    transition:
+      border-color 0.12s ease,
+      color 0.12s ease;
   }
   .ci-trend-info-btn:hover,
-  .ci-trend-info-btn[aria-expanded="true"] {
+  .ci-trend-info-btn[aria-expanded='true'] {
     border-color: var(--brand);
     color: var(--brand);
   }
@@ -1595,8 +1839,12 @@
   .ci-trend-popover p:last-of-type {
     margin-bottom: 0;
   }
-  .ci-trend-popover__swatch--fail { color: var(--bad-solid); }
-  .ci-trend-popover__swatch--pass { color: var(--ok-border); }
+  .ci-trend-popover__swatch--fail {
+    color: var(--bad-solid);
+  }
+  .ci-trend-popover__swatch--pass {
+    color: var(--ok-border);
+  }
   .ci-trend-popover__title {
     font-size: var(--fs-10);
     letter-spacing: 0.1em;
@@ -1685,7 +1933,9 @@
   border: 1px solid var(--border);
   border-radius: var(--r-control);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 .ci-theme-select:hover {
   border-color: var(--border-strong);

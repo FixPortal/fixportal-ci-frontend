@@ -49,9 +49,7 @@ test('reports a local pin that an empty OVERRIDES map no longer blesses', () => 
   // rather than merely stale. With the map empty it is reported like any other divergence,
   // so this test fails the moment someone re-pins a token instead of re-syncing it.
   const pinned = vendored.replace('--text-muted: grey', '--text-muted: #5f6472')
-  assert.deepEqual(compare(source, pinned), [
-    'light --text-muted: expected grey, found #5f6472',
-  ])
+  assert.deepEqual(compare(source, pinned), ['light --text-muted: expected grey, found #5f6472'])
 })
 
 // The real sheet declares the dark set twice - once for the [data-theme="dark"] toggle
@@ -93,7 +91,8 @@ test('reports a media query whose selector sits OUTSIDE it rather than within', 
 // --app-bg, in a different file from every other colour this script reads. It kept the
 // old value through a re-sync and flashed it on every cold load, which is the same silent
 // drift the rest of the checker exists to catch - so it is checked, not commented.
-const shell = (fallback) => `<style>html, body { background-color: var(--app-bg, ${fallback}); }</style>`
+const shell = (fallback) =>
+  `<style>html, body { background-color: var(--app-bg, ${fallback}); }</style>`
 
 test('accepts a shell fallback equal to the light --app-bg', () => {
   assert.deepEqual(compareShellFallback(shell('white'), vendored), [])
@@ -142,9 +141,10 @@ const git = (cwd, ...args) =>
 
 // Windows temp paths are commonly a short-name junction (C:\Users\X~1). git reports the
 // resolved form, so compare against the resolved form or an equal path fails on spelling.
-const real = (p) => execFileSync(process.execPath, ['-p', `require('fs').realpathSync(${JSON.stringify(p)})`], {
-  encoding: 'utf8',
-}).trim()
+const real = (p) =>
+  execFileSync(process.execPath, ['-p', `require('fs').realpathSync(${JSON.stringify(p)})`], {
+    encoding: 'utf8',
+  }).trim()
 
 test('repoRoot resolves to the MAIN checkout from a linked worktree', () => {
   const scratch = mkdtempSync(path.join(tmpdir(), 'tokens-sync-'))

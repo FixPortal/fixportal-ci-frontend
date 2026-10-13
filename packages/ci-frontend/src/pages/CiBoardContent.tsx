@@ -27,7 +27,7 @@ import { FilterChip } from '../components/FilterChip'
 // openPrs computation and the post-guard visibleRepos so the filter shape lives
 // in one place.
 function applyNoCiFilter(repos: RepositorySnapshot[], hidden: boolean): RepositorySnapshot[] {
-  return hidden ? repos.filter(r => !isNoCi(r)) : repos
+  return hidden ? repos.filter((r) => !isNoCi(r)) : repos
 }
 
 function reconcileMergedPrs(
@@ -36,9 +36,9 @@ function reconcileMergedPrs(
   receipts: ReadonlySet<string>,
 ): RepositorySnapshot[] {
   if (merged.size === 0) return repositories
-  return repositories.map(repository => ({
+  return repositories.map((repository) => ({
     ...repository,
-    pullRequests: repository.pullRequests.filter(pr => {
+    pullRequests: repository.pullRequests.filter((pr) => {
       const key = prMergeKey(repository.name, pr.number)
       return !merged.has(key) || receipts.has(key)
     }),
@@ -94,7 +94,7 @@ function buildRepoList(
           onToggle={() => collapse.toggle(KEY_PUBLIC)}
         />
         {!collapse.isCollapsed(KEY_PUBLIC) &&
-          publicRepos.map(repository => (
+          publicRepos.map((repository) => (
             <RepoBoard
               key={repository.name}
               repository={repository}
@@ -103,8 +103,7 @@ function buildRepoList(
               isAdmin={isAdmin}
               merge={merge}
             />
-          ))
-        }
+          ))}
         <RepoSection
           label="Private"
           count={privateRepos.length}
@@ -112,7 +111,7 @@ function buildRepoList(
           onToggle={() => collapse.toggle(KEY_PRIVATE)}
         />
         {!collapse.isCollapsed(KEY_PRIVATE) &&
-          privateRepos.map(repository => (
+          privateRepos.map((repository) => (
             <RepoBoard
               key={repository.name}
               repository={repository}
@@ -121,12 +120,11 @@ function buildRepoList(
               isAdmin={isAdmin}
               merge={merge}
             />
-          ))
-        }
+          ))}
       </>
     )
   }
-  return visibleRepos.map(repository => (
+  return visibleRepos.map((repository) => (
     <RepoBoard
       key={repository.name}
       repository={repository}
@@ -147,7 +145,8 @@ export function CiBoardContent() {
   // Merge state is hoisted here (pages own stateful wiring; components stay
   // presentational) and handed to RepoBoard/PullRequestStepper as props.
   const merge = usePrMerge(snapshot.data?.org)
-  const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope, storageNamespace } = useCiConfig()
+  const { adminSnapshotUrl, adminSnapshotFetcher, repositoryScope, storageNamespace } =
+    useCiConfig()
   // Same derivation as the skip link in CiBoard — namespaced so co-hosted
   // boards on one page don't duplicate the anchor id.
   const mainId = storageNamespace ? `ci-main-${storageNamespace}` : 'ci-main'
@@ -163,10 +162,12 @@ export function CiBoardContent() {
   // poll ticks, so these only recompute when data actually changes.
   const repositories = useMemo(() => {
     const repos = snapshot.data?.repositories ?? []
-    const authorised = isAdmin ? repos : repos.filter(r => !r.private)
+    const authorised = isAdmin ? repos : repos.filter((r) => !r.private)
     const reconciled = reconcileMergedPrs(authorised, merge.merged, merge.receipts)
     if (!hasRepositoryScope || scope === undefined) return reconciled
-    return reconciled.filter(repository => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope)
+    return reconciled.filter(
+      (repository) => `${snapshot.data?.org}/${repository.name}`.toLowerCase() === scope,
+    )
   }, [hasRepositoryScope, isAdmin, merge.merged, merge.receipts, scope, snapshot.data])
   const noCiFiltered = useMemo(
     () => applyNoCiFilter(repositories, hideNoCi.hidden),
@@ -191,15 +192,23 @@ export function CiBoardContent() {
     if (isAdmin && !hasRepositoryScope && !hideNoCi.hidden && !filters.isActive) {
       // The server's summary is plain key/count — re-derive the nloc no-value
       // state from the repo list so a failed scan can't render as a measured 0.
-      return withNlocAvailability(snapshot.data?.summary ?? [], visibleRepos).map(item =>
+      return withNlocAvailability(snapshot.data?.summary ?? [], visibleRepos).map((item) =>
         item.key === 'open-prs' ? { ...item, count: openPrCount } : item,
       )
     }
     return computeSummary(visibleRepos)
-  }, [hasRepositoryScope, isAdmin, hideNoCi.hidden, filters.isActive, snapshot.data, visibleRepos, openPrCount])
+  }, [
+    hasRepositoryScope,
+    isAdmin,
+    hideNoCi.hidden,
+    filters.isActive,
+    snapshot.data,
+    visibleRepos,
+    openPrCount,
+  ])
   const lastMergedPr = useMemo(() => {
     const raw = snapshot.data?.lastMergedPr ?? null
-    if (raw && visibleRepos.some(r => r.name === raw.repo)) return raw
+    if (raw && visibleRepos.some((r) => r.name === raw.repo)) return raw
     let latest: MergedPr | null = null
     for (const repository of visibleRepos) {
       const merged = repository.lastMergedPr
@@ -208,7 +217,12 @@ export function CiBoardContent() {
       // Skip entries whose mergedAt does not parse at all — an unparseable
       // timestamp compares false against everything and would wedge `latest`.
       const mergedTime = merged ? Date.parse(merged.mergedAt) : NaN
-      if (merged && Number.isFinite(mergedTime) && (!latest || mergedTime > Date.parse(latest.mergedAt))) latest = merged
+      if (
+        merged &&
+        Number.isFinite(mergedTime) &&
+        (!latest || mergedTime > Date.parse(latest.mergedAt))
+      )
+        latest = merged
     }
     return latest
   }, [snapshot.data, visibleRepos])
@@ -223,10 +237,15 @@ export function CiBoardContent() {
 
   if (snapshot.isPending) {
     return (
-      <main id={mainId} className="dashboard-page dashboard-page--loading" key="loading" tabIndex={-1}>
+      <main
+        id={mainId}
+        className="dashboard-page dashboard-page--loading"
+        key="loading"
+        tabIndex={-1}
+      >
         <div className="state-msg">Loading dashboard…</div>
         <div className="summary-panels dashboard__loading-panels" aria-hidden="true">
-          {[0, 1, 2].map(panel => (
+          {[0, 1, 2].map((panel) => (
             <div className="summary-panel dashboard__loading-panel" key={panel}>
               <span className="dashboard__loading-line dashboard__loading-line--short" />
               <span className="dashboard__loading-line" />
@@ -272,10 +291,10 @@ export function CiBoardContent() {
   // Compute the names list and the all-collapsed flag once — they were rebuilt
   // and re-traversed twice per render (the onClick and the button label).
   const noCiCount = repositories.filter(isNoCi).length
-  const repoNames = visibleRepos.map(r => r.name)
+  const repoNames = visibleRepos.map((r) => r.name)
   const hiddenCount = repositories.length - noCiFiltered.length
-  const publicRepos = visibleRepos.filter(r => !r.private)
-  const privateRepos = visibleRepos.filter(r => r.private)
+  const publicRepos = visibleRepos.filter((r) => !r.private)
+  const privateRepos = visibleRepos.filter((r) => r.private)
   const showGroups = publicRepos.length > 0 && privateRepos.length > 0
   const sectionKeys = showGroups ? [KEY_PUBLIC, KEY_PRIVATE] : []
   const allCollapsibleKeys = [...repoNames, ...sectionKeys]
@@ -291,104 +310,123 @@ export function CiBoardContent() {
   // drives the empty-state copy so "Clear filters" isn't offered when it can't help.
   const noCiHidEverything = hideNoCi.hidden && noCiFiltered.length === 0 && repositories.length > 0
   const repoListContent = buildRepoList(
-    visibleRepos, publicRepos, privateRepos, showGroups, hideNoCi.hidden, noCiHidEverything, collapse,
-    filters.isActive, filters.clear, isAdmin, merge,
+    visibleRepos,
+    publicRepos,
+    privateRepos,
+    showGroups,
+    hideNoCi.hidden,
+    noCiHidEverything,
+    collapse,
+    filters.isActive,
+    filters.clear,
+    isAdmin,
+    merge,
   )
 
   return (
     <main id={mainId} className="dashboard-page" key="dashboard" tabIndex={-1}>
       <div className="dashboard__sticky">
-      <div className="dashboard__toolbar">
-        <div className="dashboard__toolbar-left">
-          <input
-            type="search"
-            className="repo-filter__search"
-            placeholder="Filter repos or PRs..."
-            aria-label="Filter repos by name, or by PR number or title"
-            value={filters.filters.search}
-            onChange={e => filters.setSearch(e.target.value)}
-          />
-          {/* Beside the search box rather than in the filter row below: that row
+        <div className="dashboard__toolbar">
+          <div className="dashboard__toolbar-left">
+            <input
+              type="search"
+              className="repo-filter__search"
+              placeholder="Filter repos or PRs..."
+              aria-label="Filter repos by name, or by PR number or title"
+              value={filters.filters.search}
+              onChange={(e) => filters.setSearch(e.target.value)}
+            />
+            {/* Beside the search box rather than in the filter row below: that row
               already overflows on a standard screen, and this is a scope switch on
               what you are searching, not one more status narrowing. Green like
               Passing — it reads as an affirmative state. */}
-          <FilterChip
-            label="Ready to merge"
-            tone="passing"
-            pressed={filters.filters.readyToMerge}
-            onClick={filters.toggleReadyToMerge}
-          />
-        </div>
-        <span className="dashboard__refresh-state">
-          <span className="dashboard__refreshed">
-            <span className="live-dot" aria-hidden="true" />
-            updated {formatRelativeTime(refreshedAt)}
-          </span>
-          {snapshot.isError && (
-            <span className="dashboard__refresh-warning" role="status">
-              refresh failed · retrying
+            <FilterChip
+              label="Ready to merge"
+              tone="passing"
+              pressed={filters.filters.readyToMerge}
+              onClick={filters.toggleReadyToMerge}
+            />
+          </div>
+          <span className="dashboard__refresh-state">
+            <span className="dashboard__refreshed">
+              <span className="live-dot" aria-hidden="true" />
+              updated {formatRelativeTime(refreshedAt)}
             </span>
-          )}
-        </span>
-      </div>
-      <div className="dashboard__filter-row">
-        <RepoFilterBar
-          filters={filters.filters}
-          isAdmin={isAdmin}
-          onToggleVisibility={filters.toggleVisibility}
-          onToggleCiStatus={filters.toggleCiStatus}
-          onToggleHasOpenPrs={filters.toggleHasOpenPrs}
-        />
-        <div className="dashboard__board-controls">
-          {noCiCount > 0 && (
+            {snapshot.isError && (
+              <span className="dashboard__refresh-warning" role="status">
+                refresh failed · retrying
+              </span>
+            )}
+          </span>
+        </div>
+        <div className="dashboard__filter-row">
+          <RepoFilterBar
+            filters={filters.filters}
+            isAdmin={isAdmin}
+            onToggleVisibility={filters.toggleVisibility}
+            onToggleCiStatus={filters.toggleCiStatus}
+            onToggleHasOpenPrs={filters.toggleHasOpenPrs}
+          />
+          <div className="dashboard__board-controls">
+            {noCiCount > 0 && (
+              <button
+                type="button"
+                className={`dashboard__hide-noci${hideNoCi.hidden ? ' dashboard__hide-noci--on' : ''}`}
+                onClick={hideNoCi.toggle}
+                aria-pressed={hideNoCi.hidden}
+              >
+                {hideNoCi.hidden ? `Show No-CI · ${hiddenCount} hidden` : 'Hide No-CI'}
+              </button>
+            )}
             <button
               type="button"
-              className={`dashboard__hide-noci${hideNoCi.hidden ? ' dashboard__hide-noci--on' : ''}`}
-              onClick={hideNoCi.toggle}
-              aria-pressed={hideNoCi.hidden}
+              className="dashboard__collapse-all"
+              onClick={() =>
+                allCollapsed ? collapse.expandAll() : collapse.collapseAll(allCollapsibleKeys)
+              }
             >
-              {hideNoCi.hidden ? `Show No-CI · ${hiddenCount} hidden` : 'Hide No-CI'}
+              {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
             </button>
-          )}
-          <button
-            type="button"
-            className="dashboard__collapse-all"
-            onClick={() => (allCollapsed ? collapse.expandAll() : collapse.collapseAll(allCollapsibleKeys))}
-          >
-            {allCollapsed ? '⊞ Expand all' : '⊟ Collapse all'}
-          </button>
+          </div>
         </div>
-      </div>
-      <SummaryStrip
-        summary={summary}
-        onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
-        lastMerged={lastMergedPr}
-        nextPr={nextPr}
-        ciTrend={hasRepositoryScope
-          // The trend is organisation-wide; a scoped board would chart activity
-          // from repos outside its scope. The backend supplies no per-repo
-          // trend, so hide it (empty array) rather than mislead.
-          ? []
-          : (snapshot.data.ciTrend ?? snapshot.data.publicCiTrend ?? [])}
-      />
-      <LegendRow />
+        <SummaryStrip
+          summary={summary}
+          onOpenPrs={isAdmin ? () => setStepperOpen(true) : undefined}
+          lastMerged={lastMergedPr}
+          nextPr={nextPr}
+          ciTrend={
+            hasRepositoryScope
+              ? // The trend is organisation-wide; a scoped board would chart activity
+                // from repos outside its scope. The backend supplies no per-repo
+                // trend, so hide it (empty array) rather than mislead.
+                []
+              : (snapshot.data.ciTrend ?? snapshot.data.publicCiTrend ?? [])
+          }
+        />
+        <LegendRow />
       </div>
       <div className="dashboard__repo-scope">
         {snapshot.data.org}
-        {isScopeFiltered
-          ? (
-            <> · <span className="dashboard__scope-count">
+        {isScopeFiltered ? (
+          <>
+            {' '}
+            ·{' '}
+            <span className="dashboard__scope-count">
               {visibleRepos.length} of {repositories.length} repositories
-            </span></>
-          )
-          : ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
-        }
+            </span>
+          </>
+        ) : (
+          ` · ${isAdmin && hasAdminSource ? 'all repositories' : 'public repositories'}`
+        )}
       </div>
-      <div className="repo-list">
-        {repoListContent}
-      </div>
+      <div className="repo-list">{repoListContent}</div>
       {stepperOpen && openPrs.length > 0 && (
-        <PullRequestStepper prs={openPrs} onClose={() => setStepperOpen(false)} isAdmin={isAdmin} merge={merge} />
+        <PullRequestStepper
+          prs={openPrs}
+          onClose={() => setStepperOpen(false)}
+          isAdmin={isAdmin}
+          merge={merge}
+        />
       )}
     </main>
   )
