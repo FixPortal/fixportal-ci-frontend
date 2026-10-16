@@ -19,6 +19,9 @@ test('always shows the "Open on GitHub" link', () => {
   render(<PullRequestStepper prs={prs} onClose={() => {}} />)
   const link = screen.getByRole('link', { name: /Open on GitHub/ })
   expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7')
+  expect(link.getAttribute('rel')?.split(/\s+/)).toEqual(
+    expect.arrayContaining(['noopener', 'noreferrer']),
+  )
 })
 
 test('hides the prev/next nav when there is a single PR', () => {
