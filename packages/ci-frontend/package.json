@@ -1,7 +1,7 @@
 {
   "name": "@fix-portal/ci-frontend",
   "version": "3.6.1",
-  "description": "Open-source CI dashboard UI - React components for the FixPortal CI backend snapshot API.",
+  "description": "Org-wide GitHub dashboard UI - React components driven by the FixPortal CI backend snapshot API.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

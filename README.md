@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/ci-dashboard-hero.png" alt="CI Dashboard by FixPortal" width="1200">
+  <img src="docs/images/ci-dashboard-hero.png" alt="Org-wide GitHub dashboard by FixPortal" width="1200">
 </p>
 
 <p align="center">
@@ -10,9 +10,9 @@
 
 # fixportal-ci-frontend
 
-> React CI dashboard — a component library and standalone app that render a GitHub organisation's
-> CI overview (workflow status, open PRs, deploy lanes, per-repo metrics, 24-hour trend, per-PR
-> review signals) from a single backend snapshot endpoint. No FixPortal-specific dependency
+> Org-wide GitHub dashboard — a React component library and standalone app that render a GitHub
+> organisation's workflows, open PRs, deploy lanes, per-repo metrics, 24-hour trend, and per-PR
+> review signals on one board, from a single backend snapshot endpoint. No FixPortal-specific dependency
 > required; brand and design tokens are injectable. Per-PR review signals appear only when the
 > backend snapshot supplies `reviewSignals` on a pull request; older or unconfigured backends are
 > rendered exactly as before.
