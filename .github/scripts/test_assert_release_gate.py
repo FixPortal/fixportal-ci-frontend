@@ -21,7 +21,7 @@ PACKAGE_MANIFESTS = {
         "name": "root",
         "scripts": {
             "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
-            "lint": "eslint .",
+            "lint": "eslint . --max-warnings=35",
             "test": "npm run test --workspaces --if-present",
             "test:scripts": "node --test scripts/*.test.mjs",
             "build:lib": "npm run build -w @fix-portal/ci-frontend",
@@ -69,6 +69,18 @@ jobs:
 class ReleaseGatePolicyTests(unittest.TestCase):
     def test_verify_reaches_each_substantive_nested_gate(self):
         self.assertEqual(validate_verify_gate(PACKAGE_MANIFESTS), [])
+
+    def test_verify_rejects_removed_or_loosened_warning_cap(self):
+        for command in ("eslint .", "eslint . --max-warnings=36", "eslint . --max-warnings=-1"):
+            with self.subTest(command=command):
+                manifests = {
+                    **PACKAGE_MANIFESTS,
+                    "root": {
+                        **PACKAGE_MANIFESTS["root"],
+                        "scripts": {**PACKAGE_MANIFESTS["root"]["scripts"], "lint": command},
+                    },
+                }
+                self.assertEqual(validate_verify_gate(manifests), ["invalid-verify-gate: root:lint"])
 
     def test_verify_rejects_a_missing_nested_gate(self):
         manifests = {
