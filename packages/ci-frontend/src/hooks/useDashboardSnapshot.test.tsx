@@ -1,8 +1,8 @@
 // src/hooks/useDashboardSnapshot.test.ts
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { renderHook, waitFor } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, renderHook, waitFor } from '@testing-library/react'
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CiConfigProvider } from '../CiConfigContext'
 import type { CiConfig } from '../CiConfigContext'
 import { CiAdminProvider } from '../CiAdminContext'
@@ -37,6 +37,104 @@ function wrapperFor(client: QueryClient, config: CiConfig, isAdmin = false) {
 }
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe('useDashboardSnapshot focus freshness', () => {
+  it('reuses fresh data on focus but refetches after 15s before the polling interval', async () => {
+    vi.useFakeTimers()
+    let calls = 0
+    const fetchSpy = vi.fn(async () => {
+      calls += 1
+      return jsonResponse(snapshotFor(`org-${calls}`))
+    })
+    vi.stubGlobal('fetch', fetchSpy)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const board = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(client, { apiBase: 'https://focus.example' }),
+    })
+    try {
+      await vi.waitFor(() => {
+        expect(board.result.current.data?.org).toBe('org-1')
+      })
+      await act(async () => {
+        focusManager.setFocused(false)
+        await vi.advanceTimersByTimeAsync(10_000)
+        focusManager.setFocused(true)
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(board.result.current.data?.org).toBe('org-1')
+
+      await act(async () => {
+        focusManager.setFocused(false)
+        await vi.advanceTimersByTimeAsync(6_000)
+        focusManager.setFocused(true)
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await vi.waitFor(() => {
+        expect(board.result.current.data?.org).toBe('org-2')
+      })
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
+    } finally {
+      board.unmount()
+      client.clear()
+      focusManager.setFocused()
+      vi.useRealTimers()
+    }
+  })
+})
+
+it.each([false, true])(
+  'aborts the superseded built-in %s-admin URL and retains B after late A',
+  async (admin) => {
+    const urlFor = (name: string) =>
+      admin ? `https://${name}.example/admin` : `https://${name}.example/api/dashboard/snapshot`
+    let config: CiConfig = { apiBase: 'https://a.example', adminSnapshotUrl: urlFor('a') }
+    let signalA: AbortSignal | undefined
+    let resolveA: ((response: Response) => void) | undefined
+    const fetchSpy = vi.fn((url: string, init?: RequestInit) => {
+      if (url === urlFor('a')) {
+        signalA = init?.signal ?? undefined
+        // Deliberately ignore abort and settle late: stale transport completion must not win.
+        return new Promise<Response>((resolve) => {
+          resolveA = resolve
+        })
+      }
+      return Promise.resolve(jsonResponse(snapshotFor('org-b')))
+    })
+    vi.stubGlobal('fetch', fetchSpy)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    function Wrapper({ children }: { children: ReactNode }) {
+      return wrapperFor(client, config, admin)({ children })
+    }
+    const board = renderHook(() => useDashboardSnapshot(), { wrapper: Wrapper })
+    try {
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+      })
+      expect(signalA).toBeInstanceOf(AbortSignal)
+      expect(signalA?.aborted).toBe(false)
+      config = { apiBase: 'https://b.example', adminSnapshotUrl: urlFor('b') }
+      board.rerender()
+      await waitFor(() => {
+        expect(board.result.current.data?.org).toBe('org-b')
+      })
+      expect(fetchSpy.mock.calls.map(([url]) => url)).toEqual([urlFor('a'), urlFor('b')])
+      expect(signalA?.aborted).toBe(true)
+
+      await act(async () => {
+        resolveA?.(jsonResponse(snapshotFor('org-a')))
+      })
+      expect(board.result.current.data?.org).toBe('org-b')
+      expect(client.getQueryData(['dashboard-snapshot', urlFor('a')])).toBeUndefined()
+      expect(client.getQueryData<DashboardSnapshot>(['dashboard-snapshot', urlFor('b')])?.org).toBe(
+        'org-b',
+      )
+    } finally {
+      board.unmount()
+      client.clear()
+    }
+  },
+)
 
 it.each([false, true])(
   'aborts the pending built-in request when its %s-admin board unmounts',
