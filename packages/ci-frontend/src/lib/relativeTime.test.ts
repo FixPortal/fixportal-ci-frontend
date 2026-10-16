@@ -1,18 +1,22 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import { formatRelativeTime } from './relativeTime'
 
-// Computed relative to real Date.now() at call time rather than a frozen system
-// clock, so the small delay between building the fixture and formatRelativeTime's
-// own Date.now() call can't cross a threshold boundary (values below are well
-// clear of 1m / 60m / 24h boundaries).
+const fixedNow = Date.parse('2026-06-01T12:00:00Z')
+
+beforeEach(() => {
+  vi.spyOn(Date, 'now').mockReturnValue(fixedNow)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 function isoMinutesAgo(minutes: number): string {
-  // The formatter under test reads the real clock, so fixtures are derived from it too.
-  // eslint-disable-next-line no-restricted-properties
-  return new Date(Date.now() - minutes * 60_000).toISOString()
+  return new Date(fixedNow - minutes * 60_000).toISOString()
 }
 
 describe('formatRelativeTime', () => {
-  it('reports "just now" for a timestamp under a minute old', () => {
+  it('reports "just now" for the current timestamp', () => {
     expect(formatRelativeTime(isoMinutesAgo(0))).toBe('just now')
   })
 
@@ -30,5 +34,18 @@ describe('formatRelativeTime', () => {
 
   it('falls back to an empty string for an unparseable timestamp (not "NaNm ago")', () => {
     expect(formatRelativeTime('not-a-date')).toBe('')
+  })
+
+  // Minutes round first; hours round those minutes; days round those hours.
+  // These are the existing composed boundaries, not literal hour/day cutoffs.
+  it.each([
+    ['just-now to minutes', 30_000, 'just now', '1m ago'],
+    ['minutes to hours', 3_570_000, '59m ago', '1h ago'],
+    ['rounded hour increment', 5_370_000, '1h ago', '2h ago'],
+    ['hours to days', 84_570_000, '23h ago', '1d ago'],
+    ['rounded day increment', 127_770_000, '1d ago', '2d ago'],
+  ] as const)('formats both sides of the %s transition', (_label, ageMs, before, at) => {
+    expect(formatRelativeTime(new Date(fixedNow - (ageMs - 1)).toISOString())).toBe(before)
+    expect(formatRelativeTime(new Date(fixedNow - ageMs).toISOString())).toBe(at)
   })
 })
