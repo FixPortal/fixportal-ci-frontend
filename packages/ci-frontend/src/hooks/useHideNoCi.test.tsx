@@ -26,6 +26,32 @@ describe('useHideNoCi', () => {
     expect(localStorage.getItem('ci-dashboard:hide-no-ci')).toBe('false')
   })
 
+  it('keeps user visibility changes in memory when storage writes are denied', () => {
+    const board = renderHook(() => useHideNoCi())
+    const save = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota denied')
+    })
+    try {
+      expect(() => {
+        act(() => {
+          board.result.current.toggle()
+        })
+      }).not.toThrow()
+      expect(board.result.current.hidden).toBe(true)
+      expect(save).toHaveBeenLastCalledWith('ci-dashboard:hide-no-ci', 'true')
+      expect(() => {
+        act(() => {
+          board.result.current.toggle()
+        })
+      }).not.toThrow()
+      expect(board.result.current.hidden).toBe(false)
+      expect(save).toHaveBeenLastCalledWith('ci-dashboard:hide-no-ci', 'false')
+    } finally {
+      board.unmount()
+      save.mockRestore()
+    }
+  })
+
   it('seeds from existing localStorage', () => {
     localStorage.setItem('ci-dashboard:hide-no-ci', 'true')
     const { result } = renderHook(() => useHideNoCi())

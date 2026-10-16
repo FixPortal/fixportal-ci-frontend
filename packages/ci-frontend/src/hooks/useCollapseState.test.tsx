@@ -34,6 +34,37 @@ describe('useCollapseState', () => {
     expect(result.current.isCollapsed('a')).toBe(false)
   })
 
+  it('keeps user collapse changes in memory when storage writes are denied', () => {
+    const board = renderHook(() => useCollapseState())
+    const save = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota denied')
+    })
+    try {
+      expect(() => {
+        act(() => {
+          board.result.current.toggle('a')
+        })
+      }).not.toThrow()
+      expect(board.result.current.isCollapsed('a')).toBe(true)
+      expect(save).toHaveBeenLastCalledWith('ci-dashboard:collapsed', JSON.stringify(['a']))
+      expect(() => {
+        act(() => {
+          board.result.current.expandAll()
+        })
+      }).not.toThrow()
+      expect(board.result.current.isCollapsed('a')).toBe(false)
+      expect(() => {
+        act(() => {
+          board.result.current.collapseAll(['a', 'b'])
+        })
+      }).not.toThrow()
+      expect(board.result.current.allCollapsed(['a', 'b'])).toBe(true)
+    } finally {
+      board.unmount()
+      save.mockRestore()
+    }
+  })
+
   it('seeds from existing localStorage', () => {
     localStorage.setItem('ci-dashboard:collapsed', JSON.stringify(['x']))
     const { result } = renderHook(() => useCollapseState())
