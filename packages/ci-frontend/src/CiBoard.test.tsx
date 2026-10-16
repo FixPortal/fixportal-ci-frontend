@@ -273,6 +273,31 @@ describe('CiBoard controlled theme', () => {
     expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'light')
   })
 
+  it('applies the selected theme when saving the preference is denied', async () => {
+    const key = 'ci:theme:theme-write-denied'
+    localStorage.setItem(key, 'light')
+    const { container } = render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={async () => snapshot}
+        storageNamespace="theme-write-denied"
+      />,
+    )
+    const select = await screen.findByRole('combobox', { name: 'Select theme' })
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError')
+    })
+    try {
+      await expect(userEvent.selectOptions(select, 'dark')).resolves.toBeUndefined()
+      expect(setItem).toHaveBeenCalledWith(key, 'dark')
+      expect(select).toHaveValue('dark')
+      expect(container.querySelector('.ci-page')).toHaveAttribute('data-theme', 'dark')
+      expect(localStorage.getItem(key)).toBe('light')
+    } finally {
+      setItem.mockRestore()
+    }
+  })
+
   it('keeps a saved theme when the initial read throws, and persists the next user choice', async () => {
     const key = 'ci:theme:theme-denied'
     localStorage.setItem(key, 'dark')
