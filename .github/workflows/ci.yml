@@ -109,6 +109,25 @@ jobs:
       - name: Package consumer smoke
         run: npm run test:package
 
+  browser:
+    name: Browser integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Exercise dashboard and package consumer without retries
+        run: npm run test:e2e -- --retries=0
+
   container-smoke:
     name: Production container smoke
     runs-on: ubuntu-latest
@@ -165,7 +184,7 @@ jobs:
   ci-gate:
     name: CI Gate
     if: always()
-    needs: [build, container-smoke, gate-coverage]
+    needs: [build, browser, container-smoke, gate-coverage]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # No token at all: this job only reads GitHub-controlled needs.*.result values, and

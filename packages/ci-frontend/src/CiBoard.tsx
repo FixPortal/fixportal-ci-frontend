@@ -161,7 +161,7 @@ export function CiBoard({
 }: CiBoardProps) {
   // Label reflects whether the board actually consumes a privileged data source,
   // not merely that a signal was passed — matches the toolbar scope descriptor.
-  const effectiveAdmin = (adminSignal && Boolean(adminSnapshotUrl)) || Boolean(adminSnapshotFetcher)
+  const effectiveAdmin = adminSignal && (Boolean(adminSnapshotUrl) || Boolean(adminSnapshotFetcher))
 
   // Namespaced like the storage keys: multiple boards can share a host page, so
   // the skip-link target id must not collide between instances.

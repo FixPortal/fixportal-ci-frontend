@@ -89,6 +89,26 @@ describe('CiBoard admin source gating', () => {
     expect(screen.queryByRole('group', { name: 'Visibility' })).not.toBeInTheDocument()
   })
 
+  it('does not use a configured admin fetcher when the host signal is false', async () => {
+    const guestFetcher = vi.fn().mockResolvedValue(snapshot)
+    const adminFetcher = vi.fn().mockResolvedValue(readySnapshot)
+    render(
+      <CiBoard
+        adminSignal={false}
+        snapshotFetcher={guestFetcher}
+        adminSnapshotFetcher={adminFetcher}
+        storageNamespace="guest-with-admin-fetcher"
+      />,
+    )
+
+    expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
+    expect(screen.getByText(/\[Guest\]/)).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Visibility' })).not.toBeInTheDocument()
+    expect(guestFetcher).toHaveBeenCalledOnce()
+    expect(adminFetcher).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'Rebase-merge PR #42' })).not.toBeInTheDocument()
+  })
+
   it('enables admin presentation when a privileged source is configured', async () => {
     render(
       <CiBoard
