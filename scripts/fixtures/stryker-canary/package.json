@@ -1,0 +1,5 @@
+{
+  "name": "owned-stryker-vitest5-mre",
+  "private": true,
+  "type": "module"
+}

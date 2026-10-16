@@ -15,3 +15,7 @@ coverage
 # scripts/design-tokens-sync.mjs matches selectors in this file textually ("dark" attribute
 # quotes, block layout) against the upstream design tokens; reformatting breaks the sync check.
 packages/ci-frontend/src/styles/tokens.css
+
+# Generated compatibility canary receipts and current-run scratch.
+packages/ci-frontend/reports/mutation-canary/
+packages/ci-frontend/.mutation-canary-tmp/
