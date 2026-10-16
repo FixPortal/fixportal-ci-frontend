@@ -1,14 +1,18 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CiBoardProps } from '@fix-portal/ci-frontend'
 import { App } from './App'
 
+interface CapturedBoardProps {
+  adminSignal: boolean
+  apiBase: string
+}
+
 const { captureBoardProps } = vi.hoisted(() => ({
-  captureBoardProps: vi.fn<(props: CiBoardProps) => void>(),
+  captureBoardProps: vi.fn<(props: CapturedBoardProps) => void>(),
 }))
 
 vi.mock('@fix-portal/ci-frontend', () => ({
-  CiBoard: (props: CiBoardProps) => {
+  CiBoard: (props: CapturedBoardProps) => {
     captureBoardProps(props)
     return (
       <output>
