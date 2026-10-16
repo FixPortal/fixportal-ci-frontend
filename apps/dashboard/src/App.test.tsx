@@ -1,21 +1,41 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CiBoardProps } from '@fix-portal/ci-frontend'
 import { App } from './App'
 
+const { captureBoardProps } = vi.hoisted(() => ({
+  captureBoardProps: vi.fn<(props: CiBoardProps) => void>(),
+}))
+
 vi.mock('@fix-portal/ci-frontend', () => ({
-  CiBoard: ({ adminSignal, apiBase }: { adminSignal: boolean; apiBase: string }) => (
-    <output>
-      {String(adminSignal)}
-      <span data-testid="api-base">{apiBase}</span>
-    </output>
-  ),
+  CiBoard: (props: CiBoardProps) => {
+    captureBoardProps(props)
+    return (
+      <output>
+        {String(props.adminSignal)}
+        <span data-testid="api-base">{props.apiBase}</span>
+      </output>
+    )
+  },
 }))
 
 afterEach(() => {
   cleanup()
+  captureBoardProps.mockClear()
   vi.restoreAllMocks()
   localStorage.clear()
   window.history.pushState({}, '', '/')
+})
+
+it.each([false, true])('omits privileged snapshot sources for standalone admin=%s', (admin) => {
+  window.history.pushState({}, '', admin ? '/?admin=true' : '/')
+  render(<App />)
+  expect(captureBoardProps).toHaveBeenCalled()
+  for (const [props] of captureBoardProps.mock.calls) {
+    expect(props.adminSignal).toBe(admin)
+    expect(props).not.toHaveProperty('adminSnapshotUrl')
+    expect(props).not.toHaveProperty('adminSnapshotFetcher')
+  }
 })
 
 describe('App admin state startup', () => {
