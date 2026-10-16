@@ -88,12 +88,15 @@ export function boundedRun(args, cwd, env, milliseconds, cap = 1024 * 1024) {
     let bytes = 0
     let failure
     const chunks = []
+    let killed = false
     const kill = (reason) => {
       failure ??= new Error(reason)
+      if (killed) return
+      killed = true
       try {
         process.kill(-child.pid, 'SIGKILL')
       } catch (error) {
-        if (error.code !== 'ESRCH') failure = error
+        if (error.code !== 'ESRCH') failure.cause = error
       }
     }
     const timer = setTimeout(() => kill('Canary deadline exceeded'), milliseconds)
@@ -104,7 +107,7 @@ export function boundedRun(args, cwd, env, milliseconds, cap = 1024 * 1024) {
         else chunks.push(data)
       })
     child.on('error', (error) => {
-      failure = error
+      failure ??= error
     })
     child.on('close', (code) => {
       clearTimeout(timer)
@@ -113,6 +116,16 @@ export function boundedRun(args, cwd, env, milliseconds, cap = 1024 * 1024) {
       else resolve({ code, output })
     })
   })
+}
+export function readObserverEvents(sink, output) {
+  const noEvents = () => new Error(`Canary observer wrote no events; inspect ${output}/console.log`)
+  if (!fs.existsSync(sink)) throw noEvents()
+  const lines = fs
+    .readFileSync(sink, 'utf8')
+    .split('\n')
+    .filter((line) => line.trim())
+  if (lines.length === 0) throw noEvents()
+  return lines.map((line) => JSON.parse(line))
 }
 export function assertCanary(report, events) {
   const file = report.files['src/required.js']
@@ -206,11 +219,7 @@ export async function runCanary(project) {
       )
     const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'))
     fs.copyFileSync(reportPath, path.join(output, 'mutation.json'))
-    const events = fs
-      .readFileSync(sink, 'utf8')
-      .trim()
-      .split('\n')
-      .map((line) => JSON.parse(line))
+    const events = readObserverEvents(sink, output)
     const receipt = assertCanary(report, events)
     if (result.code !== 0) throw new Error(`Canary runner exit ${result.code}`)
     fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify(receipt, null, 2))

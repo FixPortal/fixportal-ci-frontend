@@ -9,6 +9,7 @@ import {
   boundedRun,
   ensureCompatibility,
   ownedDirectory,
+  readObserverEvents,
   sha,
   targets,
 } from './assert-stryker-compat.mjs'
@@ -167,3 +168,56 @@ process.exitCode = await runMutation(${JSON.stringify(root)}, ${JSON.stringify(c
     assert.equal(result.code, expected, result.output.toString('utf8'))
   })
 }
+
+for (const [label, content] of [
+  ['missing', null],
+  ['empty', ''],
+  ['blank', ' \n\n'],
+]) {
+  it(`diagnoses ${label} observer events explicitly`, () => {
+    const { root } = fixture()
+    const sink = path.join(root, 'events.jsonl')
+    if (content !== null) fs.writeFileSync(sink, content)
+    assert.throws(() => readObserverEvents(sink, root), /Canary observer wrote no events; inspect/)
+  })
+}
+it('ignores blank lines between actual observer events', () => {
+  const { root } = fixture()
+  const sink = path.join(root, 'events.jsonl')
+  fs.writeFileSync(sink, '\n {"state":"fail"}\n \n{"state":"pass"}\n')
+  assert.deepEqual(readObserverEvents(sink, root), [{ state: 'fail' }, { state: 'pass' }])
+})
+it('signals an over-cap child group once and preserves its first failure and cause', async () => {
+  const { root } = fixture()
+  const cli = path.join(root, 'owned-cli.mjs')
+  const driver = path.join(root, 'owned-driver.mjs')
+  fs.writeFileSync(
+    cli,
+    "process.stdout.write('x'.repeat(65536)); setInterval(() => process.stdout.write('x'.repeat(65536)), 1)",
+  )
+  const production = pathToFileURL(path.resolve('scripts/assert-stryker-compat.mjs')).href
+  fs.writeFileSync(
+    driver,
+    `import assert from 'node:assert/strict';
+import { boundedRun } from ${JSON.stringify(production)};
+const original = process.kill;
+let calls = 0;
+const denied = Object.assign(new Error('owned injected kill error'), { code: 'EPERM' });
+process.kill = (pid, signal) => {
+  calls++;
+  original(pid, signal);
+  throw denied;
+};
+try {
+  await assert.rejects(boundedRun([${JSON.stringify(cli)}], ${JSON.stringify(root)}, process.env, 1000, 1), error => {
+    assert.equal(error.message, 'Canary output cap exceeded');
+    assert.equal(error.cause, denied);
+    return true;
+  });
+  assert.equal(calls, 1, 'owned group must be signalled once');
+} finally { process.kill = original; }
+`,
+  )
+  const result = await boundedRun([driver], process.cwd(), process.env, 5000)
+  assert.equal(result.code, 0, result.output.toString('utf8'))
+})
