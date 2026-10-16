@@ -341,10 +341,14 @@ describe('useDashboardSnapshot custom-fetcher validation', () => {
 })
 
 describe('useDashboardSnapshot polling', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
 
-  it('refetches on the 30s refetchInterval', async () => {
+  it.each([false, true])('refetches on the 30s interval when hidden=%s', async (hidden) => {
     vi.useFakeTimers()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(hidden ? 'hidden' : 'visible')
     let calls = 0
     const fetchSpy = vi.fn().mockImplementation(async () => {
       calls += 1
