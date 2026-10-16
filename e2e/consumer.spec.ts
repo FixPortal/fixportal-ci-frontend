@@ -67,16 +67,13 @@ for (const status of [403, 409]) {
   test(`surfaces merge ${status} and refreshes the stale verdict`, async ({ page }) => {
     let ready = true
     let snapshots = 0
+    const mergeRequests: unknown[] = []
     await page.route('**/fixture/admin-snapshot', (route) => {
       snapshots++
       return route.fulfill({ json: snapshot(true, ready) })
     })
     await page.route('**/fixture/merge', async (route) => {
-      expect(route.request().postDataJSON()).toEqual({
-        repo: 'synthetic-private',
-        pullNumber: 101,
-        headSha,
-      })
+      mergeRequests.push(route.request().postDataJSON())
       ready = false
       await route.fulfill({
         status,
@@ -84,7 +81,15 @@ for (const status of [403, 409]) {
       })
     })
     await openConsumer(page)
+    const mergeResponse = page.waitForResponse('**/fixture/merge')
     await page.getByRole('button', { name: 'Rebase-merge PR #101', exact: true }).click()
+    const response = await mergeResponse
+    await response.finished()
+    expect(response.status()).toBe(status)
+    expect(await response.text()).toBe(
+      status === 403 ? 'Not authorised to merge' : 'Head changed; refresh and review',
+    )
+    expect(mergeRequests).toEqual([{ repo: 'synthetic-private', pullNumber: 101, headSha }])
     await expect(page.getByRole('alert')).toContainText(
       status === 403 ? 'Not authorised to merge' : 'Head changed',
     )
@@ -97,7 +102,7 @@ for (const status of [403, 409]) {
 
 test('submits one merge, displays its receipt and refreshes the snapshot', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-03T12:00:00Z') })
-  let calls = 0
+  const mergeRequests: unknown[] = []
   let snapshots = 0
   let releaseSnapshot!: () => void
   const initialSnapshot = new Promise<void>((resolve) => {
@@ -113,12 +118,7 @@ test('submits one merge, displays its receipt and refreshes the snapshot', async
     release = resolve
   })
   await page.route('**/fixture/merge', async (route) => {
-    calls++
-    expect(route.request().postDataJSON()).toEqual({
-      repo: 'synthetic-private',
-      pullNumber: 101,
-      headSha,
-    })
+    mergeRequests.push(route.request().postDataJSON())
     await completion
     await route.fulfill({ json: { sha: 'b'.repeat(40) } })
   })
@@ -130,13 +130,18 @@ test('submits one merge, displays its receipt and refreshes the snapshot', async
   // timers for the receipt check. A paused startup can strand its zero-delay task.
   await expect(merge).toBeVisible()
   await page.clock.pauseAt(new Date('2026-10-04T12:00:00Z'))
+  const mergeResponse = page.waitForResponse('**/fixture/merge')
   await merge.click()
   await expect(page.getByRole('button', { name: 'Merging PR #101', exact: true })).toBeDisabled()
   release()
+  const response = await mergeResponse
+  await response.finished()
+  expect(response.status()).toBe(200)
+  expect(await response.json()).toEqual({ sha: 'b'.repeat(40) })
+  expect(mergeRequests).toEqual([{ repo: 'synthetic-private', pullNumber: 101, headSha }])
   await expect(page.getByRole('button', { name: 'Merged PR #101', exact: true })).toBeVisible()
   await page.clock.runFor(900)
   await expect(page.getByRole('button', { name: 'Merged PR #101', exact: true })).toHaveCount(0)
-  expect(calls).toBe(1)
   expect(snapshots).toBeGreaterThanOrEqual(2)
 })
 

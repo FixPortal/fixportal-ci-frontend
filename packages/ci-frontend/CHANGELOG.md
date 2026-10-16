@@ -12,6 +12,11 @@ lists every published release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Respect the host's guest role when an admin snapshot fetcher remains configured,
+  including after an admin-to-guest switch.
+
 ## [3.6.1] - 2026-09-30
 
 ### Fixed
