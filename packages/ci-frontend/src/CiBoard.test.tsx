@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -181,27 +182,39 @@ describe('CiBoard snapshot retry integration', () => {
       .mockRejectedValueOnce(new Error('temporary failure'))
       .mockRejectedValueOnce(new Error('temporary failure'))
       .mockResolvedValue(snapshot)
-    render(
-      <CiBoard
-        adminSignal={false}
-        snapshotFetcher={snapshotFetcher}
-        storageNamespace="retry-integration"
-      />,
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: 1, retryDelay: 0, refetchOnWindowFocus: false },
+      },
+    })
+    const { unmount } = render(
+      <QueryClientProvider client={queryClient}>
+        <CiBoard
+          adminSignal={false}
+          snapshotFetcher={snapshotFetcher}
+          storageNamespace="retry-integration"
+        />
+      </QueryClientProvider>,
     )
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument()
-      },
-      {
-        timeout: 5_000,
-      },
-    )
-    expect(snapshotFetcher).toHaveBeenCalledTimes(2)
+    try {
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Dashboard unavailable/)).toBeInTheDocument()
+        },
+        {
+          timeout: 5_000,
+        },
+      )
+      expect(snapshotFetcher).toHaveBeenCalledTimes(2)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Retry now' }))
-    expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
-    expect(snapshotFetcher).toHaveBeenCalledTimes(3)
+      await userEvent.click(screen.getByRole('button', { name: 'Retry now' }))
+      expect(await screen.findByText('ci-frontend')).toBeInTheDocument()
+      expect(snapshotFetcher).toHaveBeenCalledTimes(3)
+    } finally {
+      unmount()
+      queryClient.clear()
+    }
   })
 })
 
