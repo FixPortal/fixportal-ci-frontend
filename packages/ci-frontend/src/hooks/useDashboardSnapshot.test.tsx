@@ -38,6 +38,64 @@ function wrapperFor(client: QueryClient, config: CiConfig, isAdmin = false) {
 
 afterEach(() => vi.unstubAllGlobals())
 
+it.each([false, true])(
+  'aborts the pending built-in request when its %s-admin board unmounts',
+  async (admin) => {
+    let signal: AbortSignal | undefined
+    const fetchSpy = vi.fn((_url: string, init?: RequestInit) => {
+      signal = init?.signal ?? undefined
+      return new Promise<Response>((_resolve, reject) => {
+        signal?.addEventListener(
+          'abort',
+          () => {
+            reject(new DOMException('Aborted', 'AbortError'))
+          },
+          {
+            once: true,
+          },
+        )
+      })
+    })
+    vi.stubGlobal('fetch', fetchSpy)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const board = renderHook(() => useDashboardSnapshot(), {
+      wrapper: wrapperFor(
+        client,
+        {
+          apiBase: 'https://public.example',
+          adminSnapshotUrl: 'https://admin.example/snapshot',
+        },
+        admin,
+      ),
+    })
+    try {
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+      })
+      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+        admin ? 'https://admin.example/snapshot' : 'https://public.example/api/dashboard/snapshot',
+      )
+      expect(signal).toBeInstanceOf(AbortSignal)
+      expect(signal?.aborted).toBe(false)
+      const key = [
+        'dashboard-snapshot',
+        admin ? 'https://admin.example/snapshot' : 'https://public.example/api/dashboard/snapshot',
+      ]
+      expect(client.getQueryState(key)).toMatchObject({ fetchStatus: 'fetching', data: undefined })
+
+      board.unmount()
+
+      expect(signal?.aborted).toBe(true)
+      await waitFor(() => {
+        expect(client.getQueryState(key)).toMatchObject({ fetchStatus: 'idle', data: undefined })
+      })
+    } finally {
+      board.unmount()
+      client.clear()
+    }
+  },
+)
+
 describe('useDashboardSnapshot cache-key isolation', () => {
   it('keeps two guest boards with distinct fetchers on separate cache rows when neither supplies a cache key', async () => {
     const client = new QueryClient()
@@ -68,7 +126,7 @@ describe('useDashboardSnapshot cache-key isolation', () => {
   it('keeps two co-hosted boards with distinct fetchers on separate cache rows under one shared QueryClient', async () => {
     // Both hooks share a single QueryClient (simulating two boards mounted under
     // the same host app), each with its own snapshotFetcher and a distinct
-    // snapshotCacheKey — the guard useDashboardSnapshot.ts:19-51 folds in so the
+    // snapshotCacheKey â€” the guard useDashboardSnapshot.ts:19-51 folds in so the
     // two boards' cache rows don't alias.
     const client = new QueryClient()
     const { result: boardA } = renderHook(() => useDashboardSnapshot(), {
