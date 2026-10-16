@@ -36,7 +36,11 @@ const wfRejectedUrl: WorkflowSnapshot = {
 
 test('links the run chip when a htmlUrl is present', () => {
   render(<SignalChip workflow={wfWithRun} />)
-  expect(screen.getByRole('link')).toHaveAttribute('href', wfWithRun.lastRun!.htmlUrl)
+  const link = screen.getByRole('link')
+  expect(link).toHaveAttribute('href', wfWithRun.lastRun!.htmlUrl)
+  expect(link.getAttribute('rel')?.split(/\s+/)).toEqual(
+    expect.arrayContaining(['noopener', 'noreferrer']),
+  )
 })
 
 test('renders a non-link chip when there is no last run', () => {

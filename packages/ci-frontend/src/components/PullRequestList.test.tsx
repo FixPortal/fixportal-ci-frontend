@@ -18,6 +18,9 @@ test('always renders a GitHub link for each PR', () => {
   render(<PullRequestList pullRequests={prs} repoName="x/y" />)
   const link = screen.getByRole('link', { name: /#7\s*Add widget/ })
   expect(link).toHaveAttribute('href', 'https://github.com/x/y/pull/7')
+  expect(link.getAttribute('rel')?.split(/\s+/)).toEqual(
+    expect.arrayContaining(['noopener', 'noreferrer']),
+  )
 })
 
 test('renders nothing when there are no pull requests', () => {

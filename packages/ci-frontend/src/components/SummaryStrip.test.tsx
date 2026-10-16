@@ -149,7 +149,11 @@ describe('SummaryStrip last-merged', () => {
         lastMerged={merged}
       />,
     )
-    expect(screen.getByText(mergedTitle).closest('a')).toHaveAttribute('href', merged.htmlUrl)
+    const link = screen.getByText(mergedTitle).closest('a')
+    expect(link).toHaveAttribute('href', merged.htmlUrl)
+    expect(link?.getAttribute('rel')?.split(/\s+/)).toEqual(
+      expect.arrayContaining(['noopener', 'noreferrer']),
+    )
   })
 
   it('shows the merged age on the label and the repo/PR on its own line', () => {

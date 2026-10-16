@@ -29,6 +29,9 @@ describe('RepoBoard GitHub link', () => {
     const link = screen.getByRole('link', { name: /open fixportal-docs on github/i })
     expect(link).toHaveAttribute('href', 'https://github.com/FixPortal/fixportal-docs')
     expect(link).toHaveAttribute('target', '_blank')
+    expect(link.getAttribute('rel')?.split(/\s+/)).toEqual(
+      expect.arrayContaining(['noopener', 'noreferrer']),
+    )
   })
 
   it('renders the GitHub link for private repos without admin gating', () => {

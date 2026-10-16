@@ -13,7 +13,11 @@ const signal: JobSignal = {
 
 test('always links job chips to their run page', () => {
   render(<JobLaneRow kind="deploys" glyph="▲" label="Deploys" signals={[signal]} />)
-  expect(screen.getByRole('link')).toHaveAttribute('href', signal.htmlUrl)
+  const link = screen.getByRole('link')
+  expect(link).toHaveAttribute('href', signal.htmlUrl)
+  expect(link.getAttribute('rel')?.split(/\s+/)).toEqual(
+    expect.arrayContaining(['noopener', 'noreferrer']),
+  )
 })
 
 test('renders nothing when there are no signals', () => {
