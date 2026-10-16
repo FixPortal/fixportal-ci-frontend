@@ -59,6 +59,17 @@ jobs:
         # runs.
         run: npm ci --ignore-scripts
 
+      - name: Qualify Stryker Vitest compatibility
+        run: node scripts/assert-stryker-compat.mjs --canary
+
+      - name: Retain mutation compatibility canary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-compatibility-canary
+          path: packages/ci-frontend/reports/mutation-canary/
+          if-no-files-found: warn
+
       - name: Format check
         run: npm run format
 

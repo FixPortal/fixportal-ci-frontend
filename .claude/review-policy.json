@@ -39,9 +39,7 @@
     "Deleting the guard itself needs no reviewer: \"Review policy intact\" is a REQUIRED",
     "status check, so removing the workflow means the check never reports and no PR merges."
   ],
-
   "version": 1,
-
   "high": [
     ".github/scripts/test_policy_checkers.py",
     ".github/scripts/assert_release_gate.py",
@@ -55,9 +53,11 @@
     ".github/workflows/review-tier.yml",
     ".github/canonical-assets.json",
     ".github/scripts/assert_canonical_assets.py",
-    ".npmrc"
+    ".npmrc",
+    "scripts/assert-stryker-compat*.mjs",
+    "scripts/fixtures/stryker-canary/**",
+    ".github/workflows/mutation.yml"
   ],
-
   "low": [
     "docs/**",
     "*.md",

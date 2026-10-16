@@ -1,0 +1,26 @@
+{
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.mjs",
+    "related": true
+  },
+  "checkers": [],
+  "coverageAnalysis": "perTest",
+  "mutate": ["src/required.js:3:4-4:23"],
+  "reporters": ["clear-text", "json"],
+  "jsonReporter": {
+    "fileName": "reports/mutation.json"
+  },
+  "concurrency": 2,
+  "timeoutMS": 10000,
+  "timeoutFactor": 1.5,
+  "dryRunTimeoutMinutes": 1,
+  "thresholds": {
+    "high": 80,
+    "low": 55,
+    "break": null
+  },
+  "cleanTempDir": false,
+  "logLevel": "info",
+  "fileLogLevel": "info"
+}

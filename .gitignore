@@ -35,3 +35,7 @@ graphify-out/
 
 # Local runs of the gate assertion; never an artefact of CI.
 .github/scripts/__pycache__/
+
+# Generated compatibility canary receipts and current-run scratch.
+packages/ci-frontend/reports/mutation-canary/
+packages/ci-frontend/.mutation-canary-tmp/
