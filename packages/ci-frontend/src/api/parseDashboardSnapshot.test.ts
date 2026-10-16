@@ -92,6 +92,28 @@ test('returns a complete compatible snapshot including null, optional, and unkno
   expect(parseDashboardSnapshot(snapshot)).toBe(snapshot)
 })
 
+test.each(['workflows', 'pullRequests'] as const)(
+  'requires the repository %s array when missing or null',
+  (field) => {
+    for (const absent of ['missing', 'null'] as const) {
+      const malformed = structuredClone(snapshot)
+      const repository: Record<string, unknown> = malformed.repositories[0]!
+      if (absent === 'missing') Reflect.deleteProperty(repository, field)
+      else repository[field] = null
+      expect(() => parseDashboardSnapshot(malformed)).toThrow(
+        `Invalid dashboard snapshot at $.repositories[0].${field}: expected array`,
+      )
+    }
+  },
+)
+
+test('accepts explicitly empty required repository arrays', () => {
+  const empty = structuredClone(snapshot)
+  empty.repositories[0]!.workflows = []
+  empty.repositories[0]!.pullRequests = []
+  expect(parseDashboardSnapshot(empty)).toBe(empty)
+})
+
 test('reports the failing path without exposing payload values', () => {
   const malformed = { ...snapshot, org: { value: 'secret-marker' } }
 
