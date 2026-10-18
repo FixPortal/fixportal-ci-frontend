@@ -1,7 +1,7 @@
-import { render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { CiWeatherBar } from './CiWeatherBar'
-import type { CiTrendBucket } from '../api/types'
+import type { CiTrendBucket, RepositorySnapshot } from '../api/types'
 
 const bucket = (state: CiTrendBucket['state'], hour: number): CiTrendBucket => ({
   bucketStart: new Date(Date.UTC(2026, 4, 30, hour)).toISOString(),
@@ -36,5 +36,38 @@ describe('CiWeatherBar', () => {
     const { container, getByText } = render(<CiWeatherBar trend={trend} />)
     expect(getByText(/2 failing/)).toBeInTheDocument()
     expect(container.querySelector('.ci-weather__block')?.getAttribute('title')).toMatch(/failing/i)
+  })
+
+  it('opens a popover naming the failed runs when a failing block is clicked', () => {
+    const repositories = [
+      {
+        name: 'repo-a',
+        workflows: [
+          {
+            name: 'CI',
+            file: 'ci.yml',
+            state: 'failure',
+            lastRun: {
+              status: 'completed',
+              conclusion: 'failure',
+              htmlUrl: 'https://github.com/o/repo-a/actions/runs/1',
+              title: 't',
+              runNumber: 1,
+              branch: 'main',
+              event: 'push',
+              updatedAt: new Date(Date.UTC(2026, 4, 30, 10, 20)).toISOString(),
+            },
+          },
+        ],
+      },
+    ] as unknown as RepositorySnapshot[]
+    const trend = [bucket('passing', 9), bucket('failing', 10)]
+    const { getByRole, queryByRole } = render(
+      <CiWeatherBar trend={trend} repositories={repositories} />,
+    )
+    expect(queryByRole('region', { name: 'Failed CI runs' })).toBeNull()
+    fireEvent.click(getByRole('button', { name: /failing/i }))
+    const popover = getByRole('region', { name: 'Failed CI runs' })
+    expect(popover).toHaveTextContent('repo-a · CI · main')
   })
 })

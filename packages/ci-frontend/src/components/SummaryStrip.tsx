@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CiTrendBucket, MergedPr, SummaryCount } from '../api/types'
+import type { CiTrendBucket, MergedPr, RepositorySnapshot, SummaryCount } from '../api/types'
 import type { OpenPr } from '../lib/flattenOpenPrs'
 import { formatCompactNumber } from '../lib/formatCompactNumber'
 import { formatRelativeTime } from '../lib/relativeTime'
@@ -52,6 +52,7 @@ interface SummaryStripProps {
   lastMerged: MergedPr | null
   nextPr?: OpenPr | null
   ciTrend?: CiTrendBucket[]
+  repositories?: RepositorySnapshot[]
 }
 
 function labelFor(key: string, count: number) {
@@ -83,6 +84,7 @@ export function SummaryStrip({
   lastMerged,
   nextPr = null,
   ciTrend = EMPTY_TREND,
+  repositories,
 }: SummaryStripProps) {
   const byKey = useMemo(() => new Map(summary.map((s) => [s.key, s])), [summary])
 
@@ -216,7 +218,7 @@ export function SummaryStrip({
               ))}
             {panel.title === 'CI status' && ciTrend.length > 0 && (
               <div className="summary-panel__trend">
-                <CiWeatherBar trend={ciTrend} />
+                <CiWeatherBar trend={ciTrend} repositories={repositories} />
                 <div ref={trendLabelRef} className="summary-panel__trend-label-row">
                   <span className="summary-panel__trend-lab">CI health · 24h</span>
                   <button

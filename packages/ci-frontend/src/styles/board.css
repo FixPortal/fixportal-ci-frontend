@@ -1754,6 +1754,54 @@
   .ci-weather__block[data-state='noData'] {
     background: color-mix(in srgb, var(--unknown) 35%, transparent);
   }
+  .ci-weather-wrap {
+    position: relative;
+  }
+  .ci-weather__block--btn {
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .ci-weather__block--btn:hover {
+    filter: brightness(1.2);
+  }
+  .ci-weather__block--btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  .ci-failed-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 320px;
+    max-width: 100%;
+    background: var(--card-bg);
+    border: 1px solid color-mix(in srgb, var(--brand) 60%, var(--border));
+    border-radius: var(--r-panel);
+    padding: var(--space-3);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    line-height: 1.55;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .ci-failed-popover p {
+    margin: 0;
+  }
+  .ci-failed-popover ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ci-failed-popover li + li {
+    margin-top: var(--space-1);
+  }
+  .ci-failed-popover a {
+    color: var(--text);
+  }
+  .ci-failed-popover__age {
+    font-family: var(--font-mono);
+  }
   .ci-weather__readout {
     display: block;
     margin-top: var(--space-1);

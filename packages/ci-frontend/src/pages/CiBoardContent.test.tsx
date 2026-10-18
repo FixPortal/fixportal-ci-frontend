@@ -392,7 +392,7 @@ describe('CiBoardContent controlled repository scope', () => {
     )
 
     expect(await screen.findByText('controlled')).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: /CI health/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /CI health/i })).not.toBeInTheDocument()
   })
 
   it('renders the CI trend on an unscoped board', async () => {
@@ -409,7 +409,7 @@ describe('CiBoardContent controlled repository scope', () => {
       />,
     )
 
-    expect(await screen.findByRole('img', { name: /CI health/i })).toBeInTheDocument()
+    expect(await screen.findByRole('group', { name: /CI health/i })).toBeInTheDocument()
   })
 })
 
@@ -429,7 +429,7 @@ describe('CiBoardContent public snapshot fallbacks', () => {
     render(<CiBoard adminSignal={false} snapshotFetcher={async () => publicSnapshot} />)
 
     expect(
-      await screen.findByRole('img', { name: /CI health, last 24h: 0 failing, 1 healthy/i }),
+      await screen.findByRole('group', { name: /CI health, last 24h: 0 failing, 1 healthy/i }),
     ).toBeInTheDocument()
   })
 
