@@ -92,11 +92,11 @@ export function CiWeatherBar({
             </p>
           ) : (
             <ul>
-              {failed.map(({ repo, workflow, run }) => {
+              {failed.map(({ key, repo, workflow, run }) => {
                 const href = isAllowedHref(run.htmlUrl)
                 const text = [repo, workflow, run.branch].filter(Boolean).join(' · ')
                 return (
-                  <li key={run.htmlUrl}>
+                  <li key={key}>
                     {href !== '#' ? (
                       <a href={href} target="_blank" rel="noopener noreferrer">
                         {text}

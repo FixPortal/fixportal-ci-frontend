@@ -39,6 +39,26 @@ describe('failedRunsInBucket', () => {
     expect(found[0]).toMatchObject({ repo: 'repo-a', workflow: 'CI' })
   })
 
+  it('keeps distinct failures that share an empty htmlUrl', () => {
+    const blank = (n: number): WorkflowRun => ({
+      ...run('failure', '2026-10-18T10:15:00Z', ''),
+      runNumber: n,
+    })
+    const wf = {
+      name: 'CI',
+      file: 'ci.yml',
+      state: 'failure',
+      lastRun: blank(1),
+      recentRuns: [blank(2)],
+    }
+    const found = failedRunsInBucket(
+      [{ name: 'repo-b', workflows: [wf] }] as unknown as RepositorySnapshot[],
+      '2026-10-18T10:00:00Z',
+    )
+    expect(found).toHaveLength(2)
+    expect(new Set(found.map((f) => f.key)).size).toBe(2)
+  })
+
   it('returns nothing for an unparseable bucket', () => {
     expect(failedRunsInBucket(repos, 'nope')).toEqual([])
   })
