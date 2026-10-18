@@ -1,6 +1,8 @@
 import type { RepositorySnapshot, WorkflowRun } from '../api/types'
 
 export interface FailedRun {
+  // Stable per-run identity; htmlUrl alone is not enough because the wire format allows ''.
+  key: string
   repo: string
   workflow: string
   run: WorkflowRun
@@ -35,7 +37,9 @@ export function failedRunsInBucket(
     ),
   )
   for (const c of candidates) {
-    if (failedWithin(c.run, start)) found.set(c.run.htmlUrl, { ...c, run: c.run })
+    if (!failedWithin(c.run, start)) continue
+    const key = c.run.htmlUrl || `${c.repo}|${c.workflow}|${c.run.runNumber}|${c.run.updatedAt}`
+    found.set(key, { ...c, key, run: c.run })
   }
   return [...found.values()].sort((a, b) => b.run.updatedAt.localeCompare(a.run.updatedAt))
 }
