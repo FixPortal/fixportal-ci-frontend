@@ -1773,8 +1773,10 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    width: 320px;
-    max-width: 100%;
+    /* Grow to fit the longest line; the cap keeps a very long branch name on screen. */
+    width: max-content;
+    min-width: 200px;
+    max-width: min(480px, calc(100vw - 32px));
     background: var(--card-bg);
     border: 1px solid color-mix(in srgb, var(--brand) 60%, var(--border));
     border-radius: var(--r-panel);
@@ -1784,6 +1786,16 @@
     line-height: 1.55;
     z-index: 20;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .ci-failed-popover__run {
+    display: flex;
+    flex-direction: column;
+  }
+  .ci-failed-popover__repo {
+    color: var(--text);
+  }
+  .ci-failed-popover__detail {
+    overflow-wrap: anywhere;
   }
   .ci-failed-popover p {
     margin: 0;

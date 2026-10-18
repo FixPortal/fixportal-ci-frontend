@@ -94,19 +94,36 @@ export function CiWeatherBar({
             <ul>
               {failed.map(({ key, repo, workflow, run }) => {
                 const href = isAllowedHref(run.htmlUrl)
-                const text = [repo, workflow, run.branch].filter(Boolean).join(' · ')
+                // "CI" is the default workflow name and says nothing; any other name is worth showing.
+                const detail = [/^ci$/i.test(workflow) ? null : workflow, run.branch]
+                  .filter(Boolean)
+                  .join(' · ')
+                const body = (
+                  <>
+                    <span className="ci-failed-popover__repo">{repo}</span>
+                    <span className="ci-failed-popover__detail">
+                      {detail}
+                      {detail && ' '}
+                      <span className="ci-failed-popover__age">
+                        {formatRelativeTime(run.updatedAt)}
+                      </span>
+                    </span>
+                  </>
+                )
                 return (
                   <li key={key}>
                     {href !== '#' ? (
-                      <a href={href} target="_blank" rel="noopener noreferrer">
-                        {text}
+                      <a
+                        className="ci-failed-popover__run"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {body}
                       </a>
                     ) : (
-                      text
-                    )}{' '}
-                    <span className="ci-failed-popover__age">
-                      {formatRelativeTime(run.updatedAt)}
-                    </span>
+                      <span className="ci-failed-popover__run">{body}</span>
+                    )}
                   </li>
                 )
               })}

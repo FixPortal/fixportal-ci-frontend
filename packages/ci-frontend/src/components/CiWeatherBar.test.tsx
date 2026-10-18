@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, within } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { CiWeatherBar } from './CiWeatherBar'
 import type { CiTrendBucket, RepositorySnapshot } from '../api/types'
@@ -68,6 +68,38 @@ describe('CiWeatherBar', () => {
     expect(queryByRole('region', { name: 'Failed CI runs' })).toBeNull()
     fireEvent.click(getByRole('button', { name: /failing/i }))
     const popover = getByRole('region', { name: 'Failed CI runs' })
-    expect(popover).toHaveTextContent('repo-a · CI · main')
+    expect(within(popover).getByText('repo-a')).toBeInTheDocument()
+    expect(popover).toHaveTextContent(/main/)
+    expect(popover).not.toHaveTextContent(/\bCI\b ·/)
+  })
+
+  it('keeps the workflow name in the popover when it is not the default "CI"', () => {
+    const repositories = [
+      {
+        name: 'repo-b',
+        workflows: [
+          {
+            name: 'Release',
+            file: 'release.yml',
+            state: 'failure',
+            lastRun: {
+              status: 'completed',
+              conclusion: 'failure',
+              htmlUrl: 'https://github.com/o/repo-b/actions/runs/2',
+              title: 't',
+              runNumber: 2,
+              branch: 'main',
+              event: 'push',
+              updatedAt: new Date(Date.UTC(2026, 4, 30, 10, 20)).toISOString(),
+            },
+          },
+        ],
+      },
+    ] as unknown as RepositorySnapshot[]
+    const { getByRole } = render(
+      <CiWeatherBar trend={[bucket('failing', 10)]} repositories={repositories} />,
+    )
+    fireEvent.click(getByRole('button', { name: /failing/i }))
+    expect(getByRole('region', { name: 'Failed CI runs' })).toHaveTextContent('Release · main')
   })
 })
