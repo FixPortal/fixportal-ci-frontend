@@ -12,6 +12,26 @@ lists every published release.
 
 ## [Unreleased]
 
+## [3.7.1] - 2026-10-18
+
+### Fixed
+
+- The failed-runs popover now shows the repository on its own line with the branch and
+  age beneath it, drops the default "CI" workflow name, and widens to fit its text
+  instead of wrapping inside a fixed 320px.
+
+## [3.7.0] - 2026-10-18
+
+### Added
+
+- Failing hours in the CI health strip are now buttons. Clicking one opens a popover
+  listing the runs that failed in that hour (repository, branch, age, link to the run),
+  built from the runs already in the snapshot. When no loaded run matches, the popover
+  says so. The strip is `role="group"` when interactive, since `role="img"` hides its
+  children from assistive technology.
+
+## [3.6.2] - 2026-10-16
+
 ### Fixed
 
 - Respect the host's guest role when an admin snapshot fetcher remains configured,
