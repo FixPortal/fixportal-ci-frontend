@@ -411,6 +411,7 @@ export function CiBoardContent() {
           }
           lastMerged={lastMergedPr}
           nextPr={nextPr}
+          repositories={repositories}
           ciTrend={
             hasRepositoryScope
               ? // The trend is organisation-wide; a scoped board would chart activity
