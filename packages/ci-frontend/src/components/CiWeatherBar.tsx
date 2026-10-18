@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CiTrendBucket, CiTrendState, RepositorySnapshot } from '../api/types'
-import { failedRunsInBucket } from '../lib/failedRunsInBucket'
+import { failedRunsInBucket, type FailedRun } from '../lib/failedRunsInBucket'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import { formatRelativeTime } from '../lib/relativeTime'
 
@@ -12,6 +12,34 @@ const BLOCK_WORD: Record<CiTrendState, string> = {
   passing: 'healthy',
   failing: 'failing',
   noData: 'no data',
+}
+
+function FailedRunItem({ item }: Readonly<{ item: FailedRun }>) {
+  const { repo, workflow, run } = item
+  const href = isAllowedHref(run.htmlUrl)
+  // "CI" is the default workflow name and says nothing; any other name is worth showing.
+  const detail = [/^ci$/i.test(workflow) ? null : workflow, run.branch].filter(Boolean).join(' · ')
+  const body = (
+    <>
+      <span className="ci-failed-popover__repo">{repo}</span>
+      <span className="ci-failed-popover__detail">
+        {detail}
+        {detail && ' '}
+        <span className="ci-failed-popover__age">{formatRelativeTime(run.updatedAt)}</span>
+      </span>
+    </>
+  )
+  return (
+    <li>
+      {href === '#' ? (
+        <span className="ci-failed-popover__run">{body}</span>
+      ) : (
+        <a className="ci-failed-popover__run" href={href} target="_blank" rel="noopener noreferrer">
+          {body}
+        </a>
+      )}
+    </li>
+  )
 }
 
 export function CiWeatherBar({
@@ -92,41 +120,9 @@ export function CiWeatherBar({
             </p>
           ) : (
             <ul>
-              {failed.map(({ key, repo, workflow, run }) => {
-                const href = isAllowedHref(run.htmlUrl)
-                // "CI" is the default workflow name and says nothing; any other name is worth showing.
-                const detail = [/^ci$/i.test(workflow) ? null : workflow, run.branch]
-                  .filter(Boolean)
-                  .join(' · ')
-                const body = (
-                  <>
-                    <span className="ci-failed-popover__repo">{repo}</span>
-                    <span className="ci-failed-popover__detail">
-                      {detail}
-                      {detail && ' '}
-                      <span className="ci-failed-popover__age">
-                        {formatRelativeTime(run.updatedAt)}
-                      </span>
-                    </span>
-                  </>
-                )
-                return (
-                  <li key={key}>
-                    {href !== '#' ? (
-                      <a
-                        className="ci-failed-popover__run"
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {body}
-                      </a>
-                    ) : (
-                      <span className="ci-failed-popover__run">{body}</span>
-                    )}
-                  </li>
-                )
-              })}
+              {failed.map((f) => (
+                <FailedRunItem key={f.key} item={f} />
+              ))}
             </ul>
           )}
         </section>
