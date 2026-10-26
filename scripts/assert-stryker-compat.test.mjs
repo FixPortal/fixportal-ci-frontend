@@ -18,7 +18,7 @@ const runnerPath = 'packages/ci-frontend/node_modules/@stryker-mutator/vitest-ru
 const packages = {
   'packages/ci-frontend/node_modules/@stryker-mutator/core': '10.0.0',
   [runnerPath]: '10.0.0',
-  'node_modules/vitest': '5.0.3',
+  'node_modules/vitest': '5.0.5',
 }
 const originals = targets.map(([name, original]) => {
   const text = fs
@@ -89,7 +89,7 @@ describe('guarded installed runner compatibility', () => {
     const { root } = fixture()
     const shadow = path.join(root, runnerPath, 'node_modules/vitest')
     fs.mkdirSync(shadow, { recursive: true })
-    fs.writeFileSync(path.join(shadow, 'package.json'), '{"version":"5.0.3"}')
+    fs.writeFileSync(path.join(shadow, 'package.json'), '{"version":"5.0.5"}')
     assert.throws(() => ensureCompatibility(root), /Unexpected runner-local Vitest resolution/)
   })
   it('rejects a runner target escaping its module subtree', () => {
