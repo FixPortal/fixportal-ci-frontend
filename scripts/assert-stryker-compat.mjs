@@ -22,7 +22,7 @@ export const targets = [
 const packages = {
   'packages/ci-frontend/node_modules/@stryker-mutator/core': '10.0.0',
   'packages/ci-frontend/node_modules/@stryker-mutator/vitest-runner': '10.0.0',
-  'node_modules/vitest': '5.0.3',
+  'node_modules/vitest': '5.0.5',
 }
 const corePath = 'packages/ci-frontend/node_modules/@stryker-mutator/core'
 const runnerPath = 'packages/ci-frontend/node_modules/@stryker-mutator/vitest-runner'
