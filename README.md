@@ -23,6 +23,9 @@
 > walks through every route from "just show me" to "point it at my own GitHub org",
 > assuming no prior knowledge.
 
+> Just looking at a board? [**Reading the CI board**](docs/user-guide.md) explains what each
+> card, colour and pill means.
+
 ## What's in the repo
 
 | Path                   | Contents                                                                  |
