@@ -67,7 +67,7 @@ A green "Ready to merge" pill appears only when the backend has judged the pull 
 
 ## The merge action
 
-In the admin view the pill becomes a button titled "Rebase-merge this PR". It reads "Merging…" while it works, then "✓ Merged". With two or more ready pull requests in a repository, "Merge all (oldest first)" appears. It stops at the first failure.
+In the admin view the pill becomes a button titled "Rebase-merge this PR". It reads "Merging…" while it works, then "✓ Merged". With two or more ready pull requests that each have a recorded head commit, "Merge all (oldest first)" appears. It stops at the first failure.
 
 The button is absent for guests and for a pull request with no recorded head commit. It is disabled while that merge runs.
 
@@ -84,7 +84,7 @@ An operator must switch merging on. See the [setup guide](setup-guide.md), "Lett
 - **Hide No-CI**: becomes "Show No-CI · N hidden" when on.
 - **Theme** in the header: System, Light or Dark, remembered in your browser. The operator can hide it.
 
-A line under the toolbar reads "N of M repositories" when filters apply. If nothing matches, you see "No repositories match the active filters." and "Clear filters". The board has no control for repository order.
+A line under the toolbar reads "N of M repositories" when filters apply. If nothing matches, you see "No repositories match the active filters." and "Clear filters". If Hide No-CI is the only reason the board is empty, you see "All repositories are No-CI — hidden." instead, with no "Clear filters" button; turn off Hide No-CI to see them. The board has no control for repository order.
 
 ## Waiting, stale and error states
 
@@ -93,6 +93,7 @@ A line under the toolbar reads "N of M repositories" when filters apply. If noth
 - "Dashboard unavailable. Retrying automatically.", with "Retry now": the first load failed.
 - "refresh failed · retrying", beside the "updated" time: a later refresh failed. The last good data stays on screen, so check its age.
 - "No repositories found.": nothing visible to you.
+- "All repositories are No-CI — hidden.": Hide No-CI is on and every repository has no CI. Use "Show No-CI · N hidden".
 
 ## If something looks wrong
 
