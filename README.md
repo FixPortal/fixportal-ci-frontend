@@ -35,8 +35,10 @@
 
 ## See it running
 
-The FixPortal organisation's own board is public at <https://ci.fixportal.org>.
-That is this dashboard, serving live data, with no install.
+The FixPortal organisation's own board is public at <https://www.fixportal.org/ci>.
+That is this dashboard, serving live data, with no install. `https://ci.fixportal.org` is
+the backend API host: observed on 2026-10-27, its root answers `301` to
+`https://www.fixportal.org/ci` and `GET /api/dashboard/snapshot` answers `200`.
 
 ## Quick start — Docker (no install required)
 
@@ -309,7 +311,7 @@ Registry: [GitHub Container Registry — fixportal-ci-frontend](https://github.c
 
 ### Public backend (guest / read-only)
 
-The same host serves both the board and its API.
+This host serves the API only; its root redirects to the board at `https://www.fixportal.org/ci`.
 
 ```
 https://ci.fixportal.org
