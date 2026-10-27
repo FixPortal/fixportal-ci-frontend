@@ -136,8 +136,8 @@ GET {apiBase}/api/dashboard/snapshot
   public barrel / export surface. The app is built with Vite.
 - **Container:** multi-stage `Dockerfile` (Node 22 Alpine build → nginx Alpine
   serve, port 8080, non-root). `docker-entrypoint.sh` runs `envsubst` over
-  `nginx.conf.template` so `BACKEND_URL` / `VITE_CI_API_BASE` are injected at
-  container start.
+  `nginx.conf.template` so `BACKEND_URL` is injected at container start
+  (`VITE_CI_API_BASE` is a Vite build-time variable, not substituted at start).
 - **CI/CD:** `ci.yml` lints, runs workspace tests, typechecks and coverage-gates
   the library, builds lib + app, and pushes the
   image to GHCR on `main`. `release.yml` publishes the npm package (OIDC
