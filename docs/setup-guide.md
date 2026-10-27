@@ -55,7 +55,9 @@ A token is a password that only permits the specific things you tick.
 4. Under **Permissions → Repository permissions**, set:
    - **Actions**: Read-only — _required_, this is the build status
    - **Pull requests**: Read-only — for open-PR counts
-   - **Contents**: Read-only — for the code metrics
+   - **Contents**: Read-only — for the code metrics. Choose **Read and write** if
+     you want admins to merge from the board; the backend's merge endpoint needs
+     write access (backend `operator-handoff.md`, `GitHub:Token` row)
    - **Code scanning alerts**: Read-only — only if you configure a CodeQL review pill
    - **Metadata**: Read-only (GitHub ticks this for you)
 5. Generate it and copy the token. It is shown **once**.
@@ -120,7 +122,18 @@ permission listed above. The rest of the dashboard works without this setup.
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | Backend container exits with `GitHub:Owner must be configured` | It cannot find your `.env`                                                        | Make sure `.env` sits in the same folder as `docker-compose.yml`, and both lines are filled in |
 | Board says "waiting for snapshot" forever                      | The backend has not finished its first pass, or the token lacks **Actions: Read** | Check `docker compose logs backend`                                                            |
-| Board loads but your private repos are missing                 | Working as designed — the anonymous endpoint serves public repos only             | Nothing to fix                                                                                 |
+| Board loads but your private repos are missing                 | Working as designed — the anonymous endpoint serves public repos only             | Nothing to fix, unless you need an admin view (see below)                                      |
+
+**Private repositories and merging need an admin key.** The backend serves
+private repositories only from `GET /api/dashboard/snapshot/admin`, and merges
+only through `POST /api/dashboard/merge`; both require an `X-Admin-Key` header
+matching the backend's `Admin__AdminKey` setting (`Admin:AdminKey`, at least 16
+characters; empty means both endpoints return 401). The backend's
+`docker-compose.yml` does not pass `Admin__AdminKey` through, so add it to the
+backend service's `environment` yourself. The key must stay on the server: put
+it in a same-origin proxy or in your own `adminSnapshotFetcher` /
+`mergeFetcher` backend, never in browser code. See the backend's
+`operator-handoff.md` for the full setting list.
 
 ---
 
@@ -195,17 +208,42 @@ inline beside the repository; a resolved value that has no `ok` field reads as
 a failure with nothing to show.
 
 The callback runs in the browser, so send the request to **your own server** and
-attach the GitHub credential there. Omit `mergeFetcher` and the board posts to
-`{apiBase}/api/dashboard/merge` instead, which your backend is expected to
-authenticate. Either way the frontend never sees a token. The controls appear
-only for an effective admin — `adminSignal` alone does nothing without an admin
-snapshot source.
+attach the credential there. Omit `mergeFetcher` and the board posts
+`{ repo, pullNumber, headSha }` to `{apiBase}/api/dashboard/merge` with only a
+`content-type` header (`mergePullRequest.ts:31`). The CI backend rejects that
+with 401 unless the request carries `X-Admin-Key` (`DashboardEndpoints.cs:149`),
+its CORS policy allows only `GET` (`Program.cs:144`), and the shipped nginx adds
+no key. So the default path cannot succeed on its own: you need either a
+**same-origin proxy that injects `X-Admin-Key`**, or a custom `mergeFetcher`
+that calls your own server. Either way the frontend never sees the key. The
+controls appear only for an effective admin — `adminSignal` alone does nothing
+without an admin snapshot source.
+
+A minimal nginx proxy for the default path, served from the same origin as the
+board. Restrict it so that only admins can reach it (the key grants merge
+rights to anyone who can call this location):
+
+```nginx
+location = /api/dashboard/merge {
+    # Add your own authentication here (auth_request, mTLS, VPN allow-list, ...).
+    proxy_pass https://your-backend.example.com;
+    proxy_set_header X-Admin-Key "<value of the backend's Admin__AdminKey>";
+    proxy_set_header Host $proxy_host;
+    proxy_ssl_server_name on;
+}
+```
+
+Keep the real key in a secret-managed include file rather than in a committed
+config. The same approach, pointed at `/api/dashboard/snapshot/admin`, serves
+`adminSnapshotUrl`.
 
 ---
 
 ## 4. "I want to change the code"
 
-You need **Node 22 or newer** and nothing else — no tokens, no private packages.
+You need **Node with npm 11.10 or newer** (root `package.json` `engines.npm`;
+`.npmrc` sets `min-release-age`, an npm 11.10+ option; CI runs Node 24) and
+nothing else — no tokens, no private packages.
 
 ```powershell
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
@@ -225,16 +263,22 @@ npm run dev
 
 That serves the app on <http://localhost:5173> and rebuilds as you edit.
 
-To point it at a backend, copy `apps/dashboard/.env.example` to
-`apps/dashboard/.env` and set `VITE_CI_API_BASE` to your backend's address.
+By default the dev server proxies `/api` to `http://localhost:5049`
+(`apps/dashboard/vite.config.ts:9-12`), which is the port the backend's
+`docker-compose.yml` publishes. With a backend running there you need no
+configuration, and no CORS setup, because the browser only calls the dev
+server's own origin.
 
-> **The one non-obvious bit.** In dev mode the browser calls the backend from a
-> different address than the backend is served on, and browsers block that unless
-> the backend explicitly permits it. Start your backend with
-> `Cors__AllowedOrigins__0=http://localhost:5173`. If you skip this the board
-> just says "Dashboard unavailable" while the network tab shows perfectly good
-> `200` responses. This does not affect the Docker setup, where both are served
-> from one address.
+To use a backend at a different address, copy `apps/dashboard/.env.example` to
+`apps/dashboard/.env` and set `VITE_CI_API_BASE` to its origin.
+
+> **Only for a non-default backend.** When `VITE_CI_API_BASE` points elsewhere,
+> the browser calls the backend from a different address than the dev server,
+> and browsers block that unless the backend explicitly permits it. Start your
+> backend with `Cors__AllowedOrigins__0=http://localhost:5173`. If you skip this
+> the board just says "Dashboard unavailable" while the network tab shows
+> perfectly good `200` responses. This does not affect the default proxy or the
+> Docker setup, where both are served from one address.
 
 Before opening a pull request, run the same checks CI runs:
 

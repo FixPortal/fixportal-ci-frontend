@@ -13,7 +13,9 @@ best-effort basis; issues and pull requests are welcome.
 
 ## Getting set up
 
-Prerequisites: **Node 22+**.
+Prerequisites: **npm 11.10 or newer** (root `package.json` `engines.npm`; `.npmrc`
+sets `min-release-age`, which needs npm 11.10+). CI runs Node 24; the Docker image
+builds on Node 22.
 
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
@@ -24,14 +26,26 @@ npm run dev          # builds the library, serves the standalone app on :5173
 
 ## Before you open a PR
 
-Run the full local check — CI runs the same and must pass before a merge:
+Run the local check. `npm run verify` bundles most of what CI runs, in this order:
+`npm audit --omit=dev --audit-level=high`, `npm run format` (Prettier check), `npm run lint`,
+`npm run test`, `npm run test:scripts`, library typecheck, library coverage gate,
+`npm run build:lib` and `npm run build:app` (`package.json` `verify` script):
 
 ```bash
-npm test             # library unit tests (Vitest)
-npm run lint         # ESLint across the workspace
-npm run build:lib    # build the library (tsup → ESM + .d.ts + CSS)
-npm run build:app    # type-check and build the standalone app
+npm run verify
 ```
+
+CI (`.github/workflows/ci.yml`) additionally runs, and `verify` does not:
+
+- the Stryker/Vitest compatibility canary (`scripts/assert-stryker-compat.mjs`)
+- the package LICENSE and NOTICE copy check
+- `npm run test:backend-contract` against the backend repo's contract file
+- the Python policy-checker and release-gate tests under `.github/scripts/`
+- `npm run test:package` (package consumer smoke)
+- `npm run test:e2e` (Playwright, Chromium) and `npm run test:container` (production nginx container)
+- actionlint, and the gate-coverage and canonical-asset checks
+
+All of these must pass before a merge; the `CI Gate` job aggregates them.
 
 ## Branches and commits
 
