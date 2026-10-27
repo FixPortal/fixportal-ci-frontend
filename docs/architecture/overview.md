@@ -71,6 +71,11 @@ GET {apiBase}/api/dashboard/snapshot
   blast radius is the whole board. `PullRequest.reviewSignals` and
   `PullRequest.readyToMerge` remain optional so newer frontends render older or
   unenriched snapshots without inventing a verdict.
+- **`SummaryCount.unavailable` is parsed but never emitted today.** The frontend type
+  (`api/types.ts:88`) accepts an optional `unavailable` flag so an unknown count is not
+  rendered as a measured zero, but the backend's `SummaryCount(string Key, int Count)`
+  (`DashboardModels.cs:112`) has no such field, so the flag is always absent against the
+  current backend. It is forward-compatible contract surface, not an observed signal.
 - **The snapshot type is two-tiered, and both tiers are load-bearing:**
   `DashboardSnapshot` is the whole payload consumed at the app-shell tier
   (`CiBoard` → `getDashboardSnapshot` → `useDashboardSnapshot`);
@@ -86,9 +91,13 @@ GET {apiBase}/api/dashboard/snapshot
 - **`mergeFetcher` is the board's only write path**, added in 3.1.0. Everything else
   here reads a snapshot; this one prop lets an admin host rebase-merge a ready pull
   request from the board. The library never holds a credential: it calls the host's
-  callback (or `POST {apiBase}/api/dashboard/merge`, which the host's own server is
-  expected to authenticate), so the token stays server-side exactly as it does for the
-  admin snapshot. `hooks/usePrMerge.ts` owns the whole of that state — in-flight keys,
+  callback (or `POST {apiBase}/api/dashboard/merge`), so the token stays server-side
+  exactly as it does for the admin snapshot. The default POST carries no credential
+  (`usePrMerge.ts:119-121`, `api/mergePullRequest.ts:31`), while the CI backend requires
+  `X-Admin-Key` (`DashboardEndpoints.cs:149`) and its CORS policy allows only `GET`
+  (`Program.cs:144`); the shipped nginx adds no key. The default path therefore needs a
+  same-origin proxy that injects `X-Admin-Key`, or a custom `mergeFetcher`
+  (see `docs/setup-guide.md`). `hooks/usePrMerge.ts` owns the whole of that state — in-flight keys,
   the confirmed-merge set that survives a stale poll, per-repository errors — and hands
   it to presentational components as the `PrMerge` prop defined in `lib/prMerge.ts`.
   `PrMerge` is deliberately NOT exported from `index.ts`: the supported surface is the

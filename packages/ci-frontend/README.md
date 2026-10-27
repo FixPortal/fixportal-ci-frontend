@@ -69,6 +69,7 @@ creates an internal client.
 | `adminSnapshotFetcher`  | `() => Promise<DashboardSnapshot \| null>`                                    | unset          | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`.                                                                                                                                                                           |
 | `adminSnapshotCacheKey` | `string`                                                                      | unset          | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`.                                                                                                                                            |
 | `mergeFetcher`          | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset          | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`.                                                                      |
+| `theme`                 | `'light' \| 'dark'`                                                           | unset          | Host-resolved theme. When set the board is controlled: the built-in switcher is hidden and `showThemeSwitcher` is ignored.                                                                                                                       |
 | `logo`                  | `ReactNode`                                                                   | text wordmark  | Brand mark in the dashboard header.                                                                                                                                                                                                              |
 | `footerSlot`            | `ReactNode`                                                                   | generic footer | Footer content.                                                                                                                                                                                                                                  |
 | `storageNamespace`      | `string`                                                                      | unset          | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin.                                                                                                                                      |
@@ -129,7 +130,7 @@ Without them TypeScript reports `TS2882`; add `declare module '*.css'`.
   — also shipped inside the package
 - [Setup guide for newcomers](https://github.com/FixPortal/fixportal-ci-frontend/blob/main/docs/setup-guide.md)
 - [Contributing](https://github.com/FixPortal/fixportal-ci-frontend/blob/main/CONTRIBUTING.md)
-  — building from source needs only Node 22+, no tokens or accounts
+  — building from source needs npm 11.10+ (CI runs Node 24), no tokens or accounts
 
 ## License
 

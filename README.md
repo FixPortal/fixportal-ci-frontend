@@ -61,8 +61,9 @@ The dashboard proxies all `/api/` requests to that origin.
 
 ## Quick start — clone and run (dev mode)
 
-Every dependency resolves from public npm, so this needs nothing but Node 22+ —
-no tokens, no registry configuration, no FixPortal account.
+Every dependency resolves from public npm, so this needs no tokens, no registry
+configuration and no FixPortal account. It does need npm 11.10 or newer (root
+`package.json` `engines.npm`; `.npmrc` uses npm 11.10's `min-release-age`). CI runs Node 24.
 
 ```bash
 git clone https://github.com/FixPortal/fixportal-ci-frontend.git
@@ -71,15 +72,16 @@ npm install
 npm run dev
 ```
 
-Builds the library and starts the app on `http://localhost:5173`. Point it at a backend by
-copying `apps/dashboard/.env.example` to `apps/dashboard/.env` and setting `VITE_CI_API_BASE`
-to your backend's origin.
+Builds the library and starts the app on `http://localhost:5173`. By default the dev server
+proxies `/api` to `http://localhost:5049` (`apps/dashboard/vite.config.ts`), so a backend
+running there needs no configuration and no CORS setup.
 
-Because the dev server origin (`http://localhost:5173`) differs from the backend's, the
-browser calls the API cross-origin, so the backend must allow-list the dev origin or every
-response is discarded. Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173`
-set (environment variable or `appsettings.Development.json`). The compose deployment does
-not need this — nginx proxies `/api/` same-origin.
+To use a backend at another address, copy `apps/dashboard/.env.example` to
+`apps/dashboard/.env` and set `VITE_CI_API_BASE` to its origin. The browser then calls the API
+cross-origin, so that backend must allow-list the dev origin or every response is discarded:
+run it with `Cors__AllowedOrigins__0=http://localhost:5173` set (environment variable or
+`appsettings.Development.json`). Neither the default proxy nor the compose deployment needs
+this — nginx proxies `/api/` same-origin.
 
 ## Self-hosting with Docker
 
@@ -149,6 +151,7 @@ export function App() {
 | `adminSnapshotFetcher`  | `() => Promise<DashboardSnapshot \| null>`                                    | unset          | Authenticated admin fetcher; takes precedence over `adminSnapshotUrl`.                                                                                                                                  |
 | `adminSnapshotCacheKey` | `string`                                                                      | unset          | Stable cache-key override for a custom admin fetcher; it has the same behavior as `snapshotCacheKey`.                                                                                                   |
 | `mergeFetcher`          | `(repo: string, pullNumber: number, headSha: string) => Promise<MergeResult>` | unset          | Authenticated callback for a single rebase merge. Keep credentials server-side, forward `headSha` to your backend (the CI backend requires it), and return a `MergeResult`.                             |
+| `theme`                 | `'light' \| 'dark'`                                                           | unset          | Host-resolved theme. When set the board is controlled: the value is written to its `.ci-page` container, the built-in switcher is hidden and `showThemeSwitcher` is ignored.                            |
 | `logo`                  | `ReactNode`                                                                   | text wordmark  | Brand mark rendered in the dashboard header.                                                                                                                                                            |
 | `footerSlot`            | `ReactNode`                                                                   | generic footer | Footer content; pass your own to replace the default.                                                                                                                                                   |
 | `storageNamespace`      | `string`                                                                      | unset          | Suffix for local-storage keys and the skip-link target, preventing collisions between boards on one origin.                                                                                             |
@@ -227,7 +230,8 @@ See `packages/ci-frontend/src/api/types.ts` for the full shape.
 | `react-dom`             | `>=18`           |
 | `@tanstack/react-query` | `>=5`            |
 
-The standalone Docker app and Vite dev server target Node 22 (see `Dockerfile`).
+The standalone Docker image builds on Node 22 (see `Dockerfile`); CI runs Node 24; the
+workspace requires npm 11.10 or newer (`package.json` `engines.npm`).
 
 ## Development
 
@@ -264,16 +268,16 @@ something.
 
 ## Troubleshooting
 
-| Symptom                                                                                   | Cause                                                                                                                  | Fix                                                                                                      |
-| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| nginx logs `502` + `peer closed connection in SSL handshake`                              | nginx resolves the HTTPS upstream hostname to an IP and connects without SNI, so the backend rejects the handshake     | Pull `latest` or rebuild from source (fix: `proxy_ssl_server_name on` added 2026-06-20)                  |
-| Dashboard shows "waiting for snapshot" indefinitely                                       | Backend returned `204 No Content` — no snapshot has been generated yet                                                 | Wait for the backend's first scheduled CI run, or check backend logs                                     |
-| Container exits immediately: `Error: BACKEND_URL must start with http:// or https://`     | `BACKEND_URL` env var was not passed to `docker run` (or lacks a scheme)                                               | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command                                 |
-| Container exits immediately: `Error: BACKEND_URL must be a bare origin: no path, ...`     | `BACKEND_URL` has a path, trailing slash, query, fragment or userinfo                                                  | Use a bare origin such as `https://your-backend.example.com`                                             |
-| Dev mode ignores your backend                                                             | `VITE_CI_API_BASE` not set in `apps/dashboard/.env`                                                                    | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin                        |
-| Dev mode sits at "Dashboard unavailable. Retrying automatically."                         | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173`                                     |
-| Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both                                                                  | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
-| `TS2882` on the `board.css` / `tokens.css` imports                                        | Your TypeScript setup has no ambient declaration for CSS modules                                                       | Add `declare module '*.css'` — see [TypeScript: CSS imports](#typescript-css-imports)                    |
+| Symptom                                                                                   | Cause                                                                                                                                                      | Fix                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| nginx logs `502` + `peer closed connection in SSL handshake`                              | nginx resolves the HTTPS upstream hostname to an IP and connects without SNI, so the backend rejects the handshake                                         | Pull `latest` or rebuild from source (fix: `proxy_ssl_server_name on` added 2026-06-20)                  |
+| Dashboard shows "waiting for snapshot" indefinitely                                       | Backend returned `204 No Content` — no snapshot has been generated yet                                                                                     | Wait for the backend's first scheduled CI run, or check backend logs                                     |
+| Container exits immediately: `Error: BACKEND_URL must start with http:// or https://`     | `BACKEND_URL` env var was not passed to `docker run` (or lacks a scheme)                                                                                   | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command                                 |
+| Container exits immediately: `Error: BACKEND_URL must be a bare origin: no path, ...`     | `BACKEND_URL` has a path, trailing slash, query, fragment or userinfo                                                                                      | Use a bare origin such as `https://your-backend.example.com`                                             |
+| Dev mode cannot reach your backend                                                        | Your backend is not on `localhost:5049`, the dev server's default `/api` proxy target                                                                      | Run it on 5049, or set `VITE_CI_API_BASE` in `apps/dashboard/.env` to its origin                         |
+| Dev mode sits at "Dashboard unavailable. Retrying automatically."                         | `VITE_CI_API_BASE` points at another origin whose CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run that backend with `Cors__AllowedOrigins__0=http://localhost:5173`                                    |
+| Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both                                                                                                      | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
+| `TS2882` on the `board.css` / `tokens.css` imports                                        | Your TypeScript setup has no ambient declaration for CSS modules                                                                                           | Add `declare module '*.css'` — see [TypeScript: CSS imports](#typescript-css-imports)                    |
 
 ## Contributing
 
