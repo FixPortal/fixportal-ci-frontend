@@ -93,8 +93,7 @@ docker run -p 8080:8080 -e BACKEND_URL=https://your-backend.example.com ci-front
 > [!IMPORTANT]
 > `BACKEND_URL` must be a bare origin — no trailing slash, no path
 > (e.g. `https://your-backend.example.com`). `docker-entrypoint.sh` rejects a path or trailing
-> slash and the container exits with `Error: BACKEND_URL must be a bare origin: no path, query,
-fragment, or userinfo`.
+> slash, and the container exits with `Error: BACKEND_URL must be a bare origin`.
 
 The image runs nginx on port **8080** (non-root; nginx cannot bind ports below 1024). Map
 accordingly: `-p 80:8080` or `-p 443:8080` behind a TLS terminator.
