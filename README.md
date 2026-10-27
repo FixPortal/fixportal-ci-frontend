@@ -92,8 +92,9 @@ docker run -p 8080:8080 -e BACKEND_URL=https://your-backend.example.com ci-front
 
 > [!IMPORTANT]
 > `BACKEND_URL` must be a bare origin — no trailing slash, no path
-> (e.g. `https://your-backend.example.com`). A trailing slash causes nginx to strip the `/api/`
-> prefix before forwarding, silently mangling upstream paths.
+> (e.g. `https://your-backend.example.com`). `docker-entrypoint.sh` rejects a path or trailing
+> slash and the container exits with `Error: BACKEND_URL must be a bare origin: no path, query,
+fragment, or userinfo`.
 
 The image runs nginx on port **8080** (non-root; nginx cannot bind ports below 1024). Map
 accordingly: `-p 80:8080` or `-p 443:8080` behind a TLS terminator.
@@ -214,7 +215,7 @@ JSON object (type exported from the package). When the default fetch path calls 
 endpoint, it must be anonymous and CORS-accessible. A custom `snapshotFetcher` may authenticate
 according to its own backend contract.
 `204 No Content` is the documented "no snapshot yet" state — the board renders a waiting message.
-See `src/api/types.ts` for the full shape.
+See `packages/ci-frontend/src/api/types.ts` for the full shape.
 
 ## Compatibility
 
@@ -265,8 +266,8 @@ something.
 | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | nginx logs `502` + `peer closed connection in SSL handshake`                              | nginx resolves the HTTPS upstream hostname to an IP and connects without SNI, so the backend rejects the handshake     | Pull `latest` or rebuild from source (fix: `proxy_ssl_server_name on` added 2026-06-20)                  |
 | Dashboard shows "waiting for snapshot" indefinitely                                       | Backend returned `204 No Content` — no snapshot has been generated yet                                                 | Wait for the backend's first scheduled CI run, or check backend logs                                     |
-| Container exits immediately: `Error: BACKEND_URL must be set`                             | `BACKEND_URL` env var was not passed to `docker run`                                                                   | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command                                 |
-| `/api/` requests return wrong paths or 404                                                | Trailing slash on `BACKEND_URL` causes nginx to strip the `/api/` prefix before forwarding                             | Remove the trailing slash from `BACKEND_URL`                                                             |
+| Container exits immediately: `Error: BACKEND_URL must start with http:// or https://`     | `BACKEND_URL` env var was not passed to `docker run` (or lacks a scheme)                                               | Add `-e BACKEND_URL=https://your-backend.example.com` to the run command                                 |
+| Container exits immediately: `Error: BACKEND_URL must be a bare origin: no path, ...`     | `BACKEND_URL` has a path, trailing slash, query, fragment or userinfo                                                  | Use a bare origin such as `https://your-backend.example.com`                                             |
 | Dev mode ignores your backend                                                             | `VITE_CI_API_BASE` not set in `apps/dashboard/.env`                                                                    | Copy `.env.example` to `.env` and set `VITE_CI_API_BASE` to your backend's origin                        |
 | Dev mode sits at "Dashboard unavailable. Retrying automatically."                         | The backend's CORS allow-list has no entry for the dev origin, so the browser discards the (otherwise `200`) responses | Run the backend with `Cors__AllowedOrigins__0=http://localhost:5173`                                     |
 | Your tests throw `ResizeObserver is not defined` or `window.matchMedia is not a function` | jsdom implements neither API, and the board uses both                                                                  | Add the two stubs from [Testing a page that contains the board](#testing-a-page-that-contains-the-board) |
