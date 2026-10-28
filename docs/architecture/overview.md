@@ -150,7 +150,8 @@ GET {apiBase}/api/dashboard/snapshot
 - **CI/CD:** `ci.yml` lints, runs workspace tests, typechecks and coverage-gates
   the library, builds lib + app, and pushes the
   image to GHCR on `main`. `release.yml` publishes the npm package (OIDC
-  provenance) and the Docker image on `v*` tags.
+  provenance) on `v*` tags. The Docker image is pushed by the `docker` job in
+  `ci.yml` on `main`, not by the release workflow.
 
 ## Where to start reading
 

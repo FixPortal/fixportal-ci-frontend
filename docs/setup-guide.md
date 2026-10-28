@@ -174,8 +174,10 @@ Three things people trip over, all covered in the
 - If you write tests that render this component under jsdom, you need two small
   stubs. jsdom does not implement `ResizeObserver` or `window.matchMedia`.
 
-**Letting admins merge from the board.** Pass a `mergeFetcher` and every ready
-pull request's verdict pill becomes a rebase-merge button (plus a per-repository
+**Letting admins merge from the board.** In the admin view every ready pull
+request's verdict pill is a rebase-merge button. By default it posts to
+`{apiBase}/api/dashboard/merge`; pass a `mergeFetcher` to send the request through
+your own server instead. The button (plus a per-repository
 `Merge all (oldest first)` once two are ready). Merges run per pull request, so one
 in progress does not block the rest of the board. `Merge all` works through the
 repository's ready pull requests oldest first, whatever order the board lists them
