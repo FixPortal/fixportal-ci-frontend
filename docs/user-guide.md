@@ -13,7 +13,7 @@ The board asks for fresh data every 30 seconds, even in a background tab. The to
 ## The summary at the top
 
 - **Review** shows the open pull request count, the next pull request in the queue, and the last merged one. In the admin view, selecting the count steps through open pull requests, oldest first.
-- **CI status** shows counts such as Running, Failing and No CI. A "CI health · 24h" bar has one bar per hour. Red means a run failed that hour on any branch. Green means runs happened and none failed. Grey means no runs. The oldest hour is on the left.
+- **CI status** shows counts such as Running, Failing and No CI. A "CI health · 24h" bar has one bar per hour. Red means the hour counts as failing: a run failed that hour, or an earlier failure is still carried forward. Select a red hour to list the failed runs the board holds for it. Green means passing and grey means no data. The oldest hour is on the left.
 - **Inventory** shows plain totals such as repositories and workflows.
 
 A dash instead of a number means there is no data. It is not a zero. The Legend button explains the dots.
@@ -73,7 +73,7 @@ The button is absent for guests and for a pull request with no recorded head com
 
 A failed merge shows a message on the card, such as "Not authorised to merge" or "Network error". Use "✕" to dismiss it. The board refreshes after each attempt.
 
-An operator must switch merging on. See the [setup guide](setup-guide.md), "Letting admins merge from the board".
+In the admin view the button always appears for a ready pull request with a recorded head commit. Whether the merge succeeds depends on how the operator wired the merge call; if it is not set up, the card shows "Not authorised to merge". See the [setup guide](setup-guide.md), "Letting admins merge from the board".
 
 ## Filters and display options
 
