@@ -433,7 +433,7 @@ gh pr merge $prNumber -R FixPortal/fixportal-simulator-backend --rebase --delete
 Dispatch only the simulator backend production target:
 
 ```powershell
-pwsh <repos>/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-backend-prod
+pwsh <private-deploy-script> -Target <backend-production-target>
 ```
 
 Watch the exact run ID printed by the helper. After it succeeds, verify an anonymous POST is rejected and the public snapshot remains readable:
@@ -728,7 +728,7 @@ Push `feat/ci-admin-merge-controls` once, open one PR, follow `.claude/review-po
 Dispatch:
 
 ```powershell
-pwsh <repos>/fixportal-assets/scripts/fixportal-deploy.ps1 -Target sim-frontend-prod
+pwsh <private-deploy-script> -Target <frontend-production-target>
 ```
 
 Retain and watch the exact run ID printed by the helper. Do not dispatch YJC, dev, ThemeLab, or the full estate.

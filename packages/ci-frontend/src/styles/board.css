@@ -13,7 +13,7 @@
   --font-sans, --font-mono). Supply them by importing EITHER:
     - this package's tokens.css (the vendored standalone set), OR
     - your own design system that defines the same custom-property names
-      (e.g. the FixPortal simulator's @fixportal/design tokens).
+      (for example the tokens of an application that already has a design system).
   Import board.css AFTER the token sheet so the cascade resolves.
 
   Keyframes are named ci-live-pulse (NOT live-pulse) to avoid colliding with a
