@@ -175,10 +175,10 @@ Three things people trip over, all covered in the
   stubs. jsdom does not implement `ResizeObserver` or `window.matchMedia`.
 
 **Letting admins merge from the board.** In the admin view every ready pull
-request's verdict pill is a rebase-merge button. By default it posts to
-`{apiBase}/api/dashboard/merge`; pass a `mergeFetcher` to send the request through
-your own server instead. The button (plus a per-repository
-`Merge all (oldest first)` once two are ready). Merges run per pull request, so one
+request's verdict pill is a rebase-merge button, and a per-repository
+`Merge all (oldest first)` button appears once two are ready. By default the
+button posts to `{apiBase}/api/dashboard/merge`; pass a `mergeFetcher` to send
+the request through your own server instead. Merges run per pull request, so one
 in progress does not block the rest of the board. `Merge all` works through the
 repository's ready pull requests oldest first, whatever order the board lists them
 in, so each merge rebases the newer ones rather than the other way round:
