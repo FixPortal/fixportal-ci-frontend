@@ -13,7 +13,7 @@ The board asks for fresh data every 30 seconds, even in a background tab. The to
 ## The summary at the top
 
 - **Review** shows the open pull request count, the next pull request in the queue, and the last merged one. In the admin view, selecting the count steps through open pull requests, oldest first.
-- **CI status** shows counts such as Running, Failing and No CI. A "CI health · 24h" bar has one bar per hour. Red means the hour counts as failing: a run failed that hour, or an earlier failure is still carried forward. Select a red hour to list the failed runs the board holds for it. Green means passing and grey means no data. The oldest hour is on the left.
+- **CI status** shows counts such as Running, Failing and No CI. A "CI health · 24h" bar has one bar per hour. Red means the hour counts as failing: a run failed that hour, or an earlier failure is still carried forward. Select a red hour to list the failed runs the board holds for it. Green means passing and grey means no data. The oldest hour is on the left. When a host limits the board to a single repository, the bar is hidden, because the trend covers the whole organisation.
 - **Inventory** shows plain totals such as repositories and workflows.
 
 A dash instead of a number means there is no data. It is not a zero. The Legend button explains the dots.
@@ -81,8 +81,11 @@ In the admin view the button always appears for a ready pull request with a reco
 - **CI Status**: Running, Failing, Passing, No-CI. Within a group the chips combine with "or". Groups combine with "and". A repository is placed by its worst state.
 - **Visibility**: Public, Private. Admin view only.
 - **Has PRs**: only repositories with open pull requests.
-- **Hide No-CI**: becomes "Show No-CI · N hidden" when on.
+- **Hide No-CI**: becomes "Show No-CI · N hidden" when on. It appears only when at least one repository has no CI.
+- **⊟ Collapse all** / **⊞ Expand all**: collapses or expands every repository card at once. The label shows what a press will do.
 - **Theme** in the header: System, Light or Dark, remembered in your browser. The operator can hide it.
+
+The board remembers your search text, your filters, Hide No-CI and which cards you collapsed in your browser's local storage, so they are still there next time. This is best effort: a private window or blocked storage forgets them. A host that embeds the board can give it its own storage namespace, so two boards on one site do not share these settings.
 
 A line under the toolbar reads "N of M repositories" when filters apply. If nothing matches, you see "No repositories match the active filters." and "Clear filters". If Hide No-CI is the only reason the board is empty, you see "All repositories are No-CI — hidden." instead, with no "Clear filters" button; turn off Hide No-CI to see them. The board has no control for repository order.
 
