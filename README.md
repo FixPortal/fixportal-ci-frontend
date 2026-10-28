@@ -247,13 +247,16 @@ npm run build:app   # type-check and build the standalone app
 ### Design token sync
 
 The standalone token sheet is intentionally vendored so public clones do not
-depend on the private `@fixportal/design` package. When the canonical design
-tokens change, run the projection check from a checkout that also contains the
-`fixportal-assets` repository:
+depend on a private design package. When the canonical design tokens change,
+run the projection check from a checkout that also contains the private
+design-assets repository, passing the path to its token sheet:
 
 ```bash
-npm run design:tokens:check -- --source=../fixportal-assets/packages/design/tokens.css
+npm run design:tokens:check -- --source=<path-to-design-assets>/packages/design/tokens.css
 ```
+
+Without `--source` the script looks for that repository as a sibling directory;
+`scripts/design-tokens-sync.mjs` names the directory it expects.
 
 The check compares the universal tokens used by this board and allows only the
 two documented frontend accessibility overrides. Update
@@ -261,12 +264,12 @@ two documented frontend accessibility overrides. Update
 and the normal verification suite.
 
 It is deliberately **not** part of `npm run verify`, and must not be added back.
-`fixportal-assets` is private and this repository is public, so no workflow here
-can reach the shared sheet: as a gate it could only ever fail, or pass by being
+The design-assets repository is private and this repository is public, so no
+workflow here can reach the shared sheet: as a gate it could only ever fail, or pass by being
 skipped. It ran inside `verify` briefly and took down the v3.3.0 release, which
 is the only thing that ever exercised it in CI. Run it by hand from a checkout
-that has `fixportal-assets` beside it, which is where it can actually tell you
-something.
+that has the design-assets repository beside it, which is where it can actually
+tell you something.
 
 ## Troubleshooting
 

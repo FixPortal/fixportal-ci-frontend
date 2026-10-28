@@ -45,8 +45,8 @@ jobs:
           node-version: 24
           # Caching is safe now that every dependency is public: there is no
           # private tarball a fork PR could restore from the default-branch cache
-          # scope. (It was disabled while the dashboard depended on the private
-          # @fixportal/design package.)
+          # scope. (It was disabled while the dashboard depended on a private
+          # design package.)
           cache: npm
 
       - name: Install
