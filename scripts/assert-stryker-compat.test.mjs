@@ -35,6 +35,8 @@ function fixture() {
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version }))
   }
+  // runMutation spawns the child with the workspace as its cwd.
+  fs.mkdirSync(path.join(root, 'packages/ci-frontend'), { recursive: true })
   return { root }
 }
 describe('guarded installed runner compatibility', () => {
