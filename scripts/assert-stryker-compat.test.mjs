@@ -10,26 +10,14 @@ import {
   ensureCompatibility,
   ownedDirectory,
   readObserverEvents,
-  sha,
-  targets,
 } from './assert-stryker-compat.mjs'
 
-const runnerPath = 'packages/ci-frontend/node_modules/@stryker-mutator/vitest-runner'
+const runnerPath = 'node_modules/@stryker-mutator/vitest-runner'
 const packages = {
-  'packages/ci-frontend/node_modules/@stryker-mutator/core': '10.0.0',
-  [runnerPath]: '10.0.0',
+  'node_modules/@stryker-mutator/core': '10.1.1',
+  [runnerPath]: '10.1.1',
   'node_modules/vitest': '5.0.5',
 }
-const originals = targets.map(([name, original]) => {
-  const text = fs
-    .readFileSync(`${runnerPath}/dist/src/${name}`, 'utf8')
-    .replace(
-      "return nameParts.filter((part) => part !== '').join(' > ').trim();",
-      "return nameParts.join(' ').trim();",
-    )
-  assert.equal(sha(text), original, 'Unknown installed test input')
-  return text
-})
 const owned = []
 afterEach(() => {
   for (const root of owned.splice(0)) {
@@ -47,44 +35,22 @@ function fixture() {
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version }))
   }
-  const files = targets.map(([name], index) => {
-    const file = path.join(root, runnerPath, 'dist/src', name)
-    fs.mkdirSync(path.dirname(file), { recursive: true })
-    fs.writeFileSync(file, originals[index])
-    return file
-  })
-  return { root, files }
+  return { root }
 }
 describe('guarded installed runner compatibility', () => {
-  it('patches both exact files and is idempotent', () => {
-    const { root, files } = fixture()
-    ensureCompatibility(root)
-    assert.deepEqual(
-      files.map((file) => sha(fs.readFileSync(file))),
-      targets.map((target) => target[2]),
-    )
-    assert.equal(ensureCompatibility(root).length, 2)
+  it('accepts the exact supported versions', () => {
+    const { root } = fixture()
+    assert.doesNotThrow(() => ensureCompatibility(root))
   })
-  it('prevalidates the second complete file before writing the first', () => {
-    const { root, files } = fixture()
-    fs.appendFileSync(files[1], '// unknown')
-    assert.throws(() => ensureCompatibility(root), /Unknown runner hash/)
-    assert.equal(sha(fs.readFileSync(files[0])), targets[0][1])
-  })
-  for (const index of [0, 1])
-    it(`rejects mixed patch state ${index}`, () => {
-      const { root, files } = fixture()
-      ensureCompatibility(root)
-      fs.writeFileSync(files[index], originals[index])
-      assert.throws(() => ensureCompatibility(root), /Mixed runner patch state/)
-      assert.equal(sha(fs.readFileSync(files[index])), targets[index][1])
+  for (const [relative, version] of [
+    ['node_modules/vitest', '99.0.0'],
+    [runnerPath, '10.0.0'],
+  ])
+    it('rejects unsupported ' + relative + ' ' + version, () => {
+      const { root } = fixture()
+      fs.writeFileSync(path.join(root, relative, 'package.json'), JSON.stringify({ version }))
+      assert.throws(() => ensureCompatibility(root), /Unsupported/)
     })
-  it('rejects unsupported Vitest before writing', () => {
-    const { root, files } = fixture()
-    fs.writeFileSync(path.join(root, 'node_modules/vitest/package.json'), '{"version":"99.0.0"}')
-    assert.throws(() => ensureCompatibility(root), /Unsupported/)
-    assert.equal(sha(fs.readFileSync(files[0])), targets[0][1])
-  })
   it('rejects a shadow Vitest resolved by the actual runner', () => {
     const { root } = fixture()
     const shadow = path.join(root, runnerPath, 'node_modules/vitest')
@@ -92,24 +58,15 @@ describe('guarded installed runner compatibility', () => {
     fs.writeFileSync(path.join(shadow, 'package.json'), '{"version":"5.0.5"}')
     assert.throws(() => ensureCompatibility(root), /Unexpected runner-local Vitest resolution/)
   })
-  it('rejects a runner target escaping its module subtree', () => {
-    const { root, files } = fixture()
-    const outside = path.join(root, 'outside.js')
-    fs.writeFileSync(outside, originals[0])
-    fs.unlinkSync(files[0])
-    fs.symlinkSync(outside, files[0])
-    assert.throws(() => ensureCompatibility(root), /Path escapes project/)
-    assert.equal(sha(fs.readFileSync(files[1])), targets[1][1])
-  })
   for (const parent of ['.mutation-canary-tmp', 'reports'])
-    it(`rejects escaping output parent ${parent}`, () => {
+    it('rejects escaping output parent ' + parent, () => {
       const { root } = fixture()
       const outside = fs.mkdtempSync(
         path.join(fs.realpathSync(os.tmpdir()), 'owned-stryker-guard-'),
       )
       owned.push(outside)
       fs.symlinkSync(outside, path.join(root, parent), 'dir')
-      assert.throws(() => ownedDirectory(root, `${parent}/child`), /Path escapes project/)
+      assert.throws(() => ownedDirectory(root, parent + '/child'), /Path escapes project/)
       assert.deepEqual(fs.readdirSync(outside), [])
     })
 })

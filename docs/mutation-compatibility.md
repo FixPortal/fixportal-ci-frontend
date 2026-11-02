@@ -1,15 +1,18 @@
-# Temporary Stryker 10 / Vitest 5 compatibility guard
+# Stryker 10 / Vitest 5 compatibility guard
 
-The explicit `test:mutation` entrypoint validates the exact installed local tuple
-and full hashes of both runner name collectors before patching either. Unknown
-versions, unknown files, mixed states, shadow Vitest resolution and escaping paths
-fail closed. There is no installation hook or package acquisition.
+The explicit `test:mutation` entrypoint validates the exact installed tuple
+(Stryker 10.1.1, Vitest 5.0.5), resolved from the root `node_modules` where npm
+hoists them. Unknown versions, shadow Vitest resolution and escaping paths fail
+closed. There is no installation hook, package acquisition or patching of
+`node_modules`.
 
-Vitest 5 joins nested test names with `>`, while Stryker10.0.0 uses spaces. This
-can skip the intended nested assertions during mutation runs. See the
+Vitest 5 joins nested test names with `>`, while Stryker 10.0.0 used spaces, which
+could skip the intended nested assertions during mutation runs. Stryker 10.1.0
+(re-released as 10.1.1) ships the fix, so the local runner patch and its file-hash
+pins were removed. See the
 [Vitest migration guide](https://vitest.dev/guide/migration/#testnamepattern-matches-the-joined-full-name),
-[upstream issue6210](https://github.com/stryker-mutator/stryker-js/issues/6210) and
-[upstream fix6214](https://github.com/stryker-mutator/stryker-js/pull/6214).
+[upstream issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210) and
+[upstream fix 6214](https://github.com/stryker-mutator/stryker-js/pull/6214).
 
 A real tiny JavaScript canary runs in required CI and before mutation measurement.
 It requires its known false-condition mutant to be killed by the nested literal
@@ -24,7 +27,6 @@ attribution. Targeted canary proofs do not establish a whole-project score.
 Production mutation scope, observational break:null, and the existing job budget
 are unchanged. A full corrected measurement needs a separate run and review.
 
-Remove the shim after an official released runner passes the same real canary
-without patching, then qualify the production scope. Version changes require an
-explicit review, not silent fallback. Required canary reports are retained under
-the package's generated reports/mutation-canary directory.
+Version changes require an explicit review against the canary, not silent
+fallback. Required canary reports are retained under the package's generated
+reports/mutation-canary directory.
