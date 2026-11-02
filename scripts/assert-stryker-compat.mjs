@@ -1,33 +1,17 @@
 import { createRequire } from 'node:module'
-import { createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const oldStatement = "return nameParts.join(' ').trim();"
-const newStatement = "return nameParts.filter((part) => part !== '').join(' > ').trim();"
-export const targets = [
-  [
-    'test-helpers.js',
-    '120ef95f006b5449019155f93c049d888f2c73b525cfd57a9131ebe3d953535e',
-    '13db8fafa22afcbdb9370cee12e7ac7070a58e6a4298853a44346f6c9a21106f',
-  ],
-  [
-    'stryker-setup.js',
-    '11ea94ed9ba49a916fb0f6cbb365e896f4ce67958009f7a4320ceebaba14febb',
-    '400e0e3d5b6b3cc7f1e736ff2d2b301c6231a85b93e1896d6d6a53502c11ded7',
-  ],
-]
 const packages = {
-  'packages/ci-frontend/node_modules/@stryker-mutator/core': '10.0.0',
-  'packages/ci-frontend/node_modules/@stryker-mutator/vitest-runner': '10.0.0',
+  'node_modules/@stryker-mutator/core': '10.1.1',
+  'node_modules/@stryker-mutator/vitest-runner': '10.1.1',
   'node_modules/vitest': '5.0.5',
 }
-const corePath = 'packages/ci-frontend/node_modules/@stryker-mutator/core'
-const runnerPath = 'packages/ci-frontend/node_modules/@stryker-mutator/vitest-runner'
+const corePath = 'node_modules/@stryker-mutator/core'
+const runnerPath = 'node_modules/@stryker-mutator/vitest-runner'
 const workspacePath = 'packages/ci-frontend'
-export const sha = (value) => createHash('sha256').update(value).digest('hex')
 function contained(root, candidate) {
   const relative = path.relative(root, candidate)
   if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative))
@@ -50,28 +34,6 @@ export function ensureCompatibility(project) {
   )
   if (resolvedVitest !== local('node_modules/vitest/package.json'))
     throw new Error('Unexpected runner-local Vitest resolution')
-  // Validate BOTH complete files before writing either. Mixed states never auto-heal.
-  const files = targets.map(([name, original, patched]) => {
-    const filename = contained(runnerRoot, local(`${runnerPath}/dist/src/${name}`))
-    const text = fs.readFileSync(filename, 'utf8')
-    const hash = sha(text)
-    if (hash !== original && hash !== patched) throw new Error(`Unknown runner hash: ${name}`)
-    const statement = hash === original ? oldStatement : newStatement
-    if (text.split(statement).length !== 2) throw new Error(`Unexpected statement count: ${name}`)
-    return { filename, text, original, patched, hash }
-  })
-  if (
-    files.some((file) => file.hash === file.original) &&
-    files.some((file) => file.hash === file.patched)
-  )
-    throw new Error('Mixed runner patch state')
-  for (const file of files) {
-    if (file.hash === file.original)
-      fs.writeFileSync(file.filename, file.text.replace(oldStatement, newStatement))
-    if (sha(fs.readFileSync(file.filename)) !== file.patched)
-      throw new Error('Runner post-write hash mismatch')
-  }
-  return files.map((file) => ({ file: path.basename(file.filename), sha256: file.patched }))
 }
 
 // Linux CI only: each owned child gets its own process group, including descendants.
@@ -199,11 +161,7 @@ export async function runCanary(project) {
   if (path.dirname(output) !== outputParent) throw new Error('Canary output ownership mismatch')
   try {
     fs.cpSync(path.join(root, 'scripts/fixtures/stryker-canary'), owned, { recursive: true })
-    fs.symlinkSync(
-      path.join(root, workspacePath, 'node_modules'),
-      path.join(owned, 'node_modules'),
-      'dir',
-    )
+    fs.symlinkSync(path.join(root, 'node_modules'), path.join(owned, 'node_modules'), 'dir')
     const sink = path.join(output, 'events.jsonl')
     const result = await boundedRun(
       [path.join(root, corePath, 'bin/stryker.js'), 'run', 'stryker.config.json'],
