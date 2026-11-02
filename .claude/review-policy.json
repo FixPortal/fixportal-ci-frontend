@@ -41,6 +41,9 @@
   ],
   "version": 1,
   "high": [
+    "scripts/backend-contract.mjs",
+    "scripts/container-smoke.mjs",
+    "scripts/package-smoke.mjs",
     ".github/scripts/test_policy_checkers.py",
     ".github/scripts/assert_release_gate.py",
     ".github/scripts/test_assert_release_gate.py",
