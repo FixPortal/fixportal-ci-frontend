@@ -86,8 +86,16 @@ class GateCoverageTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_escaped_quote_outside_a_string_does_not_hide_the_exit(self):
-        result = run_gate(COMPLETE_CONDITION, "|", r'echo \"; exit 1')
+        # Under bash `\"` is a literal quote, so `exit 1` still runs. The shell is named:
+        # with no shell key the checker reads the body under pwsh as well, where it is not.
+        result = run_gate(COMPLETE_CONDITION, "|", r'echo \"; exit 1', "        shell: bash\n")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_escaped_quote_is_refused_when_the_shell_could_be_pwsh(self):
+        # pwsh does not escape with `\`, so the string runs on and swallows `; exit 1`:
+        # the step would exit zero on a pwsh runner (canonical gate checker, review M1).
+        result = run_gate(COMPLETE_CONDITION, "|", r'echo \"; exit 1')
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_shell_parameter_length_is_not_stripped_as_a_comment(self):
         # The vehicle changed, not the assertion: this pins comment stripping, and it
