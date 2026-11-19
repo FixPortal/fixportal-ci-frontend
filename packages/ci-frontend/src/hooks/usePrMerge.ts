@@ -183,7 +183,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
       const queue = prs.filter(({ number: n }) => !isInFlight(prMergeKey(repo, n)))
       let attempted = queue.length
       try {
-        for (const { number: n, headSha } of queue) {
+        for (const [index, { number: n, headSha }] of queue.entries()) {
           // The PR being merged carries its own key too, so its pill reads
           // "Merging…" as the queue reaches it rather than just going flat.
           const key = prMergeKey(repo, n)
@@ -204,9 +204,14 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           }
           if (generation !== sourceGeneration.current) return
           if (!result.ok) {
+            // A later PR may have been taken by another entry point while this one
+            // was in flight; the loop breaks before its guard could exclude it.
+            const takenSince = queue
+              .slice(index + 1)
+              .filter((pr) => isInFlight(prMergeKey(repo, pr.number))).length
             setRepoError(
               repo,
-              `Merged ${merged} of ${attempted}; failed on #${n}: ${result.message}`,
+              `Merged ${merged} of ${attempted - takenSince}; failed on #${n}: ${result.message}`,
             )
             break
           }

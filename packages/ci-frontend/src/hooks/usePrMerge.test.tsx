@@ -427,6 +427,34 @@ test('returning to an organisation whose merge is still pending does not admit a
   expect(mergeFetcher).toHaveBeenCalledTimes(1)
 })
 
+test('mergeAll excludes a PR that another merge takes while the queue is waiting', async () => {
+  let failFirst!: (result: MergeResult) => void
+  const mergeFetcher = vi.fn().mockImplementation((_repo: string, n: number) =>
+    n === 9
+      ? new Promise<MergeResult>((resolve) => {
+          failFirst = resolve
+        })
+      : new Promise<MergeResult>(() => {}),
+  )
+  const { wrapper } = wrapperWith(mergeFetcher)
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  let queue!: Promise<void>
+  act(() => {
+    queue = result.current.mergeAll(
+      'repo-a',
+      [9, 7].map((n) => ({ number: n, headSha: `sha-${n}` })),
+    )
+  })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7') // takes #7 while #9 is in flight
+  })
+  await act(async () => {
+    failFirst({ ok: false, status: 409, message: 'not mergeable' })
+    await queue
+  })
+  expect(result.current.errors.get('repo-a')).toBe('Merged 0 of 1; failed on #9: not mergeable')
+})
+
 test('mergeAll excludes a PR owned elsewhere even when it sits after the failing one', async () => {
   const mergeFetcher = vi.fn().mockImplementation(async (_repo: string, n: number) => {
     if (n === 7) return new Promise<MergeResult>(() => {})
