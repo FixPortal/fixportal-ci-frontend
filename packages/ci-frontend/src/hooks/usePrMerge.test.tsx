@@ -374,3 +374,74 @@ test('mergeAll over only skipped PRs still refreshes the snapshot and reports no
   expect(result.current.errors.size).toBe(0)
   expect(result.current.merging.has('repo-a#all')).toBe(false)
 })
+
+test('a snapshot that is briefly absent does not reset an in-flight merge', async () => {
+  const resolvers: ((result: MergeResult) => void)[] = []
+  const mergeFetcher = vi.fn().mockImplementation(
+    () =>
+      new Promise<MergeResult>((resolve) => {
+        resolvers.push(resolve)
+      }),
+  )
+  const { wrapper, invalidateSpy } = wrapperWith(mergeFetcher)
+  const { result, rerender } = renderHook<ReturnType<typeof usePrMerge>, { org?: string }>(
+    ({ org }) => usePrMerge(org),
+    { initialProps: { org: 'org-a' }, wrapper },
+  )
+  let merge!: Promise<void>
+  act(() => {
+    merge = result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
+
+  rerender({ org: undefined })
+  rerender({ org: 'org-a' })
+  expect(result.current.merging.has('repo-a#7')).toBe(true)
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
+  expect(mergeFetcher).toHaveBeenCalledTimes(1)
+
+  await act(async () => {
+    resolvers[0]!(ok)
+    await merge
+  })
+  expect(result.current.merged.has('repo-a#7')).toBe(true)
+  expect(invalidateSpy).toHaveBeenCalledTimes(1)
+})
+
+test('returning to an organisation whose merge is still pending does not admit a second request', async () => {
+  const mergeFetcher = vi.fn().mockImplementation(() => new Promise<MergeResult>(() => {}))
+  const { wrapper } = wrapperWith(mergeFetcher)
+  const { result, rerender } = renderHook(({ org }) => usePrMerge(org), {
+    initialProps: { org: 'org-a' },
+    wrapper,
+  })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
+  rerender({ org: 'org-b' })
+  rerender({ org: 'org-a' })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
+  expect(mergeFetcher).toHaveBeenCalledTimes(1)
+})
+
+test('mergeAll excludes a PR owned elsewhere even when it sits after the failing one', async () => {
+  const mergeFetcher = vi.fn().mockImplementation(async (_repo: string, n: number) => {
+    if (n === 7) return new Promise<MergeResult>(() => {})
+    return { ok: false, status: 409, message: 'not mergeable' } satisfies MergeResult
+  })
+  const { wrapper } = wrapperWith(mergeFetcher)
+  const { result } = renderHook(() => usePrMerge(), { wrapper })
+  act(() => {
+    void result.current.mergeOne('repo-a', 7, 'sha-7')
+  })
+  await act(() =>
+    result.current.mergeAll(
+      'repo-a',
+      [9, 7].map((n) => ({ number: n, headSha: `sha-${n}` })),
+    ),
+  )
+  expect(result.current.errors.get('repo-a')).toBe('Merged 0 of 1; failed on #9: not mergeable')
+})

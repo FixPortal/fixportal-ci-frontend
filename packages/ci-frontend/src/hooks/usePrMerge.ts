@@ -29,10 +29,14 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   const [merged, setMerged] = useState<ReadonlySet<string>>(() => new Set())
   const [receipts, setReceipts] = useState<ReadonlySet<string>>(() => new Set())
   const receiptTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
-  const previousSnapshotOrg = useRef(snapshotOrg)
+  // The last org the snapshot named. A briefly absent snapshot (204, null fetcher,
+  // recreated fetcher) leaves it alone, so only a real org-to-org change resets.
+  const currentOrg = useRef(snapshotOrg)
   const sourceGeneration = useRef(0)
   // The guard reads from a ref, not from `merging`: two clicks in the same tick
-  // would both see the pre-render state and both start the same merge.
+  // would both see the pre-render state and both start the same merge. Guard ids
+  // are qualified by org and released only by the request that took them, so an
+  // org reset never frees a POST that is still on the wire.
   const inFlight = useRef(new Set<string>())
 
   useEffect(
@@ -43,40 +47,42 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
   )
 
   useEffect(() => {
-    if (previousSnapshotOrg.current === snapshotOrg) return
-    previousSnapshotOrg.current = snapshotOrg
+    if (snapshotOrg === undefined) return
+    const previous = currentOrg.current
+    currentOrg.current = snapshotOrg
+    if (previous === undefined || previous === snapshotOrg) return
     sourceGeneration.current += 1
     for (const timer of receiptTimers.current) clearTimeout(timer)
     receiptTimers.current.clear()
-    inFlight.current.clear()
     setMerging(new Set())
     setMerged(new Set())
     setReceipts(new Set())
     setErrors(new Map())
   }, [snapshotOrg])
 
+  const isInFlight = useCallback(
+    (key: string) => inFlight.current.has(`${currentOrg.current ?? ''}|${key}`),
+    [],
+  )
+
+  // Returns the guard id to hand back to endMerge, or null when the key is taken.
   const startMerge = useCallback((key: string) => {
-    if (inFlight.current.has(key)) return false
-    inFlight.current.add(key)
+    const guard = `${currentOrg.current ?? ''}|${key}`
+    if (inFlight.current.has(guard)) return null
+    inFlight.current.add(guard)
     setMerging((current) => new Set(current).add(key))
-    return true
+    return guard
   }, [])
 
-  const endMerge = useCallback((key: string) => {
-    inFlight.current.delete(key)
+  const endMerge = useCallback((key: string, guard: string, generation: number) => {
+    inFlight.current.delete(guard)
+    if (generation !== sourceGeneration.current) return
     setMerging((current) => {
       const next = new Set(current)
       next.delete(key)
       return next
     })
   }, [])
-
-  const endMergeIfCurrent = useCallback(
-    (key: string, generation: number) => {
-      if (generation === sourceGeneration.current) endMerge(key)
-    },
-    [endMerge],
-  )
 
   const dismissError = useCallback((repo: string) => {
     setErrors((current) => {
@@ -132,7 +138,8 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
     async (repo: string, pullNumber: number, headSha: string) => {
       const key = prMergeKey(repo, pullNumber)
       const generation = sourceGeneration.current
-      if (!startMerge(key)) return
+      const guard = startMerge(key)
+      if (guard === null) return
       dismissError(repo)
       try {
         let result: MergeResult
@@ -156,30 +163,34 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           setRepoError(repo, result.message)
         }
       } finally {
-        endMergeIfCurrent(key, generation)
+        endMerge(key, guard, generation)
       }
     },
-    [startMerge, endMergeIfCurrent, dismissError, setRepoError, callMerge, markMerged, refresh],
+    [startMerge, endMerge, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
   const mergeAll = useCallback(
     async (repo: string, prs: readonly { number: number; headSha: string }[]) => {
       const allKey = prMergeKey(repo, 'all')
       const generation = sourceGeneration.current
-      if (!startMerge(allKey)) return
+      const allGuard = startMerge(allKey)
+      if (allGuard === null) return
       dismissError(repo)
       let merged = 0
-      // Excludes PRs skipped because another entry point already owns them, so
-      // the reported total only counts PRs this call actually attempted.
-      let attempted = prs.length
+      // Excludes PRs another entry point already owns, whether taken before this
+      // call or while it runs, so the reported total only counts PRs this call
+      // attempted or will attempt.
+      const queue = prs.filter(({ number: n }) => !isInFlight(prMergeKey(repo, n)))
+      let attempted = queue.length
       try {
-        for (const { number: n, headSha } of prs) {
+        for (const { number: n, headSha } of queue) {
           // The PR being merged carries its own key too, so its pill reads
           // "Merging…" as the queue reaches it rather than just going flat.
           const key = prMergeKey(repo, n)
           // A PR already merging through another entry point (e.g. mergeOne) is
           // left alone rather than issuing a second backend request for it.
-          if (!startMerge(key)) {
+          const guard = startMerge(key)
+          if (guard === null) {
             attempted -= 1
             continue
           }
@@ -189,7 +200,7 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
           } catch (error) {
             result = { ok: false, status: null, message: mergeErrorMessage(error) }
           } finally {
-            endMergeIfCurrent(key, generation)
+            endMerge(key, guard, generation)
           }
           if (generation !== sourceGeneration.current) return
           if (!result.ok) {
@@ -204,10 +215,10 @@ export function usePrMerge(snapshotOrg?: string): PrMerge {
         }
         if (generation === sourceGeneration.current) await refresh()
       } finally {
-        endMergeIfCurrent(allKey, generation)
+        endMerge(allKey, allGuard, generation)
       }
     },
-    [startMerge, endMergeIfCurrent, dismissError, setRepoError, callMerge, markMerged, refresh],
+    [startMerge, endMerge, isInFlight, dismissError, setRepoError, callMerge, markMerged, refresh],
   )
 
   return { merging, merged, receipts, errors, mergeOne, mergeAll, dismissError }

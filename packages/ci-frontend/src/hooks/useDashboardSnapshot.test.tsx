@@ -224,7 +224,7 @@ describe('useDashboardSnapshot cache-key isolation', () => {
   it('keeps two co-hosted boards with distinct fetchers on separate cache rows under one shared QueryClient', async () => {
     // Both hooks share a single QueryClient (simulating two boards mounted under
     // the same host app), each with its own snapshotFetcher and a distinct
-    // snapshotCacheKey â€” the guard useDashboardSnapshot.ts:19-51 folds in so the
+    // snapshotCacheKey — the guard useDashboardSnapshot.ts:19-51 folds in so the
     // two boards' cache rows don't alias.
     const client = new QueryClient()
     const { result: boardA } = renderHook(() => useDashboardSnapshot(), {

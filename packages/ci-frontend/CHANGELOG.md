@@ -12,6 +12,30 @@ lists every published release.
 
 ## [Unreleased]
 
+### Changed
+
+- A merge failure that a host's `mergeFetcher` throws is now shown inline on the board
+  with the error's `message`, instead of rejecting the call. Hosts that relied on an
+  unhandled-rejection handler no longer see these failures there, and the message text
+  reaches the admin UI, so keep it free of anything you would not show an admin.
+- "Merge all" skips a PR that another merge already owns, and it still refreshes the
+  snapshot after a first-merge failure. Its "Merged N of M" total counts only the PRs it
+  attempted.
+- The repository filter no longer writes to storage when the board mounts.
+- "Merge all (oldest first)" and the oldest-first PR list now order by the instant a PR
+  was opened, so timestamps that mix UTC offsets or fractional-second precision sort
+  correctly. An unparseable timestamp sorts last.
+- Draft PR cards are no longer dimmed, which left their small text below WCAG AA
+  contrast. They keep the "draft" label and gain a dashed left edge.
+
+### Fixed
+
+- A snapshot that is briefly absent (the backend's 204 before its first pass, or a
+  fetcher that resolves `null`) no longer resets merge state. Only a change from one
+  organisation to another does. A finished merge is no longer dropped and a queue no
+  longer abandoned, and a second click can no longer send a duplicate request while the
+  first is still pending, including after an organisation round trip.
+
 ## [3.7.1] - 2026-10-18
 
 ### Fixed

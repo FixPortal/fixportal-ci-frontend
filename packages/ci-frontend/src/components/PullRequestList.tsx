@@ -1,4 +1,5 @@
 import type { PullRequest } from '../api/types'
+import { compareCreatedAt } from '../lib/compareCreatedAt'
 import { formatRelativeTime } from '../lib/relativeTime'
 import { isAllowedHref } from '../lib/isAllowedHref'
 import type { PrMerge } from '../lib/prMerge'
@@ -32,7 +33,7 @@ export function PullRequestList({
   // one under it, so each subsequent merge is the one most likely to go stale.
   const mergeablePrs = readyPrs
     .filter((pr): pr is typeof pr & { headSha: string } => Boolean(pr.headSha))
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.number - b.number)
+    .sort(compareCreatedAt)
   const openPrCount = pullRequests.filter(
     (pr) => !merge?.merged.has(prMergeKey(repoName, pr.number)),
   ).length

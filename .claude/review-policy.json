@@ -58,6 +58,9 @@
     ".github/scripts/assert_canonical_assets.py",
     ".npmrc",
     "scripts/assert-stryker-compat*.mjs",
+    "scripts/design-tokens-sync.test.mjs",
+    "scripts/plantuml-glob.test.mjs",
+    "scripts/release-tag.test.mjs",
     "scripts/fixtures/stryker-canary/**",
     ".github/workflows/mutation.yml"
   ],

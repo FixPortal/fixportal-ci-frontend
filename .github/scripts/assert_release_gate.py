@@ -31,6 +31,7 @@ REQUIRED_COMMANDS = (
 REQUIRED_VERIFY_AUDIT = "npm audit --omit=dev --audit-level=high"
 REQUIRED_CI_WORKFLOW = "./.github/workflows/ci.yml"
 REQUIRED_VERIFY_GATES = {
+    "root:format": "prettier --check .",
     "root:lint": "eslint . --max-warnings=35",
     "@fix-portal/ci-frontend:test": "vitest run",
     "dashboard:test": "vitest run",
