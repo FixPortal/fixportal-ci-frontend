@@ -20,7 +20,8 @@ PACKAGE_MANIFESTS = {
     "root": {
         "name": "root",
         "scripts": {
-            "verify": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
+            "verify": "npm audit --omit=dev --audit-level=high && npm run format && npm run lint && npm run test && npm run test:scripts && npm run typecheck -w @fix-portal/ci-frontend && npm run coverage -w @fix-portal/ci-frontend && npm run build:lib && npm run build:app",
+            "format": "prettier --check .",
             "lint": "eslint . --max-warnings=35",
             "test": "npm run test --workspaces --if-present",
             "test:scripts": "node --test scripts/*.test.mjs",
@@ -81,6 +82,33 @@ class ReleaseGatePolicyTests(unittest.TestCase):
                     },
                 }
                 self.assertEqual(validate_verify_gate(manifests), ["invalid-verify-gate: root:lint"])
+
+    def test_verify_rejects_a_format_script_that_writes_instead_of_checking(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "root": {
+                **PACKAGE_MANIFESTS["root"],
+                "scripts": {**PACKAGE_MANIFESTS["root"]["scripts"], "format": "prettier --write ."},
+            },
+        }
+
+        self.assertEqual(validate_verify_gate(manifests), ["invalid-verify-gate: root:format"])
+
+    def test_verify_rejects_a_verify_script_without_the_format_step(self):
+        manifests = {
+            **PACKAGE_MANIFESTS,
+            "root": {
+                **PACKAGE_MANIFESTS["root"],
+                "scripts": {
+                    **PACKAGE_MANIFESTS["root"]["scripts"],
+                    "verify": PACKAGE_MANIFESTS["root"]["scripts"]["verify"].replace(
+                        "npm run format && ", ""
+                    ),
+                },
+            },
+        }
+
+        self.assertEqual(validate_verify_gate(manifests), ["missing-verify-gate: root:format"])
 
     def test_verify_rejects_a_missing_nested_gate(self):
         manifests = {

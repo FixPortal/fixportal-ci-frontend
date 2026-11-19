@@ -94,7 +94,7 @@ GET {apiBase}/api/dashboard/snapshot
   callback (or `POST {apiBase}/api/dashboard/merge`), so the token stays server-side
   exactly as it does for the admin snapshot. The default POST carries no credential
   (`usePrMerge.ts:119-121`, `api/mergePullRequest.ts:31`), while the CI backend requires
-  `X-Admin-Key` (`DashboardEndpoints.cs:149`) and its CORS policy allows only `GET`
+  `X-Admin-Key` (checked in `HandleMergeAsync`, `DashboardEndpoints.cs`) and its CORS policy allows only `GET`
   (`Program.cs:144`); the shipped nginx adds no key. The default path therefore needs a
   same-origin proxy that injects `X-Admin-Key`, or a custom `mergeFetcher`
   (see `docs/setup-guide.md`). `hooks/usePrMerge.ts` owns the whole of that state — in-flight keys,

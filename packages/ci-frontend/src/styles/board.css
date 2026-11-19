@@ -1629,8 +1629,10 @@
   .pr-card--red {
     border-left-color: var(--bad-solid);
   }
+  /* No opacity: it dims the 12px --text-muted lines below WCAG AA. The head line
+     already says "draft"; the dashed edge adds a non-text cue. */
   .pr-card--draft {
-    opacity: 0.72;
+    border-left-style: dashed;
   }
   .pr-card__head {
     display: flex;

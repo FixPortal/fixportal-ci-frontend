@@ -1,4 +1,5 @@
 import type { PullRequest, RepositorySnapshot } from '../api/types'
+import { compareCreatedAt } from './compareCreatedAt'
 
 export type OpenPr = PullRequest & { repo: string }
 
@@ -7,5 +8,5 @@ export type OpenPr = PullRequest & { repo: string }
 export function flattenOpenPrs(repositories: RepositorySnapshot[]): OpenPr[] {
   return repositories
     .flatMap((r) => r.pullRequests.map((pr) => ({ ...pr, repo: r.name })))
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .sort(compareCreatedAt)
 }

@@ -124,6 +124,24 @@ test('Merge all merges oldest first, whatever order the board lists them in', as
   await screen.findByRole('button', { name: 'Merged PR #9' })
   expect(calls).toEqual([4, 7, 9])
 })
+
+test('Merge all orders by instant when timestamps mix offsets and precision', async () => {
+  const calls: number[] = []
+  const mergeFetcher = vi.fn().mockImplementation(async (_r: string, n: number) => {
+    calls.push(n)
+    return { ok: true, sha: 'x' } satisfies MergeResult
+  })
+  renderList(mergeFetcher, true, [
+    // 09:00Z, listed first but latest.
+    { ...readyPr(1), createdAt: '2026-05-30T09:00:00Z' },
+    // 08:00Z: earlier than 09:00Z, although "…T10:00:00+02:00" sorts after it as text.
+    { ...readyPr(2), createdAt: '2026-05-30T10:00:00+02:00' },
+  ])
+  await userEvent.click(screen.getByRole('button', { name: /Merge all/i }))
+  await screen.findByRole('button', { name: 'Merged PR #1' })
+  expect(calls).toEqual([2, 1])
+})
+
 test('Merge all button is hidden when fewer than two PRs are ready', () => {
   renderList(vi.fn(), true, [readyPr(7), { ...readyPr(8), readyToMerge: false }])
   expect(screen.queryByRole('button', { name: /Merge all/i })).toBeNull()

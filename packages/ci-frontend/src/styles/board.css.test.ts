@@ -38,6 +38,9 @@ describe('board.css review pill selectors', () => {
     '.chip--review-pending',
     '.chip--review-disabled',
     '.chip--review-unknown',
+    // opacity on the card dims its 12px --text-muted lines below WCAG AA; drafts
+    // are marked by the text label and a dashed border instead.
+    '.pr-card--draft',
   ])('%s preserves text contrast', (selector) => {
     // Every rule naming the class (later, compound, pseudo-class or inside @media), not
     // just the first block: a later `.chip--unknown:hover { opacity }` must also fail.
