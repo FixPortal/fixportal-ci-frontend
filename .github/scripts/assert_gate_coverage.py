@@ -3860,13 +3860,26 @@ def _in_shell_comment(text, start):
 
     Under BOTH quoting disciplines, since the shell is not known here: a `#` that only one
     of them reads as unquoted may be string content under the shell that runs the body.
-    The text is masked from its START, not from the start of the line: a string opened on
-    an earlier line can still be open here, and a `#` inside it is not a comment.
+    The text is read from its START, not from the start of the line: a string opened on
+    an earlier line can still be open here, and a `#` inside it is not a comment. A quote
+    inside an earlier comment opens nothing (see _comment_indexes).
     """
-    return all(
-        re.search(r"(?:^|[ \t])#", mask_quoted(text[:start], powershell=powershell).rsplit("\n", 1)[-1]) is not None
-        for powershell in (False, True)
-    )
+    if _holds_substitution(text):
+        return False
+    return all(start in _comment_indexes(text, powershell) for powershell in (False, True))
+
+
+def _holds_substitution(text):
+    """True when `text` holds a command substitution, `$(...)` or backticks.
+
+    A substitution runs its commands wherever it sits, a comment included in a string, and
+    its own quotes nest inside the string around it: in `echo "$(echo " # "; python3
+    scripts/gate.py;)"` the second quote does not close the first. Neither quote scanner
+    models that nesting, so with a substitution anywhere in the text nothing is vouched for
+    as a comment. The cost is a script named in a real comment being required HIGH.
+    printed_only draws the same line.
+    """
+    return "$(" in text or "`" in text
 
 
 def _comment_indexes(text, powershell):
@@ -3913,6 +3926,23 @@ def without_agreed_comments(text):
     """
     agreed = _comment_indexes(text, False) & _comment_indexes(text, True)
     return "".join(" " if index in agreed else char for index, char in enumerate(text))
+
+
+def body_readings(body):
+    """The readings of one run body that gate_script_paths must check, as lists of lines.
+
+    Always the body with its agreed comments blanked. When the body holds a command
+    substitution that reading is not enough: the substitution's nested quotes can make a
+    quoted `#` and the command after it look like a comment, which blanking then deletes
+    (see _holds_substitution). So the body as written is read as well, and gate_script_paths
+    takes every script reference and every directory change EITHER reading finds. Two
+    readings can only add detections, which is the direction an uncertain parse must err.
+    """
+    raw = "\n".join(body)
+    blanked = without_agreed_comments(raw)
+    yield blanked.split("\n")
+    if _holds_substitution(raw) and blanked != raw:
+        yield list(body)
 
 
 def _interpreter_tokens(segment):
@@ -4077,17 +4107,23 @@ def gate_script_paths(lines, jobs, needs, gate_job, root):
     """
     found = {}
     seen_bodies = set()
+    readings = []
     for job_id, _, body, body_directories in gated_run_bodies(lines, jobs, needs, gate_job, root):
         body_key = (job_id, tuple(body), tuple(sorted(body_directories)))
         if body_key in seen_bodies:
             continue
         seen_bodies.add(body_key)
-        body = without_agreed_comments("\n".join(body)).split("\n")
+        body_list = list(body_readings(body))
+        # One verdict per BODY, across its readings: a `cd` one reading sees applies to a
+        # script only the other reading sees (CodeRabbit, PR #483).
+        moved = any(changes_directory(reading) for reading in body_list)
+        readings.extend((job_id, reading, body_directories, moved) for reading in body_list)
+    for job_id, body, body_directories, moved in readings:
         # `cd frontend && npm run gate` resolves the script in frontend/package.json, which
         # no declared working directory names: nothing resolves, so the per-reference
         # refusal below never ran and the script npm executes went untiered (C1-F7).
         folded = re.sub(r"\\\n[ \t]*", "", "\n".join(body))
-        if changes_directory(body) and any(
+        if moved and any(
             not printed_only(folded, offset) for offset, _, _ in npm_invocations(folded)
         ):
             sys.exit(f"{root}: cannot verify gate script paths after a directory change in job '{job_id}'; use working-directory:")
@@ -4095,7 +4131,7 @@ def gate_script_paths(lines, jobs, needs, gate_job, root):
             unsupported = next((directory for directory in directories if directory.startswith("!unsupported ")), None)
             if unsupported:
                 sys.exit(f"{root}: {unsupported[1:]}")
-            if changes_directory(body):
+            if moved:
                 sys.exit(f"{root}: cannot verify gate script paths after a directory change in job '{job_id}'; use working-directory:")
             full_references = {relative} | {
                 directory + "/" + relative
