@@ -2520,6 +2520,14 @@ def assert_readable_shapes(root, text, name=None):
             )
         job_nodes_seen.add(id(value))
     step_nodes_seen = set()
+    # The mappings under `with:` and `env:` hold caller data: a key named `uses` there is an input
+    # or a variable, not an action reference. The `jobs:` mapping is skipped, because its keys are
+    # job ids and a job may be named `with` or `env` (CodeRabbit, PR #495).
+    data_mappings = {
+        id(value)
+        for node in iter_nodes(root) if isinstance(node, yaml.MappingNode) and node is not jobs_node
+        for key, value in node.value if isinstance(key, yaml.ScalarNode) and key.value in ("with", "env")
+    }
     for node in iter_nodes(root):
         if not isinstance(node, yaml.MappingNode):
             continue
@@ -2544,6 +2552,21 @@ def assert_readable_shapes(root, text, name=None):
                     f"{where}line {line}: a plain multi-line value for `{key.value}` is unsupported; "
                     "YAML folds it into one value that a line scan reads as its first line. "
                     "Write it on one line, or as a block scalar (`|` or `>-`)"
+                )
+            # `uses:` then the path on the next line is a valid scalar GitHub runs (actionlint
+            # accepts it, observed 2026-11-21), but every reader takes `uses` from the key's own
+            # line, so the called workflow or action was never walked (ide review, RV-41).
+            if (
+                isinstance(key, yaml.ScalarNode)
+                and key.value == "uses"
+                and id(node) not in data_mappings
+                and isinstance(value, yaml.ScalarNode)
+                and (value.start_mark.line != key.start_mark.line or value.end_mark.line > value.start_mark.line)
+            ):
+                # An alias lands here too: it resolves to the node at its anchor, on another line.
+                raise ValueError(
+                    f"{where}line {line}: a `uses` value must be written on the key's own line, on one line"
+                    + (", not as a block scalar" if value.style in ("|", ">") else ", not as an alias or on a later line")
                 )
             if key.tag == MERGE_TAG:
                 raise ValueError(f"{where}line {line}: YAML merge key `<<` is unsupported; spell the keys out")
@@ -3350,12 +3373,50 @@ NPM_RUN_COMMANDS = {"run", "run-script", "rum", "urn"}
 # Lifecycle commands run the package script of their own name, pre/post hooks included.
 # `npm restart` runs `restart`, or `stop` then `start` when the package has none; that choice
 # is made per package in npm_script_commands.
+# `npm ci` and `npm install` run the package's own preinstall..postprepare hooks unless
+# --ignore-scripts is set (npm lib/commands/ci.js), and the *-test commands run them before
+# `test` (ide review, RV-40). npm_script_commands adds pre/post around each name.
+# shortcut: that also names preprepublish/postprepublish, which npm does not run; a superset.
+NPM_INSTALL_HOOKS = ("install", "prepublish", "prepare")
 NPM_LIFECYCLE_COMMANDS = {
     "test": ("test",), "t": ("test",), "tst": ("test",), "start": ("start",), "stop": ("stop",),
     "restart": ("restart",),
-    "install-test": ("test",), "it": ("test",),
-    "install-ci-test": ("test",), "clean-install-test": ("test",), "cit": ("test",), "sit": ("test",),
+    **{alias: NPM_INSTALL_HOOKS for alias in (
+        "ci", "clean-install", "ic", "install-clean", "isntall-clean",
+        "install", "i", "in", "ins", "inst", "insta", "instal", "isnt", "isnta", "isntal", "isntall", "add",
+    )},
+    **{alias: NPM_INSTALL_HOOKS + ("test",) for alias in (
+        "install-test", "it", "install-ci-test", "clean-install-test", "cit", "sit",
+    )},
 }
+
+
+_INSTALL_HOOK_REPOS = {}
+
+
+def repository_defines_install_hook(root):
+    """True when a package.json in the checkout (outside node_modules) defines an install hook.
+
+    With none, `npm ci` runs no script this checker could tier, wherever it runs, so `cd x &&
+    npm ci` and an unresolvable `npm install -w x` stay accepted. An unreadable package.json
+    counts as defining one: the fail-closed direction.
+    """
+    if root not in _INSTALL_HOOK_REPOS:
+        names = {prefix + name for name in NPM_INSTALL_HOOKS for prefix in ("pre", "", "post")}
+        found = False
+        for directory, subdirectories, files in os.walk(root):
+            subdirectories[:] = [name for name in subdirectories if name not in ("node_modules", ".git")]
+            if "package.json" not in files:
+                continue
+            try:
+                scripts = json.loads((Path(directory) / "package.json").read_text(encoding="utf-8-sig")).get("scripts") or {}
+                found = bool(names & set(scripts))
+            except (OSError, ValueError, AttributeError, TypeError):
+                found = True
+            if found:
+                break
+        _INSTALL_HOOK_REPOS[root] = found
+    return _INSTALL_HOOK_REPOS[root]
 # Options that move npm into another package. Each is resolved to that package's directory
 # by npm_package_dirs; a value it cannot resolve statically is refused.
 NPM_DIRECTORY_OPTIONS = ("--prefix", "-C", "--workspace", "-w", "--workspaces", "-ws", "--ws")
@@ -3460,8 +3521,11 @@ def npm_package_dirs(root, base, selectors):
     return sorted(set(directories)), None
 
 
-def npm_invocations(text):
-    """(offset, script name, selectors) for each `npm` command in `text` that runs a package script.
+def npm_invocations(text, root=None):
+    """(offset, script name, selectors, installs) for each `npm` command in `text` that runs a package script.
+
+    `installs` is True when the name is a hook an install command runs, as opposed to the same
+    script run by name (`npm run prepare`): only an install also runs the workspaces' hooks.
 
     `npm test` / `npm t` run `scripts.test` with its hooks just as `npm run test` does, and
     reading only `run` left the most common gate command unfollowed. A directory option
@@ -3495,19 +3559,26 @@ def npm_invocations(text):
         if command is None:
             continue
         if command not in NPM_LIFECYCLE_COMMANDS and command not in NPM_RUN_COMMANDS:
-            # `npm ci --prefix frontend` runs no package script this reading follows.
+            # `npm audit --prefix ui` runs no package script this reading follows.
             continue
         selectors = npm_selectors(npm_args)
         if command in NPM_LIFECYCLE_COMMANDS:
+            # --ignore-scripts skips the install hooks (an explicit `test` still runs), and a
+            # global install never runs the local package's. Without a root nothing hook-shaped
+            # is known about the checkout, so the hooks are followed.
+            skip_hooks = (root is not None and not repository_defines_install_hook(root)) or any(
+                arg in ("-g", "--global", "--global=true", "--ignore-scripts", "--ignore-scripts=true") for arg in npm_args
+            )
             for name in NPM_LIFECYCLE_COMMANDS[command]:
-                yield match.start(), name, selectors
+                if not (skip_hooks and name in NPM_INSTALL_HOOKS):
+                    yield match.start(), name, selectors, name in NPM_INSTALL_HOOKS
         elif command in NPM_RUN_COMMANDS:
             index += 1
             while index < len(tokens) and tokens[index].startswith("-"):
                 index += 1
             name = NPM_NAME.match(tokens[index]).group(0) if index < len(tokens) else ""
             if name:
-                yield match.start(), name, selectors
+                yield match.start(), name, selectors, False
             # `npm run --loglevel warn gate`: after a bare option the first word may be its
             # value, so the next word is followed too. A missing script is skipped, so this
             # only adds candidates.
@@ -3518,7 +3589,7 @@ def npm_invocations(text):
                     index += 1
                 following = NPM_NAME.match(tokens[index]).group(0) if index < len(tokens) else ""
                 if following:
-                    yield match.start(), following, selectors
+                    yield match.start(), following, selectors, False
 
 
 def printed_only(line, start):
@@ -3534,7 +3605,7 @@ def printed_only(line, start):
     `Write-Host (cmd)` run cmd under pwsh, `echo <(cmd)` runs it under bash (CodeRabbit,
     PR #425).
     """
-    if "$(" in line or "`" in line:
+    if _holds_substitution(line):
         return False
     # BOTH quoting disciplines must agree, as changes_directory requires: the shell is not
     # known here, and under bash rules the pwsh string `"C:\out\"` never closes, so a
@@ -3598,13 +3669,44 @@ def npm_script_commands(root, bases, name, visited):
                 continue
             visited.add((base, hook))
             commands.append((base, command, None))
-            for _, nested, selectors in npm_invocations(command):
-                directories, refusal = npm_package_dirs(root, base, selectors)
-                if refusal:
-                    commands.append((base, None, refusal))
-                else:
+            nested_runs = list(npm_invocations(command, root))
+            if nested_runs and changes_directory([command]):
+                # After a `cd` the nested npm runs in an unknown package (ide review, RV-13).
+                commands.append((base, None, f"cannot verify gate script paths after a directory change in package script `{hook}`; drop the `cd` and use npm --prefix"))
+                continue
+            for _, nested, selectors, installs in nested_runs:
+                # `"gate": "npm ci --workspace=pkg"` runs the root's install hooks too, as the same
+                # command written in `run:` does (issue 496). From one base, no package means a refusal.
+                directories, refusals = npm_command_packages(root, [base], selectors, installs)
+                if directories:
                     commands.extend(npm_script_commands(root, directories, nested, visited))
+                commands.extend((base, None, refusal) for refusal in ([] if directories else refusals))
     return commands
+
+
+def npm_command_packages(root, bases, selectors, installs):
+    """(packages, refusals): the package directories an npm command with `selectors` runs
+    scripts in, from any of `bases`, and the refusal from each base it does not resolve from.
+
+    An install runs more hooks than its selectors name (observed with npm 11.14; CodeRabbit,
+    PR #495): the package it runs from always, so `npm ci --workspace=pkg` still ran the root's
+    postinstall and prepare, and, with no workspace selector, every workspace's as well.
+    `npm run prepare` runs the one package's script only, so it does not expand.
+    """
+    every_workspace = not any(option in ("--workspace", "-w", "--workspaces", "-ws", "--ws") for option, _ in selectors)
+    prefixes = [(option, value) for option, value in selectors if option in ("--prefix", "-C")]
+    packages, refusals = [], []
+    for base in bases:
+        resolved, refusal = npm_package_dirs(root, base, selectors)
+        if refusal:
+            refusals.append(refusal)
+            continue
+        if installs:
+            # The prefix resolved above, so it resolves alone too: that is the package npm runs from.
+            for install_root in npm_package_dirs(root, base, prefixes)[0]:
+                resolved = resolved + [install_root] + (npm_workspace_dirs(root, install_root) if every_workspace else [])
+        packages.extend(directory for directory in resolved if directory not in packages)
+    return packages, refusals
 
 
 def script_references(body, directories, root):
@@ -3632,16 +3734,10 @@ def script_references(body, directories, root):
     markers = {directory for directory in directories if directory.startswith("!")}
     for relative, extra in interpreter_references(folded, bases, root):
         yield relative, extra | markers
-    for offset, name, selectors in npm_invocations(folded):
+    for offset, name, selectors, installs in npm_invocations(folded, root):
         if printed_only(folded, offset):
             continue
-        packages, refusals = [], []
-        for base in bases:
-            resolved, refusal = npm_package_dirs(root, base, selectors)
-            if refusal:
-                refusals.append(refusal)
-            else:
-                packages.extend(directory for directory in resolved if directory not in packages)
+        packages, refusals = npm_command_packages(root, bases, selectors, installs)
         # The root is always a candidate beside a working-directory, so a selector is refused
         # only when it resolves from none of them (`--prefix ../x` leaves the root, not `sub`).
         if not packages:
@@ -3651,12 +3747,20 @@ def script_references(body, directories, root):
             if nested_refusal:
                 yield _refusal(nested_refusal)
                 continue
-            for script in GATE_SCRIPT.finditer(command):
-                yield script.group(1).replace("\\", "/"), directories | ({base} if base else set())
+            direct = list(GATE_SCRIPT.finditer(command))
+            references = [(script.group(1).replace("\\", "/"), directories | ({base} if base else set())) for script in direct]
             # `"gate": "python3 gate.py"` runs a root-level script GATE_SCRIPT cannot see (CodeRabbit, PR #426).
             # npm runs it from the package's own directory.
-            for relative, extra in interpreter_references(command, [base], root):
-                yield relative, extra | markers
+            interpreted = [(relative, extra | markers) for relative, extra in interpreter_references(command, [base], root)]
+            # `"gate": "cd frontend && node gate.mjs"` runs frontend/gate.mjs, which nothing resolves
+            # from the package directory, so it was dropped untiered (ide review, RV-13). Refused
+            # exactly as a `cd` in the run body is: only when the script names something to run, so a
+            # path that is merely printed (`cd frontend && echo scripts/report.py`) does not refuse.
+            runs = interpreted or any(not printed_only(command, script.start()) and not _in_shell_comment(command, script.start()) for script in direct)
+            if runs and changes_directory([command]):
+                yield _refusal(f"cannot verify gate script paths after a directory change in package script `{name}`; drop the `cd` and use npm --prefix or working-directory:")
+                continue
+            yield from references + interpreted
 
 
 # A Python interpreter as a command word. The target after it is read by
@@ -3688,6 +3792,44 @@ def _resolve_under_bases(root, bases, relative):
         candidate = f"{base}/{relative}" if base else relative
         found.extend(resolve_committed_paths(root, candidate, allow_outside_repository=True))
     return found
+
+
+def _glob_under_bases(root, bases, pattern, extensions):
+    """Root-relative committed files a shell glob names under each base directory.
+
+    The shell expands `node --test scripts/*.test.mjs`; the checker reads one literal name,
+    so every matching file would stay untiered (adversarial review 20261119T121117Z, C1-F2).
+    Only in-checkout files with a script extension count, as for a literal target.
+    """
+    found = []
+    root_resolved = root.resolve()
+    patterns = [pattern]
+    while any(re.search(r"\{[^{}]*,[^{}]*\}", item) for item in patterns):  # shell braces: `scripts/*.{mjs,js}`
+        expanded_patterns = []
+        for item in patterns:
+            brace = re.search(r"\{([^{}]*,[^{}]*)\}", item)
+            if brace:
+                expanded_patterns.extend(item[:brace.start()] + option + item[brace.end():] for option in brace.group(1).split(","))
+            else:
+                expanded_patterns.append(item)
+        patterns = expanded_patterns
+    # A brace group with no comma (`ci/{smoke}`) is literal to the shell; pathlib reads `{` as plain text too.
+    for base in bases:
+        matches = []
+        for item in patterns:
+            try:
+                matches.extend((root / base if base else root).glob(item))
+            except (NotImplementedError, ValueError, OSError):
+                continue  # an absolute or empty pattern: not a path under this base
+        for path in matches:
+            try:
+                path.resolve().relative_to(root_resolved)  # containment only: a symlink may point anywhere
+                relative = path.relative_to(root).as_posix()  # the spelling the shell was given, which resolve_committed_paths keeps
+            except (ValueError, OSError):
+                continue  # outside the checkout
+            if path.is_file() and relative.lower().endswith(extensions):
+                found.extend(resolve_committed_paths(root, relative, allow_outside_repository=True))
+    return sorted(set(found))
 
 
 def _files_matching(root, bases, start, patterns):
@@ -3798,7 +3940,16 @@ _SCRIPT_EXTENSIONS = {
     "pwsh": (".ps1",), "powershell": (".ps1",),
     "node": (".js", ".mjs", ".cjs"),
 }
-_VALUE_FLAGS = {"-executionpolicy", "-ep", "-workingdirectory", "-wd", "-r", "--require", "-o", "-w", "-configurationname"}
+# Options that take the next token as their value, per interpreter: one shared table read
+# `bash -r gate.sh` (restricted shell, no value) as node's `-r <module>` and swallowed the
+# script (ide review, RV-15). pwsh is matched case-folded, the others as written (node `-C` is
+# --conditions and takes a value; `-c` is --check and does not).
+_VALUE_FLAGS = {
+    "bash": {"-O", "--rcfile", "--init-file"}, "sh": {"-O"}, "zsh": {"-O"},
+    "pwsh": {"-executionpolicy", "-ep", "-workingdirectory", "-wd", "-o", "-w", "-configurationname"},
+    "node": {"-r", "--require", "--import", "--loader", "--experimental-loader", "-C", "--conditions"},
+}
+_VALUE_FLAGS["powershell"] = _VALUE_FLAGS["pwsh"]
 
 
 def _other_interpreter_target(interpreter, tokens):
@@ -3821,7 +3972,7 @@ def _other_interpreter_target(interpreter, tokens):
             continue
         if folded == "-file":
             return tokens[index + 1] if index + 1 < len(tokens) else None
-        index += 2 if folded in _VALUE_FLAGS else 1
+        index += 2 if (folded if interpreter in ("pwsh", "powershell") else token) in _VALUE_FLAGS[interpreter] else 1
     return None
 
 
@@ -3842,10 +3993,18 @@ def _other_interpreter_references(text, bases, root):
             segment = segment[:comment.start()]
         interpreter = re.sub(r"(?i)\.exe$", "", match.group(0).strip("\"'")).lower()
         target = _other_interpreter_target(interpreter, _interpreter_tokens(segment))
-        if not target or not target.lower().endswith(_SCRIPT_EXTENSIONS[interpreter]):
+        # A glob may end in `*`, `}` or `/*` (`node --test scripts/*`): its extension is judged on
+        # each file it matches, in _glob_under_bases, not on the pattern text.
+        is_glob = bool(target) and re.search(r"[*?\[{]", target) is not None
+        if not target or not (is_glob or target.lower().endswith(_SCRIPT_EXTENSIONS[interpreter])):
             continue
         target, rooted = WORKSPACE_PREFIX.subn("", target.replace("\\", "/"))
         found = _resolve_under_bases(root, [""] if rooted else bases, target)
+        if is_glob:
+            # The shell expands an unquoted glob even when a file is literally named like it.
+            # One that matches nothing here is still yielded raw below: after `cd ci`, bash expands
+            # `checks/*` from `ci`, so only the directory-change refusal can catch it (issue 496).
+            found = sorted(set(found) | set(_glob_under_bases(root, [""] if rooted else bases, target, _SCRIPT_EXTENSIONS[interpreter])))
         for relative in found:
             yield relative, set()
         # Unresolved here, a relative target is still yielded raw so gate_script_paths applies
@@ -3870,7 +4029,11 @@ def _in_shell_comment(text, start):
 
 
 def _holds_substitution(text):
-    """True when `text` holds a command substitution, `$(...)` or backticks.
+    """True when `text` holds a command substitution, `$(...)` or backticks, or an ANSI-C string `$'..'`.
+
+    An ANSI-C string keeps `\'` inside the string, which neither quote scanner models, so
+    `label=$'can\'t # note'; python3 scripts/gate.py` reads the command as a comment
+    (fixportal-agents-skills#486).
 
     A substitution runs its commands wherever it sits, a comment included in a string, and
     its own quotes nest inside the string around it: in `echo "$(echo " # "; python3
@@ -3879,7 +4042,7 @@ def _holds_substitution(text):
     as a comment. The cost is a script named in a real comment being required HIGH.
     printed_only draws the same line.
     """
-    return "$(" in text or "`" in text
+    return "$(" in text or "`" in text or "$'" in text
 
 
 def _comment_indexes(text, powershell):
@@ -4057,14 +4220,20 @@ def _pytest_references(root, bases, args):
             found = _resolve_under_bases(root, bases, path)
             if not found:
                 yield _refusal(f"cannot resolve the pytest target '{path}' to a file in the checkout")
-            for relative in found:
-                yield relative, set()
-            continue
-        resolved, files = _files_matching(root, bases, path, ["test_*.py", "*_test.py", "conftest.py"])
-        if not resolved:
-            yield _refusal(f"cannot resolve the pytest target '{path}' in the checkout")
-        for relative in sorted(files):
+        else:
+            resolved, files = _files_matching(root, bases, path, ["test_*.py", "*_test.py", "conftest.py"])
+            if not resolved:
+                yield _refusal(f"cannot resolve the pytest target '{path}' in the checkout")
+            found = sorted(files)
+        for relative in found:
             yield relative, set()
+            # pytest also imports every conftest.py from its rootdir down to a collected file, and one
+            # can skip the gate's tests (ide review, RV-14; observed with pytest 9.1). Every ancestor up
+            # to the repository root is named, whatever --rootdir/--confcutdir say: a superset.
+            parts = relative.split("/")
+            for depth in range(len(parts)):
+                for conftest in resolve_committed_paths(root, "/".join(parts[:depth] + ["conftest.py"]), allow_outside_repository=True):
+                    yield conftest, set()
 
 
 def _module_references(root, bases, module):
@@ -4124,7 +4293,7 @@ def gate_script_paths(lines, jobs, needs, gate_job, root):
         # refusal below never ran and the script npm executes went untiered (C1-F7).
         folded = re.sub(r"\\\n[ \t]*", "", "\n".join(body))
         if moved and any(
-            not printed_only(folded, offset) for offset, _, _ in npm_invocations(folded)
+            not printed_only(folded, offset) for offset, _, _, _ in npm_invocations(folded, root)
         ):
             sys.exit(f"{root}: cannot verify gate script paths after a directory change in job '{job_id}'; use working-directory:")
         for relative, directories in script_references(body, body_directories, root):
