@@ -41,6 +41,7 @@
   ],
   "version": 1,
   "high": [
+    "scripts/design-tokens-sync.mjs",
     "scripts/backend-contract.mjs",
     "scripts/container-smoke.mjs",
     "scripts/package-smoke.mjs",
